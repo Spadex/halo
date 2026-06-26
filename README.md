@@ -195,9 +195,9 @@ your-project/
 
 ## How It Works
 
-### Phase 1: Design — Knowledge Injection + Spec Authoring
+### Phase 1: Brainstorming — Knowledge Injection + Spec Authoring
 
-When you describe a requirement, the agent enters the design phase:
+When you describe a requirement, the agent enters the brainstorming phase:
 
 ```
 You: "Add a coupon redemption API"
@@ -207,18 +207,28 @@ Agent (with Lattice rules):
   2. Runs: bash lattice/kernel/knowledge/loader.sh coupon redemption payment
      → Finds: payment-idempotency.md, coupon-business-rules.md
   3. Evaluates: "Is this context sufficient?" If not → asks you
-  4. Authors spec using spec-template.md format:
+  4. Writes lattice/specs/coupon-redemption/spec.md:
      - AC-1: Redeem valid coupon → 200, balance deducted
      - AC-2: Redeem expired coupon → 400, no side effects
      - AC-3: Concurrent redemption → only one succeeds (idempotency)
+     - execution_mode: tdd
      ...
 ```
 
-**HARD-GATE**: The spec must be approved by a human before implementation begins. This is the only mandatory human checkpoint in the entire workflow.
+The durable output is a compact `spec.md` with Intent, Scope, Context, Acceptance Criteria, Design Decisions, Risk Notes, Execution Policy, and Verification Plan.
 
-### Phase 2: Implement — AC-Traced TDD
+### Phase 2: Planning — AC-Traced Tasks
 
-During implementation, the agent follows naming conventions enforced by `rules.md`:
+The agent turns the spec into `lattice/specs/<id>/plan.md`. Every task references Scope or `AC-{n}`. If the spec uses `execution_mode: tdd`, the plan must include red-test-first tasks before implementation tasks.
+
+### Phase 3: Implementation — Plan or TDD Policy
+
+Implementation follows the execution policy declared in the spec:
+
+- `plan`: implement from the reviewed plan with necessary tests.
+- `tdd`: write failing AC-traced tests first, then implementation, then refactor.
+
+In both modes, tests can trace back to spec AC numbers:
 
 ```go
 // Test names trace back to spec AC numbers
@@ -239,7 +249,7 @@ describe('AC-1: Redeem valid coupon', () => { ... })
 describe('AC-2: Redeem expired coupon', () => { ... })
 ```
 
-### Phase 3: Verify — Independent Gate Pipeline
+### Phase 4: Verification — Independent Gate Pipeline
 
 Before declaring completion, the agent runs the pipeline:
 
@@ -280,6 +290,10 @@ Project: my-api (go)
 
 **On failure**, the agent reads the output, fixes the issue, and re-runs — up to 3 retries. After exhausting retries, exit code `2` triggers escalation: the agent stops self-repairing and outputs a diagnostic report for human intervention.
 
+### Phase 5: Finishing — Evidence and Knowledge
+
+After verification passes, the agent writes `lattice/specs/<id>/summary.md`, links commands and gate evidence, records deferred work, and extracts only reusable lessons through `/learn`.
+
 ---
 
 ## Gate Reference
@@ -297,18 +311,13 @@ bash lattice/kernel/delivery/gates/spec-lint.sh [spec-file]
 ```yaml
 specs:
   required_sections:
-    - "Background & Goals"
-    - "Naming Conventions"
-    - "Technical Design"
-    - "API Design"
-    - "Data Model"
-    - "Design Alternatives"
+    - "Intent"
+    - "Scope"
+    - "Context"
     - "Acceptance Criteria"
-    - "Risk Review"
-    - "Test Strategy"
-    - "Release Checklist"
-    - "Rollout & Rollback"
-    - "Decision Log"
+    - "Design Decisions"
+    - "Execution Policy"
+    - "Verification Plan"
   risk_categories:
     - "Financial Safety"
     - "Technical Risk"
@@ -469,15 +478,19 @@ bash lattice/kernel/knowledge/sync.sh status   # View sync status
 
 ## Agent Skills
 
-Lattice exposes 3 skills (slash commands in Claude Code; natural language in other agents):
+Lattice exposes a small AI Coding skill chain (slash commands in Claude Code; natural language in other agents):
 
 | Skill | Trigger | What It Does |
 |-------|---------|-------------|
 | **init** | `/init` | Interactive project setup: detect language → generate manifest → copy scaffold → inject rules |
+| **brainstorm** | `/brainstorm` | Clarify intent, load knowledge, and write persistent `spec.md` |
+| **plan** | `/plan` | Decompose `spec.md` into AC-traced `plan.md` |
+| **implement** | `/implement` | Execute `plan` or `tdd` policy from the spec |
 | **verify** | `/verify` | Run the full delivery pipeline |
+| **finish** | `/finish` | Close delivery, link evidence, and extract durable knowledge |
 | **learn** | `/learn "lesson"` | Write a knowledge entry to `knowledge/`, update index |
 
-All other capabilities — knowledge loading, spec templates, AC naming, drift detection — are auto-activated via `rules.md` behavior injection. The agent follows the rules because they are in its prompt, not because Lattice controls the agent.
+The core chain is `Brainstorming -> Planning -> Implementation(plan|tdd) -> Verification -> Finishing`. Knowledge loading, spec templates, AC naming, drift detection, and delivery gates are activated via `rules.md` and the skill files.
 
 ---
 
@@ -636,10 +649,13 @@ specs:
   dir: "lattice/specs"
   template: "lattice/kernel/orchestrator/templates/spec-template.md"
   required_sections:                    # Override defaults
-    - "Background & Goals"
-    - "Technical Design"
+    - "Intent"
+    - "Scope"
+    - "Context"
     - "Acceptance Criteria"
-    # ...
+    - "Design Decisions"
+    - "Execution Policy"
+    - "Verification Plan"
   risk_categories:                      # Override defaults
     - "Financial Safety"
     - "Technical Risk"

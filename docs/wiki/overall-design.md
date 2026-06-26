@@ -64,7 +64,7 @@ Lattice 的边界很克制：
 
 职责：
 
-- 定义开发阶段：design、approve、plan、implement、verify、deliver、deploy
+- 定义开发阶段：brainstorming、planning、implementation、verification、finishing、deploy
 - 约束 Spec 格式和 AC 编号
 - 要求实现任务和测试命名追踪到 AC
 - 通过 `rules.md` 被 agent 导入

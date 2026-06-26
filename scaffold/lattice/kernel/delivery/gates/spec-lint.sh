@@ -18,6 +18,10 @@ echo ""
 echo "── Section completeness ──"
 
 SECTION_COUNT=$(yq '.specs.required_sections | length // 0' "$MANIFEST" 2>/dev/null || echo 0)
+SPEC_PROFILE="legacy"
+if grep -qiE '^## +Intent$|^## +Execution Policy$|execution_mode:' "$SPEC"; then
+  SPEC_PROFILE="lattice"
+fi
 
 if [[ "$SECTION_COUNT" -gt 0 ]]; then
   REQUIRED_SECTIONS=()
@@ -25,6 +29,16 @@ if [[ "$SECTION_COUNT" -gt 0 ]]; then
     section=$(yq -r ".specs.required_sections[$i]" "$MANIFEST")
     [[ -n "$section" && "$section" != "null" ]] && REQUIRED_SECTIONS+=("$section")
   done
+elif [[ "$SPEC_PROFILE" == "lattice" ]]; then
+  REQUIRED_SECTIONS=(
+    "Intent"
+    "Scope"
+    "Context"
+    "Acceptance Criteria"
+    "Design Decisions"
+    "Execution Policy"
+    "Verification Plan"
+  )
 else
   REQUIRED_SECTIONS=(
     "Background & Goals"
@@ -52,10 +66,10 @@ done
 
 # Conditional: financial safety section
 if grep -qEi 'asset|deduct|balance|cost|fund|charge' "$SPEC"; then
-  if grep -qi "Financial Safety\|Fund Safety" "$SPEC"; then
-    pass "Financial Safety section (asset keywords detected)"
+  if grep -qi "Financial Safety\|Fund Safety\|Risk Notes" "$SPEC"; then
+    pass "Risk section (asset keywords detected)"
   else
-    fail "Asset keywords detected but missing Financial Safety section"
+    fail "Asset keywords detected but missing Risk Notes / Financial Safety section"
   fi
 fi
 
@@ -64,7 +78,7 @@ echo ""
 # ── 2. AC numbering continuity ──
 echo "── AC numbering check ──"
 
-AC_NUMS=$(grep -o 'AC-[0-9]*' "$SPEC" | sed 's/AC-//' | sort -n | uniq)
+AC_NUMS=$({ grep -o 'AC-[0-9]*' "$SPEC" || true; } | sed 's/AC-//' | sort -n | uniq)
 AC_COUNT=$(echo "$AC_NUMS" | grep -c . || true)
 
 if [[ "$AC_COUNT" -eq 0 ]]; then
@@ -87,7 +101,7 @@ else
     fail "AC number gaps:$GAPS"
   fi
 
-  TABLE_ACS=$(grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" | grep -o 'AC-[0-9]*' | sort)
+  TABLE_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | { grep -o 'AC-[0-9]*' || true; } | sort)
   TABLE_DUPES=$(echo "$TABLE_ACS" | uniq -d)
   if [[ -z "$TABLE_DUPES" ]]; then
     pass "No duplicate AC rows in table"
@@ -124,7 +138,7 @@ echo ""
 # ── 4. DDL-ER consistency ──
 echo "── DDL-ER consistency ──"
 
-DDL_TABLES=$(grep -i 'CREATE TABLE' "$SPEC" | sed 's/.*`\([^`]*\)`.*/\1/' | sort)
+DDL_TABLES=$({ grep -i 'CREATE TABLE' "$SPEC" || true; } | sed 's/.*`\([^`]*\)`.*/\1/' | sort)
 DDL_COUNT=$(echo "$DDL_TABLES" | grep -c . || true)
 
 if [[ "$DDL_COUNT" -eq 0 ]]; then
@@ -169,22 +183,31 @@ echo ""
 echo "── Risk review check ──"
 
 RISK_COUNT=$(yq '.specs.risk_categories | length // 0' "$MANIFEST" 2>/dev/null || echo 0)
+RISK_CATEGORIES=()
+MANDATORY_RISK_COUNT=0
 if [[ "$RISK_COUNT" -gt 0 ]]; then
-  RISK_CATEGORIES=()
   for i in $(seq 0 $((RISK_COUNT - 1))); do
     cat_val=$(yq -r ".specs.risk_categories[$i]" "$MANIFEST")
-    [[ -n "$cat_val" && "$cat_val" != "null" ]] && RISK_CATEGORIES+=("$cat_val")
+    if [[ -n "$cat_val" && "$cat_val" != "null" ]]; then
+      RISK_CATEGORIES+=("$cat_val")
+      MANDATORY_RISK_COUNT=$((MANDATORY_RISK_COUNT + 1))
+    fi
   done
-else
+elif [[ "$SPEC_PROFILE" == "legacy" ]]; then
   RISK_CATEGORIES=("Financial Safety" "Technical Risk" "Data Risk" "Release Process")
+  MANDATORY_RISK_COUNT=4
 fi
 
-for cat_val in "${RISK_CATEGORIES[@]}"; do
-  if grep -qi "$cat_val" "$SPEC"; then
-    pass "Risk category: $cat_val"
-  else
-    fail "Missing risk category: $cat_val"
-  fi
-done
+if [[ "$MANDATORY_RISK_COUNT" -eq 0 ]]; then
+  warn "No mandatory risk categories for $SPEC_PROFILE profile"
+else
+  for cat_val in "${RISK_CATEGORIES[@]}"; do
+    if grep -qi "$cat_val" "$SPEC"; then
+      pass "Risk category: $cat_val"
+    else
+      fail "Missing risk category: $cat_val"
+    fi
+  done
+fi
 
 print_summary "Spec Lint"

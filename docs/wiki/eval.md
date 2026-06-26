@@ -105,7 +105,7 @@ lattice/state/eval-runs/
 
 | 指标 | 含义 |
 |------|------|
-| spec churn | approved 后 Spec 被修改次数 |
+| spec churn | drafted/planned 后 Spec 被修改次数 |
 | missed AC rate | review 或线上发现的漏验收比例 |
 | knowledge hit rate | 需求设计阶段知识命中比例 |
 | knowledge miss rate | 事后发现应有知识但未命中比例 |

@@ -140,7 +140,7 @@ find_spec() {
 
   if [[ -d "$PROJECT_ROOT/$spec_dir" ]]; then
     local latest
-    latest=$(ls -t "$PROJECT_ROOT/$spec_dir"/*.md 2>/dev/null | head -1)
+    latest=$(find "$PROJECT_ROOT/$spec_dir" -name '*.md' -type f -not -path '*/.locks/*' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
     if [[ -n "$latest" ]]; then
       echo "$latest"
       return 0

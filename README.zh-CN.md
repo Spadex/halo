@@ -196,9 +196,9 @@ your-project/
 
 ## 工作原理
 
-### 阶段一：设计 — 知识注入 + 规约编写
+### 阶段一：Brainstorming — 知识注入 + 规约编写
 
-当你描述一个需求时，Agent 进入设计阶段：
+当你描述一个需求时，Agent 进入 brainstorming 阶段：
 
 ```
 你："添加一个优惠券核销 API"
@@ -208,18 +208,28 @@ Agent（已加载 Lattice 规则）：
   2. 运行：bash lattice/kernel/knowledge/loader.sh coupon redemption payment
      → 找到：payment-idempotency.md, coupon-business-rules.md
   3. 评估："上下文是否充分？" 不够 → 向你提问
-  4. 使用 spec-template.md 格式编写规约：
+  4. 写入 lattice/specs/coupon-redemption/spec.md：
      - AC-1: 核销有效优惠券 → 200，余额扣减
      - AC-2: 核销过期优惠券 → 400，无副作用
      - AC-3: 并发核销 → 仅一个成功（幂等）
+     - execution_mode: tdd
      ...
 ```
 
-**HARD-GATE**：规约必须经人类审批后方可开始实现。这是整个工作流中唯一的强制人工检查点。
+持久化产物是克制的 `spec.md`，包含 Intent、Scope、Context、Acceptance Criteria、Design Decisions、Risk Notes、Execution Policy 和 Verification Plan。
 
-### 阶段二：实现 — AC 追踪的 TDD
+### 阶段二：Planning — AC 追踪任务
 
-实现阶段，Agent 遵循 `rules.md` 强制的命名规范：
+Agent 将 spec 转换为 `lattice/specs/<id>/plan.md`。每个任务必须引用 Scope 或 `AC-{n}`。如果 spec 使用 `execution_mode: tdd`，plan 必须先列出 red-test-first 任务，再列实现任务。
+
+### 阶段三：Implementation — Plan 或 TDD 执行策略
+
+实现阶段遵循 spec 中声明的执行策略：
+
+- `plan`：按已评审 plan 实现，并补充必要测试。
+- `tdd`：先写 AC 追踪的失败测试，再实现，再重构。
+
+两种模式下，测试都可以追溯到 spec AC 编号：
 
 ```go
 // 测试名称追溯到规约 AC 编号
@@ -240,7 +250,7 @@ describe('AC-1: Redeem valid coupon', () => { ... })
 describe('AC-2: Redeem expired coupon', () => { ... })
 ```
 
-### 阶段三：验证 — 独立卡口流水线
+### 阶段四：Verification — 独立卡口流水线
 
 在宣布完成之前，Agent 运行流水线：
 
@@ -281,6 +291,10 @@ Project: my-api (go)
 
 **失败时**，Agent 读取输出 → 修复问题 → 重跑，最多 3 次重试。重试耗尽后，退出码 `2` 触发升级：Agent 停止自修复，输出诊断报告请求人工介入。
 
+### 阶段五：Finishing — 证据与知识沉淀
+
+验证通过后，Agent 写入 `lattice/specs/<id>/summary.md`，关联命令与卡口证据，记录延期事项，并只通过 `/learn` 提取可复用经验。
+
 ---
 
 ## 卡口参考
@@ -298,18 +312,13 @@ bash lattice/kernel/delivery/gates/spec-lint.sh [spec-file]
 ```yaml
 specs:
   required_sections:
-    - "Background & Goals"
-    - "Naming Conventions"
-    - "Technical Design"
-    - "API Design"
-    - "Data Model"
-    - "Design Alternatives"
+    - "Intent"
+    - "Scope"
+    - "Context"
     - "Acceptance Criteria"
-    - "Risk Review"
-    - "Test Strategy"
-    - "Release Checklist"
-    - "Rollout & Rollback"
-    - "Decision Log"
+    - "Design Decisions"
+    - "Execution Policy"
+    - "Verification Plan"
   risk_categories:
     - "Financial Safety"
     - "Technical Risk"
@@ -470,15 +479,19 @@ bash lattice/kernel/knowledge/sync.sh status   # 查看同步状态
 
 ## Agent Skills
 
-Lattice 暴露 3 个 skill（Claude Code 中为斜杠命令；其他 Agent 中为自然语言）：
+Lattice 暴露一条克制的 AI Coding skill 链路（Claude Code 中为斜杠命令；其他 Agent 中为自然语言）：
 
 | Skill | 触发方式 | 功能 |
 |-------|---------|------|
 | **init** | `/init` | 交互式项目初始化：检测语言 → 生成 manifest → 复制脚手架 → 注入规则 |
+| **brainstorm** | `/brainstorm` | 澄清意图、加载知识，并写入持久化 `spec.md` |
+| **plan** | `/plan` | 将 `spec.md` 拆成 AC 追踪的 `plan.md` |
+| **implement** | `/implement` | 按 Spec 中的 `plan` 或 `tdd` 执行策略实现 |
 | **verify** | `/verify` | 运行完整交付流水线 |
+| **finish** | `/finish` | 交付收口、关联证据，并提取长期知识 |
 | **learn** | `/learn "经验"` | 将知识条目写入 `knowledge/`，更新索引 |
 
-其他能力——知识加载、规约模板、AC 命名、漂移检测——通过 `rules.md` 行为注入自动激活。Agent 遵循规则是因为它们在提示词中，而非 Lattice 控制了 Agent。
+核心链路是 `Brainstorming -> Planning -> Implementation(plan|tdd) -> Verification -> Finishing`。知识加载、规约模板、AC 命名、漂移检测和交付卡口通过 `rules.md` 与 skill 文件共同激活。
 
 ---
 
@@ -637,10 +650,13 @@ specs:
   dir: "lattice/specs"
   template: "lattice/kernel/orchestrator/templates/spec-template.md"
   required_sections:                    # 覆盖默认值
-    - "Background & Goals"
-    - "Technical Design"
+    - "Intent"
+    - "Scope"
+    - "Context"
     - "Acceptance Criteria"
-    # ...
+    - "Design Decisions"
+    - "Execution Policy"
+    - "Verification Plan"
   risk_categories:                      # 覆盖默认值
     - "Financial Safety"
     - "Technical Risk"

@@ -1,10 +1,10 @@
 Run the full verification pipeline and paste evidence.
 
-Execute `specharness/skills/verify.md` verification flow.
+Execute `lattice/skills/verify.md` verification flow.
 
 ## Core behavior
 
-1. Execute `specharness/kernel/delivery/pipeline.sh` (manifest.yaml driven)
+1. Execute `lattice/kernel/delivery/pipeline.sh` (manifest.yaml driven)
 2. If harness not found, fallback to language defaults
 3. Paste actual terminal output for each step
 4. Summarize: ✅ PASS / ❌ FAIL

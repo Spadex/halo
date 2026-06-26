@@ -99,6 +99,14 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   else
     fail "CLAUDE.md not created"
   fi
+
+  for skill in brainstorm plan implement finish; do
+    if [[ -f "$SANDBOX/lattice/skills/${skill}.md" ]] && [[ -f "$SANDBOX/.claude/commands/${skill}.md" ]]; then
+      pass "$skill skill and slash command installed"
+    else
+      fail "$skill skill or slash command missing"
+    fi
+  done
 else
   fail "init.sh exited non-zero"
 fi
@@ -152,6 +160,34 @@ echo "── 6. Spec-lint gate ──"
 mkdir -p "$SANDBOX/lattice/specs"
 cat > "$SANDBOX/lattice/specs/test-feature.md" << 'SPEC'
 # Test Feature
+
+## Intent
+Test feature for smoke testing.
+
+## Scope
+
+### In
+- Widget CRUD.
+
+### Out
+- Export.
+
+## Context
+No special project knowledge required.
+
+## Design Decisions
+Use the existing smoke handler structure.
+
+## Risk Notes
+No high-risk behavior.
+
+## Execution Policy
+- Mode: `plan`
+- Reason: smoke test.
+
+## Verification Plan
+- spec-lint
+- ac-coverage
 
 ## Part I — Background & Goals
 
@@ -239,6 +275,84 @@ if [[ $LINT_EXIT -eq 0 ]]; then
 else
   fail "spec-lint failed on valid spec (exit=$LINT_EXIT)"
   echo "$LINT_OUTPUT" | tail -10
+fi
+echo ""
+
+# ── 6b. Spec-lint on modern persistent spec layout ──
+echo "── 6b. Spec-lint modern layout ──"
+mkdir -p "$SANDBOX/lattice/specs/modern-feature"
+cat > "$SANDBOX/lattice/specs/modern-feature/spec.md" << 'SPEC'
+---
+id: modern-feature
+status: drafted
+execution_mode: tdd
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Modern Feature
+
+## Intent
+
+Add a small behavior with AC tracing.
+
+## Scope
+
+### In
+
+- Create behavior.
+
+### Out
+
+- Export behavior.
+
+## Context
+
+| Source | Constraint | Why it matters |
+|--------|------------|----------------|
+| smoke | Keep it simple | Test modern lint |
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestAC1 |
+| AC-2 | Get item | Returns item | TestAC2 |
+
+## Design Decisions
+
+| # | Decision | Rationale | Reversible? |
+|---|----------|-----------|-------------|
+| D-1 | Use existing handler | Minimal change | yes |
+
+## Risk Notes
+
+| Risk | Mitigation | Verification |
+|------|------------|--------------|
+| None | N/A | Tests |
+
+## Execution Policy
+
+- Mode: `tdd`
+- Reason: smoke test validates modern template.
+
+## Verification Plan
+
+| Gate / Test | Required? | Notes |
+|-------------|-----------|-------|
+| spec-lint | yes | |
+| unit-test | yes | |
+SPEC
+
+MODERN_LINT_EXIT=0
+MODERN_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/gates/spec-lint.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" 2>&1) || MODERN_LINT_EXIT=$?
+
+if [[ $MODERN_LINT_EXIT -eq 0 ]]; then
+  pass "spec-lint passes on modern persistent spec"
+else
+  fail "spec-lint failed on modern persistent spec (exit=$MODERN_LINT_EXIT)"
+  echo "$MODERN_LINT_OUTPUT" | tail -10
 fi
 echo ""
 

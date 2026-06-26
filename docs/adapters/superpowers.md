@@ -1,20 +1,20 @@
 # Superpowers Adapter — Lattice Integration Guide
 
-> This document describes how Lattice integrates with the [Superpowers](https://github.com/obra/superpowers) workflow engine.
-> For other engines, the same principles apply — Lattice injects constraints at phase boundaries, not inside the engine.
+> This document describes how Lattice maps its AI Coding workflow to the [Superpowers](https://github.com/obra/superpowers) workflow engine.
+> Lattice does not depend on Superpowers. Superpowers is an optional execution adapter.
 
 ## Phase Mapping
 
-Lattice uses generic phase names. Map them to Superpowers skills:
+Lattice keeps its own durable artifacts (`spec.md`, `plan.md`, verification evidence, summary) and maps its stages to Superpowers skills when Superpowers is present:
 
-| Lattice Phase | Superpowers Skill | Override Scope |
-|-------------------|-------------------|----------------|
-| **design** | `brainstorming` | Spec path, format, knowledge injection |
-| **approve** | HARD-GATE (built-in) | Unchanged |
-| **plan** | `writing-plans` | AC traceability in tasks |
-| **implement** | `test-driven-development` | Test naming conventions |
-| **verify** | `verification-before-completion` | Pipeline execution |
-| **deliver** | `finishing-a-development-branch` | Full coverage check |
+| Lattice Stage | Superpowers Skill | Lattice Artifact / Constraint |
+|---------------|-------------------|-------------------------------|
+| **Brainstorming** | `brainstorming` | Write persistent `lattice/specs/<id>/spec.md`; load knowledge; select execution policy |
+| **Planning** | `writing-plans` | Write `lattice/specs/<id>/plan.md`; every task references Scope or ACs |
+| **Implementation: plan** | `executing-plans` | Execute reviewed plan with necessary tests |
+| **Implementation: tdd** | `test-driven-development` | Red test first; tests trace to ACs |
+| **Verification** | `verification-before-completion` | Run `lattice/kernel/delivery/pipeline.sh` |
+| **Finishing** | `finishing-a-development-branch` | Write `summary.md`; extract durable knowledge only |
 
 ## How It Works
 
@@ -26,9 +26,14 @@ Lattice injects rules via `@import` in the project's `CLAUDE.md`:
 
 When `rules.md` and a Superpowers skill definition conflict, `CLAUDE.md` content takes priority. Lattice rules override Superpowers defaults without modifying Superpowers source code.
 
+The most important distinction:
+
+- Superpowers owns workflow discipline.
+- Lattice owns durable artifacts, execution policy, knowledge injection, and verification evidence.
+
 ## Why Not Modify Superpowers Directly
 
-1. **Version independence**: Superpowers upgrades don't break Lattice constraints
-2. **Portability**: Switching to another engine only requires adjusting rules.md
-3. **Separation of concerns**: Superpowers manages workflow order, Lattice manages quality standards
-4. **Zero invasion**: Teams can adopt Lattice independently without affecting other team members' Superpowers experience
+1. **Version independence**: Superpowers upgrades don't break Lattice artifacts or gates
+2. **Portability**: Switching to another engine keeps the same `spec.md` / `plan.md` / `verify` contract
+3. **Separation of concerns**: Superpowers manages workflow discipline; Lattice manages contracts and evidence
+4. **Zero invasion**: Teams can adopt Lattice without replacing or forking Superpowers

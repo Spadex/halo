@@ -1,12 +1,12 @@
-Capture a knowledge entry to `specharness/knowledge/`.
+Capture a knowledge entry to `lattice/knowledge/`.
 
-Execute `specharness/skills/learn.md` knowledge capture flow.
+Execute `lattice/skills/learn.md` knowledge capture flow.
 
 ## Core behavior
 
-1. Check existing: `specharness/kernel/knowledge/loader.sh --list`
-2. Generate knowledge file `specharness/knowledge/<slug>.md` (slug in kebab-case)
-3. Update `specharness/knowledge/index.md`
+1. Check existing: `lattice/kernel/knowledge/loader.sh --list`
+2. Generate knowledge file `lattice/knowledge/<slug>.md` (slug in kebab-case)
+3. Update `lattice/knowledge/index.md`
 
 ## Knowledge file format
 

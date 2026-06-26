@@ -221,11 +221,11 @@ chmod +x lattice/kernel/_lib.sh lattice/kernel/knowledge/*.sh lattice/kernel/del
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/index.md" "lattice/knowledge/index.md"
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/synonyms.txt" "lattice/knowledge/synonyms.txt"
 
-for f in init.md verify.md learn.md; do
+for f in init.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
   copy_if_not_exists "$SCAFFOLD_DIR/lattice/skills/$f" "lattice/skills/$f"
 done
 
-for f in init.md verify.md learn.md; do
+for f in init.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
   copy_if_not_exists "$SCAFFOLD_DIR/.claude/commands/$f" ".claude/commands/$f"
 done
 
@@ -349,18 +349,13 @@ specs:
   dir: "lattice/specs"
   template: "lattice/kernel/orchestrator/templates/spec-template.md"
   required_sections:
-    - "Background & Goals"
-    - "Naming Conventions"
-    - "Technical Design"
-    - "API Design"
-    - "Data Model"
-    - "Design Alternatives"
+    - "Intent"
+    - "Scope"
+    - "Context"
     - "Acceptance Criteria"
-    - "Risk Review"
-    - "Test Strategy"
-    - "Release Checklist"
-    - "Rollout & Rollback"
-    - "Decision Log"
+    - "Design Decisions"
+    - "Execution Policy"
+    - "Verification Plan"
 
 testing:
   strategies:
@@ -454,7 +449,11 @@ echo "  lattice/knowledge/           — Knowledge base"
 echo "  .claude/commands/                — Slash commands"
 echo ""
 echo "Usage:"
+echo "  /brainstorm       — Draft persistent spec"
+echo "  /plan             — Create AC-traced plan"
+echo "  /implement        — Execute plan/tdd policy"
 echo "  /verify           — Run verification pipeline"
+echo "  /finish           — Close delivery and extract knowledge"
 echo "  /learn \"lesson\"   — Capture knowledge to knowledge base"
 echo "  Describe a requirement — Full spec-driven workflow"
 echo "══════════════════════════════════"

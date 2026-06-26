@@ -4,7 +4,8 @@ version: 1.0.0
 description: >
   Lattice — team-native AI Coding framework for reusable, verifiable delivery.
   Provides Context / Spec / Harness / Eval-oriented project scaffolding;
-  init with /init, verify with /verify, capture knowledge with /learn.
+  brainstorm persistent specs, plan execution, implement with plan/tdd policies,
+  verify with gates, finish with evidence, and capture knowledge with /learn.
   Triggers: "initialize framework", "initialize harness", "lattice init", "configure dev environment".
   Triggers: "verify", "run pipeline" → execute lattice/kernel/delivery/pipeline.sh.
 ---
@@ -51,7 +52,11 @@ my-project/
 | Trigger | Action |
 |---------|--------|
 | `lattice init` / initialize framework | Run Init flow |
+| `brainstorm` / draft spec | Run Brainstorming flow and write `lattice/specs/<id>/spec.md` |
+| `plan` / write plan | Run Planning flow and write `lattice/specs/<id>/plan.md` |
+| `implement` / tdd | Execute `plan` or `tdd` policy from the spec |
 | `verify` / run pipeline | Execute `lattice/kernel/delivery/pipeline.sh` |
+| `finish` / close out | Write delivery summary and extract durable knowledge |
 | `learn` / capture / remember | Execute `lattice/skills/learn.md` flow |
 
 ## Init Flow
@@ -69,4 +74,4 @@ my-project/
 - `manifest.yaml` is the single project configuration entry point
 - Spec template: `lattice/kernel/orchestrator/templates/spec-template.md`
 - Verification entry point: `lattice/kernel/delivery/pipeline.sh`
-- Explicit skills: `/init`, `/verify`, `/learn` only
+- Explicit skills: `/init`, `/brainstorm`, `/plan`, `/implement`, `/verify`, `/finish`, `/learn`

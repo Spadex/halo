@@ -6,20 +6,23 @@
 
 Lattice 的技术路线是可行的：它不试图重写 AI coding agent，而是在项目仓库内增加一层可版本化的工程 harness，把需求规约、项目知识、验证卡口和失败反馈变成团队可复用资产。
 
-当前实现已经具备最小闭环：
+当前实现已经具备最小闭环；目标流程会收敛为一条克制的 AI Coding 契约链路：
 
 ```mermaid
 flowchart LR
-    R["Requirement"] --> S["Spec"]
-    S --> P["Plan"]
-    P --> C["Code"]
-    C --> V["Verify"]
-    V --> D["Deliver"]
+    I["Intent"] --> B["Brainstorming"]
+    B --> S["spec.md"]
+    S --> P["Planning"]
+    P --> E{"Implementation"}
+    E -->|"plan"| PM["Plan Mode"]
+    E -->|"tdd"| TM["TDD Mode"]
+    PM --> V["Verification"]
+    TM --> V
+    V --> F["Finishing"]
 
-    K["Knowledge"] -. "context" .-> S
-    V -. "evidence" .-> E["Eval"]
-    V -. "failure" .-> L["Loop"]
-    L -. "lesson" .-> K
+    K["Knowledge"] -. "context" .-> B
+    V -. "evidence" .-> EV["Eval"]
+    F -. "lesson" .-> K
 ```
 
 但它仍处于 scaffold + deterministic gates 阶段，真正要变成团队级框架，还需要补齐结构化状态、评估数据模型、知识治理、插件协议和更强的语言/框架适配。
@@ -29,7 +32,7 @@ flowchart LR
 | 文档 | 说明 |
 |------|------|
 | [整体设计](overall-design.md) | 系统分层、核心数据流、可插拔边界和安装形态 |
-| [SDD 设计](sdd.md) | Spec-driven development 在 Lattice 中如何落地 |
+| [SDD 设计](sdd.md) | 精简 Superpowers 后的 AI Coding 链路、Plan/TDD execution policy 与产物设计 |
 | [知识库设计](knowledge-base.md) | Knowledge layer 的定位、索引、同步、防腐和 gap |
 | [Eval 设计](eval.md) | 当前验证证据如何演进为可度量评估体系 |
 | [Loop 设计](loop.md) | verify-fix-retry-learn 的闭环机制 |
@@ -70,6 +73,6 @@ flowchart LR
 ## 推荐阅读顺序
 
 1. 先读 [整体设计](overall-design.md)，理解 Lattice 为什么是 harness 而不是 agent。
-2. 再读 [SDD 设计](sdd.md)，理解 Spec 如何成为协作控制点。
+2. 再读 [SDD 设计](sdd.md)，理解 Brainstorming 如何产出持久化 Spec，以及 Plan Mode / TDD Mode 如何共享主流程。
 3. 继续读 [知识库设计](knowledge-base.md) 和 [Eval 设计](eval.md)，它们对应上下文边界和验证边界。
 4. 最后读 [Loop 设计](loop.md) 与 [Gap 与 Roadmap](gaps-and-roadmap.md)，判断当前实现离团队级产品还有多远。

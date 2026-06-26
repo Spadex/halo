@@ -2,29 +2,25 @@
 # Engine-agnostic phase definitions. For engine-specific mappings, see docs/adapters/
 
 stages:
-  - name: design
-    output: "lattice/specs/{requirement}-{slug}.md"
+  - name: brainstorming
+    output: "lattice/specs/{spec-id}/spec.md"
     template: "lattice/kernel/orchestrator/templates/spec-template.md"
     gate: spec-lint
     layers: [orchestrator, knowledge]
-    description: "Explore code and knowledge base, clarify requirements, author reviewable spec"
+    description: "Explore code and knowledge base, clarify intent, author persistent spec"
 
-  - name: approve
-    action: human
-    input: "lattice/specs/*.md"
-    description: "HARD-GATE: spec must be approved before implementation begins"
-
-  - name: plan
-    output: "lattice/plans/{requirement}-{slug}.md"
+  - name: planning
+    output: "lattice/specs/{spec-id}/plan.md"
     layers: [orchestrator]
-    description: "Decompose into AC-traced execution tasks"
+    description: "Decompose spec into AC-traced execution tasks"
 
-  - name: implement
+  - name: implementation
     gate: [build, lint, test]
     layers: [orchestrator, delivery]
-    description: "Implement per spec + plan, follow TDD and AC naming conventions"
+    policy: [plan, tdd]
+    description: "Execute plan policy or red-test-first TDD policy"
 
-  - name: verify
+  - name: verification
     command: "lattice/kernel/delivery/pipeline.sh"
     gate: [bootstrap, spec-lint, build, lint, unit-test, ac-coverage, integration-test, drift-check, compliance]
     on_fail: fix
@@ -32,10 +28,11 @@ stages:
     layers: [delivery]
     description: "Run independent verification gates; fix and re-run on failure"
 
-  - name: deliver
+  - name: finishing
+    output: "lattice/specs/{spec-id}/summary.md"
     gate: [evidence]
     layers: [orchestrator, delivery]
-    description: "Confirm full coverage, no spec drift, then finalize"
+    description: "Confirm evidence, close delivery, extract durable knowledge"
 
   - name: deploy
     command: "lattice/kernel/delivery/deploy.sh"
@@ -44,15 +41,14 @@ stages:
     description: "Deploy per manifest config and run smoke tests"
 
 transitions:
-  design -> approve: "spec-lint passes"
-  approve -> plan: "spec approved"
-  plan -> implement: "plan complete"
-  implement -> verify: "build + lint + test pass"
-  verify -> deliver: "pipeline passes"
-  verify -> implement: "pipeline fails, fix and retry"
-  deliver -> deploy: "deploy config exists and deployment requested"
+  brainstorming -> planning: "spec is reviewable and execution policy selected"
+  planning -> implementation: "plan complete"
+  implementation -> verification: "build + lint + focused tests pass"
+  verification -> finishing: "pipeline passes"
+  verification -> implementation: "pipeline fails, fix and retry"
+  finishing -> deploy: "deploy config exists and deployment requested"
 
 behavioral_rules:
-  hard_gate: approve
+  hard_gate: brainstorming
   retry_budget: 3
   spec_lock: "bash lattice/kernel/delivery/gates/spec-lock.sh acquire <spec-file>"

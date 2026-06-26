@@ -37,6 +37,14 @@ commands:
 specs:
   dir: "lattice/specs"
   template: "lattice/kernel/orchestrator/templates/spec-template.md"
+  required_sections:
+    - "Intent"
+    - "Scope"
+    - "Context"
+    - "Acceptance Criteria"
+    - "Design Decisions"
+    - "Execution Policy"
+    - "Verification Plan"
 
 testing:
   strategies:
