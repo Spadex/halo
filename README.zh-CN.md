@@ -4,7 +4,7 @@
     <strong>面向团队的 AI Coding 工程框架</strong>
   </p>
   <p align="center">
-    <a href="README.md">English</a> · <a href="CHANGELOG.md">更新日志</a> · <a href="docs/adapters/">Agent 适配器</a> · <a href="examples/go-gin-gorm/">示例</a>
+    <a href="README.md">English</a> · <a href="docs/wiki/">设计 Wiki</a> · <a href="CHANGELOG.md">更新日志</a> · <a href="docs/adapters/">Agent 适配器</a> · <a href="examples/go-gin-gorm/">示例</a>
   </p>
 </p>
 
@@ -73,7 +73,7 @@ Lattice 采用组件化设计。每个组件都可以单独使用，同时通过
 
 ```bash
 # 方式 A: 远程安装
-bash <(curl -fsSL https://raw.githubusercontent.com/your-org/lattice/main/install.sh) --init
+bash <(curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh) --init
 
 # 方式 B: 本地安装（已克隆仓库）
 ./install.sh /path/to/your-project --init
@@ -87,7 +87,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/your-org/lattice/main/instal
 ### 试试示例
 
 ```bash
-git clone https://github.com/your-org/lattice.git
+git clone https://github.com/zdolphin07-dotcom/lattice.git
 cd lattice
 bash examples/go-gin-gorm/try-it.sh
 ```

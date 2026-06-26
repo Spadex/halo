@@ -3,7 +3,7 @@
 #
 # Usage:
 #   Remote install:
-#     bash <(curl -fsSL https://raw.githubusercontent.com/your-org/lattice/main/install.sh)
+#     bash <(curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh)
 #
 #   Local install:
 #     ./install.sh                     # Install to current directory
@@ -15,7 +15,7 @@
 #
 set -euo pipefail
 
-REPO_URL="${LATTICE_REPO:-https://github.com/your-org/lattice.git}"
+REPO_URL="${LATTICE_REPO:-https://github.com/zdolphin07-dotcom/lattice.git}"
 TARGET=""
 AUTO_INIT=false
 FORCE_UPGRADE=false

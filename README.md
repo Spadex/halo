@@ -4,7 +4,7 @@
     <strong>Team-native AI Coding Framework for reusable, verifiable software delivery</strong>
   </p>
   <p align="center">
-    <a href="README.zh-CN.md">中文文档</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="docs/adapters/">Agent Adapters</a> · <a href="examples/go-gin-gorm/">Example</a>
+    <a href="README.zh-CN.md">中文文档</a> · <a href="docs/wiki/">Design Wiki</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="docs/adapters/">Agent Adapters</a> · <a href="examples/go-gin-gorm/">Example</a>
   </p>
 </p>
 
@@ -73,7 +73,7 @@ Lattice is intentionally modular. Each component can be used on its own, while t
 
 ```bash
 # Option A: Remote install
-bash <(curl -fsSL https://raw.githubusercontent.com/your-org/lattice/main/install.sh) --init
+bash <(curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh) --init
 
 # Option B: Local install (if you cloned the repo)
 ./install.sh /path/to/your-project --init
@@ -87,7 +87,7 @@ The `--init` flag auto-detects your language, framework, and ORM, then generates
 ### Try the Example
 
 ```bash
-git clone https://github.com/your-org/lattice.git
+git clone https://github.com/zdolphin07-dotcom/lattice.git
 cd lattice
 bash examples/go-gin-gorm/try-it.sh
 ```
