@@ -56,11 +56,11 @@ Lattice 采用这条链路中对团队工程最有价值的部分，但保留自
 | Superpowers 语义 | Lattice 阶段 | Lattice 补强 |
 |------------------|--------------|--------------|
 | brainstorming | Brainstorming | 持久化 `spec.md`、知识注入、验收标准 |
-| writing-plans | Planning | `plan.md` 必须引用 Spec |
-| executing-plans | Implementation: Plan Mode | 按 plan 执行，低摩擦 |
-| test-driven-dev | Implementation: TDD Mode | red test、AC 追踪、green/refactor |
+| writing-plans | Planning | `Global Constraints`、task `Interfaces`、AC 引用 |
+| executing-plans | Implementation: Plan Mode | task brief、review package、低摩擦执行 |
+| test-driven-dev | Implementation: TDD Mode | red test、AC 追踪、green/refactor、red/green 证据 |
 | verification | Verification | 独立 pipeline，不依赖 Agent 自评 |
-| finishing | Finishing | 只沉淀长期知识，避免文档腐化 |
+| finishing | Finishing | review verdict、证据收口、只沉淀长期知识 |
 
 因此，Superpowers 是可选 adapter，不是 Lattice 的基础依赖。
 
@@ -214,18 +214,40 @@ lattice/specs/<spec-id>/plan.md
 ```markdown
 # Plan: <title>
 
-## Execution Policy
-plan | tdd
+## Source
+
+- Spec: `lattice/specs/<spec-id>/spec.md`
+- Execution mode: plan | tdd
+
+## Global Constraints
+
+- Versions / dependencies:
+- Naming / style:
+- Security / permissions:
+- Data / migration:
+- Compatibility:
+- Out-of-scope:
 
 ## Tasks
 
 - [ ] T1: <task>
   - Ref: AC-1, AC-2
+  - Interfaces:
+    - Inputs:
+    - Outputs:
+    - Touched files/contracts:
   - Files:
   - Verification:
+  - Evidence:
+    - Brief: `.lattice/sdd/<spec-id>/T1/brief.md`
+    - Review package: `.lattice/sdd/<spec-id>/T1/review-package.md`
 
 - [ ] T2: <task>
   - Ref: AC-3
+  - Interfaces:
+    - Inputs:
+    - Outputs:
+    - Touched files/contracts:
   - Files:
   - Verification:
 ```
@@ -243,12 +265,16 @@ TDD Mode 下，`plan.md` 需要额外标注 test-first tasks：
 ### 出口标准
 
 - 每个 task 都引用 Scope 或 AC
+- `Global Constraints` 把版本、依赖、命名、安全、数据兼容和明确不做的事传递给每个 task
+- 每个 task 都声明 `Interfaces`：输入、输出、触碰文件/契约、验证方式
 - task 粒度适合人类 review，不把 2000 行黑盒改动塞进一个 task
 - TDD Mode 下明确哪些 AC 需要 red test
 
 ### 为什么值得存在
 
 Planning 是执行前最后一次低成本 review。它避免 Agent 从一份 Spec 直接跳到大范围代码修改。
+
+这里吸收 Superpowers 6.0 的关键经验：计划不是任务清单，而是给 implementer 和 reviewer 都能消费的执行契约。`Global Constraints` 解决跨任务约束丢失，`Interfaces` 解决 reviewer 无法判断任务边界。
 
 ## 阶段 3：Implementation
 
@@ -269,10 +295,24 @@ plan.md -> code changes -> necessary tests
 - code changes
 - 必要测试
 - task completion notes
+- `.lattice/sdd/<spec-id>/<task-id>/brief.md`
+- `.lattice/sdd/<spec-id>/<task-id>/review-package.md`
 
 规则：
 
 - 按 `plan.md` 顺序执行
+- 每个 task 开始前生成 task brief：
+
+```bash
+bash lattice/kernel/orchestrator/sdd/task-brief.sh <spec-id> <task-id>
+```
+
+- 每个 task 完成后生成 review package：
+
+```bash
+bash lattice/kernel/orchestrator/sdd/review-package.sh <spec-id> <task-id>
+```
+
 - 行为变化必须补必要测试
 - 遇到 Spec 不合理，不静默偏离；记录 drift 并回到 Brainstorming 或 Planning 修正
 
@@ -305,6 +345,7 @@ plan.md -> red tests -> code changes -> green tests -> refactor
 - 测试必须追踪 AC
 - 不能通过删除、跳过、放宽测试换绿
 - refactor 后测试仍必须保持 green
+- red/green 证据写入 task notes 或 review package
 
 测试命名建议：
 
@@ -322,6 +363,25 @@ describe("AC-1: create item", () => {})
 ```
 
 TDD Mode 的价值不是流程更重，而是把高风险行为变成可执行约束。测试吃掉 Spec 中最容易腐化的可执行部分。
+
+### Review Package
+
+Lattice 不新增独立 `/review` 阶段，但 Implementation 必须能生成只读 review 包：
+
+```text
+.lattice/sdd/<spec-id>/<task-id>/review-package.md
+```
+
+reviewer 或 subagent 只读取这个文件，不修改工作区。输出两个 verdict：
+
+```markdown
+## Verdict
+
+- Spec compliance: pass | fail | cannot-verify
+- Code quality: pass | fail | cannot-verify
+```
+
+`cannot-verify` 是正式结果：当 diff 中没有足够证据时，不允许 reviewer 猜。处理方式只有两种：补证据/补测试后重审，或在 Finishing 中作为 residual risk 明示。
 
 ## 阶段 4：Verification
 
@@ -437,6 +497,9 @@ completed / partial / reverted / escalated
 ## Evidence
 - Verify run:
 - Tests:
+- Task briefs:
+- Review packages:
+- Review verdicts:
 - Commit:
 
 ## Changes
@@ -566,4 +629,4 @@ lattice/state/eval-runs/<run-id>.json
 
 ## 最小专业定义
 
-> Lattice SDD 是一条克制的 AI Coding 契约链路：Brainstorming 生成持久化 Spec，Planning 生成可审查 Plan，Implementation 按 Plan Mode 或 TDD Mode 执行，Verification 给出独立证据，Finishing 只沉淀长期知识。它参考 Superpowers 的阶段语义，但不依赖 Superpowers，也不重复实现完整 workflow engine。
+> Lattice SDD 是一条克制的 AI Coding 契约链路：Brainstorming 生成持久化 Spec，Planning 生成带全局约束和接口边界的可审查 Plan，Implementation 按 Plan Mode 或 TDD Mode 执行并生成 task brief / review package，Verification 给出独立证据，Finishing 收口 review verdict 并只沉淀长期知识。它参考 Superpowers 的阶段语义和 6.0 的证据化改进，但不依赖 Superpowers，也不重复实现完整 workflow engine。

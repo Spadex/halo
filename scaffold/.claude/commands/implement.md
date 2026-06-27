@@ -5,8 +5,10 @@ Execute `lattice/skills/implement.md`.
 ## Core behavior
 
 1. Read `lattice/specs/<spec-id>/spec.md` and `plan.md`.
-2. If mode is `plan`, implement from the reviewed plan.
-3. If mode is `tdd`, write red tests first, then make them green, then refactor.
-4. Do not claim completion before `/verify`.
+2. Generate task briefs with `lattice/kernel/orchestrator/sdd/task-brief.sh`.
+3. If mode is `plan`, implement from the reviewed plan.
+4. If mode is `tdd`, write red tests first, then make them green, then refactor.
+5. Generate review packages with `lattice/kernel/orchestrator/sdd/review-package.sh`.
+6. Do not claim completion before `/verify`.
 
 User input: $ARGUMENTS

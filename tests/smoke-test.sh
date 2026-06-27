@@ -107,6 +107,18 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
       fail "$skill skill or slash command missing"
     fi
   done
+
+  if [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" ]] && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" ]]; then
+    pass "SDD helper scripts installed"
+  else
+    fail "SDD helper scripts missing"
+  fi
+
+  if grep -qxF ".lattice/sdd/" "$SANDBOX/.gitignore"; then
+    pass ".lattice/sdd ignored"
+  else
+    fail ".lattice/sdd not ignored"
+  fi
 else
   fail "init.sh exited non-zero"
 fi
@@ -353,6 +365,65 @@ if [[ $MODERN_LINT_EXIT -eq 0 ]]; then
 else
   fail "spec-lint failed on modern persistent spec (exit=$MODERN_LINT_EXIT)"
   echo "$MODERN_LINT_OUTPUT" | tail -10
+fi
+echo ""
+
+# ── 6c. SDD helper scripts ──
+echo "── 6c. SDD helper scripts ──"
+cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
+# Plan: Modern Feature
+
+## Source
+
+- Spec: `lattice/specs/modern-feature/spec.md`
+- Execution mode: tdd
+
+## Implementation Notes
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Naming / style: keep AC test names.
+- Security / permissions: no permission change.
+- Data / migration: no migration.
+- Compatibility: no API break.
+- Out-of-scope: export behavior.
+
+## Tasks
+
+- [ ] T1: Add create behavior
+  - Ref: AC-1
+  - Interfaces:
+    - Inputs: create request
+    - Outputs: 201 response
+    - Touched files/contracts: handler
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC1_CreateItem`
+  - Evidence:
+    - Brief: `.lattice/sdd/modern-feature/T1/brief.md`
+    - Review package: `.lattice/sdd/modern-feature/T1/review-package.md`
+
+## Test-first Tasks
+
+- [ ] RED-1: Add failing test for AC-1
+  - Expected failure: handler not implemented
+  - Test file: `internal/handler/item_test.go`
+PLAN
+
+BRIEF_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" modern-feature T1 2>&1)
+if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/brief.md" ]] && grep -q "Global Constraints" "$SANDBOX/.lattice/sdd/modern-feature/T1/brief.md"; then
+  pass "task-brief generates task evidence"
+else
+  fail "task-brief did not generate expected evidence"
+  echo "$BRIEF_OUTPUT" | tail -10
+fi
+
+REVIEW_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" modern-feature T1 2>&1)
+if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/review-package.md" ]] && grep -q "cannot-verify" "$SANDBOX/.lattice/sdd/modern-feature/T1/review-package.md"; then
+  pass "review-package generates read-only review package"
+else
+  fail "review-package did not generate expected package"
+  echo "$REVIEW_OUTPUT" | tail -10
 fi
 echo ""
 

@@ -12,13 +12,14 @@ stages:
   - name: planning
     output: "lattice/specs/{spec-id}/plan.md"
     layers: [orchestrator]
-    description: "Decompose spec into AC-traced execution tasks"
+    description: "Decompose spec into AC-traced tasks with global constraints and interfaces"
 
   - name: implementation
+    output: ".lattice/sdd/{spec-id}/{task-id}/{brief.md,review-package.md}"
     gate: [build, lint, test]
     layers: [orchestrator, delivery]
     policy: [plan, tdd]
-    description: "Execute plan policy or red-test-first TDD policy"
+    description: "Execute plan or red-test-first TDD policy and produce task evidence"
 
   - name: verification
     command: "lattice/kernel/delivery/pipeline.sh"
@@ -51,4 +52,5 @@ transitions:
 behavioral_rules:
   hard_gate: brainstorming
   retry_budget: 3
+  scratch_dir: ".lattice/sdd"
   spec_lock: "bash lattice/kernel/delivery/gates/spec-lock.sh acquire <spec-file>"

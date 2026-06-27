@@ -31,12 +31,25 @@ Before planning:
 ## Workflow
 
 1. Summarize the spec in one sentence.
-2. Identify affected modules, files, tests, and contracts.
-3. Decompose into tasks that are small enough for review.
-4. Reference Scope or `AC-{n}` for every task.
-5. If `execution_mode: tdd`, add test-first tasks before implementation tasks.
-6. Write `lattice/specs/<spec-id>/plan.md`.
-7. Update spec front matter status to `planned` if possible.
+2. Extract global constraints that every task must obey: versions, dependencies, naming rules, fixed values, migration constraints, security boundaries, and compatibility limits.
+3. Identify affected modules, files, tests, and contracts.
+4. Decompose into tasks that are independently reviewable and can complete their own focused test cycle.
+5. Reference Scope or `AC-{n}` for every task.
+6. For each task, declare interfaces: inputs consumed, outputs produced, touched files/contracts, and verification evidence.
+7. If `execution_mode: tdd`, add test-first tasks before implementation tasks.
+8. Write `lattice/specs/<spec-id>/plan.md`.
+9. Update spec front matter status to `planned` if possible.
+
+## Task Sizing
+
+A task is the right size when:
+
+- one implementer can complete it without reading unrelated modules;
+- one reviewer can judge it from the task brief and diff;
+- it has clear inputs, outputs, touched files, and verification;
+- it can fail independently without invalidating the rest of the plan.
+
+Split tasks that mix unrelated behavior, migrations, API contracts, and cleanup.
 
 ## Output Format
 
@@ -50,15 +63,35 @@ Before planning:
 
 ## Implementation Notes
 
+## Global Constraints
+
+- Versions / dependencies:
+- Naming / style:
+- Security / permissions:
+- Data / migration:
+- Compatibility:
+- Out-of-scope:
+
 ## Tasks
 
 - [ ] T1: <task>
   - Ref: AC-1, AC-2
+  - Interfaces:
+    - Inputs:
+    - Outputs:
+    - Touched files/contracts:
   - Files:
   - Verification:
+  - Evidence:
+    - Brief: `.lattice/sdd/<spec-id>/T1/brief.md`
+    - Review package: `.lattice/sdd/<spec-id>/T1/review-package.md`
 
 - [ ] T2: <task>
   - Ref: Scope
+  - Interfaces:
+    - Inputs:
+    - Outputs:
+    - Touched files/contracts:
   - Files:
   - Verification:
 
@@ -76,6 +109,8 @@ Before planning:
 Planning is complete only when:
 
 - every task references Scope or one or more ACs;
+- every task declares interfaces and verification evidence;
+- global constraints capture the few rules all tasks must carry;
 - the plan is reviewable without reading unrelated context;
 - `tdd` mode includes explicit red-test tasks;
 - verification expectations are visible before implementation.

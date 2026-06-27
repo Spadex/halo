@@ -6,7 +6,8 @@ Execute `lattice/skills/plan.md`.
 
 1. Read `lattice/specs/<spec-id>/spec.md`.
 2. Create `lattice/specs/<spec-id>/plan.md`.
-3. Ensure every task references Scope or ACs.
-4. If `execution_mode: tdd`, include test-first tasks.
+3. Add `Global Constraints` that every task must carry.
+4. Ensure every task references Scope or ACs and declares interfaces.
+5. If `execution_mode: tdd`, include test-first tasks.
 
 User input: $ARGUMENTS

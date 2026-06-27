@@ -28,17 +28,24 @@ Before finishing:
 1. Read `lattice/specs/<spec-id>/spec.md`.
 2. Read `lattice/specs/<spec-id>/plan.md`.
 3. Read verification output from `/verify`.
-4. Inspect current git status and relevant commits/diffs.
+4. Read task evidence under `.lattice/sdd/<spec-id>/`.
+5. Inspect current git status and relevant commits/diffs.
 
 ## Workflow
 
 1. Determine status: `completed`, `partial`, `reverted`, or `escalated`.
-2. Link evidence: commands run, gate results, tests, commit hash if available.
-3. Summarize shipped changes in a few bullets.
-4. Identify durable knowledge candidates.
-5. Write `lattice/specs/<spec-id>/summary.md`.
-6. If knowledge should be retained, invoke `/learn` or create a clearly marked draft entry.
-7. Update spec front matter status to `finished` or `escalated` if possible.
+2. Link evidence: commands run, gate results, focused tests, task review packages, review verdicts, commit hash if available.
+3. If no review package exists, generate a branch-level package:
+
+```bash
+bash lattice/kernel/orchestrator/sdd/review-package.sh <spec-id> branch
+```
+
+4. Summarize shipped changes in a few bullets.
+5. Identify durable knowledge candidates.
+6. Write `lattice/specs/<spec-id>/summary.md`.
+7. If knowledge should be retained, invoke `/learn` or create a clearly marked draft entry.
+8. Update spec front matter status to `finished` or `escalated` if possible.
 
 ## Output Format
 
@@ -54,6 +61,11 @@ completed | partial | reverted | escalated
 - Spec:
 - Plan:
 - Verify:
+- Task briefs:
+- Review packages:
+- Review verdicts:
+  - Spec compliance: pass | fail | cannot-verify
+  - Code quality: pass | fail | cannot-verify
 - Commit:
 
 ## Changes
@@ -68,6 +80,12 @@ completed | partial | reverted | escalated
 
 - ...
 ```
+
+## Review Verdict Rule
+
+- `pass`: evidence was checked and no blocking issue remains.
+- `fail`: blocking issue remains; finish as `partial` or `escalated` unless fixed and reverified.
+- `cannot-verify`: the reviewer could not prove a claim from the package. Either add evidence/tests and re-review, or finish with an explicit residual risk.
 
 ## Knowledge Extraction Rule
 
@@ -92,6 +110,7 @@ Do not extract:
 Finishing is complete only when:
 
 - verification evidence is linked;
+- review packages and verdicts are linked or explicitly skipped with a reason;
 - final status is explicit;
 - reusable knowledge has been extracted or intentionally skipped;
 - no required follow-up is hidden in prose.

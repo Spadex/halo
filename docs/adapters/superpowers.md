@@ -10,11 +10,21 @@ Lattice keeps its own durable artifacts (`spec.md`, `plan.md`, verification evid
 | Lattice Stage | Superpowers Skill | Lattice Artifact / Constraint |
 |---------------|-------------------|-------------------------------|
 | **Brainstorming** | `brainstorming` | Write persistent `lattice/specs/<id>/spec.md`; load knowledge; select execution policy |
-| **Planning** | `writing-plans` | Write `lattice/specs/<id>/plan.md`; every task references Scope or ACs |
-| **Implementation: plan** | `executing-plans` | Execute reviewed plan with necessary tests |
-| **Implementation: tdd** | `test-driven-development` | Red test first; tests trace to ACs |
+| **Planning** | `writing-plans` | Write `lattice/specs/<id>/plan.md`; include Global Constraints, task interfaces, Scope/AC refs |
+| **Implementation: plan** | `executing-plans` | Execute reviewed plan with necessary tests; generate task brief and review package |
+| **Implementation: tdd** | `test-driven-development` | Red test first; tests trace to ACs; record red/green evidence |
 | **Verification** | `verification-before-completion` | Run `lattice/kernel/delivery/pipeline.sh` |
-| **Finishing** | `finishing-a-development-branch` | Write `summary.md`; extract durable knowledge only |
+| **Finishing** | `finishing-a-development-branch` | Write `summary.md`; link review verdicts; extract durable knowledge only |
+
+## Superpowers 6.0 Compatibility Notes
+
+Lattice adopts the useful 6.0 ideas without depending on the Superpowers runtime:
+
+- File-backed context: `task-brief.sh` and `review-package.sh` write compact artifacts under `.lattice/sdd/`.
+- Read-only review: reviewers consume `review-package.md` and must not modify the working tree.
+- Dual verdicts: review output separates spec compliance from code quality.
+- `cannot-verify`: reviewers can say the diff package lacks enough evidence instead of guessing.
+- Scratch isolation: transient SDD files live under `.lattice/sdd/`, not `.git/`, and should be ignored by git.
 
 ## How It Works
 

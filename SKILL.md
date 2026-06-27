@@ -5,7 +5,8 @@ description: >
   Lattice — team-native AI Coding framework for reusable, verifiable delivery.
   Provides Context / Spec / Harness / Eval-oriented project scaffolding;
   brainstorm persistent specs, plan execution, implement with plan/tdd policies,
-  verify with gates, finish with evidence, and capture knowledge with /learn.
+  generate task briefs and review packages, verify with gates, finish with evidence,
+  and capture knowledge with /learn.
   Triggers: "initialize framework", "initialize harness", "lattice init", "configure dev environment".
   Triggers: "verify", "run pipeline" → execute lattice/kernel/delivery/pipeline.sh.
 ---
@@ -73,5 +74,6 @@ my-project/
 - User assets never overwritten: `lattice/manifest.yaml`, `lattice/knowledge/`, `lattice/specs/`
 - `manifest.yaml` is the single project configuration entry point
 - Spec template: `lattice/kernel/orchestrator/templates/spec-template.md`
+- SDD evidence helpers: `lattice/kernel/orchestrator/sdd/task-brief.sh`, `lattice/kernel/orchestrator/sdd/review-package.sh`
 - Verification entry point: `lattice/kernel/delivery/pipeline.sh`
 - Explicit skills: `/init`, `/brainstorm`, `/plan`, `/implement`, `/verify`, `/finish`, `/learn`

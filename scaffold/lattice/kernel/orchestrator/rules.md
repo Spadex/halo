@@ -42,6 +42,8 @@ Before drafting the spec:
 
 - Plan path: `lattice/specs/{spec-id}/plan.md`
 - Each task must reference its associated AC number
+- Plan must include `Global Constraints` for versions, dependencies, naming, security, data, compatibility, and out-of-scope limits
+- Each task must declare interfaces: inputs, outputs, touched files/contracts, and verification evidence
 - If `execution_mode: tdd`, include test-first tasks
 - If spec drift is discovered during coding, update the spec first, then continue implementation
 
@@ -52,6 +54,16 @@ Before drafting the spec:
 - Smoke tests: `TestSmoke_{API}`
 - Plan mode: execute `plan.md`, add necessary tests for behavior changes
 - TDD mode: write red tests first, implement green, then refactor; no red test, no implementation
+- Before each task: generate a task brief with `bash lattice/kernel/orchestrator/sdd/task-brief.sh <spec-id> <task-id>`
+- After each task: generate a review package with `bash lattice/kernel/orchestrator/sdd/review-package.sh <spec-id> <task-id>`
+- Store transient evidence under `.lattice/sdd/{spec-id}/{task-id}/`; do not put execution scratch files in `.git/`
+
+#### Review contract
+
+- Review is read-only: reviewers must not modify the working tree
+- Return both verdicts: spec compliance and code quality
+- Valid verdicts: `pass`, `fail`, `cannot-verify`
+- Use `cannot-verify` when the diff package lacks enough evidence; do not invent certainty
 
 #### Phase: Verification — Delivery pipeline
 
@@ -74,6 +86,7 @@ Before merge/PR, confirm:
 - `compliance`: knowledge references and clarification traces are auditable
 - For multi-agent concurrent spec edits, use `spec-lock.sh`
 - Write `lattice/specs/{spec-id}/summary.md`
+- Link task briefs, review packages, and review verdicts
 - Extract only durable knowledge via `/learn`; do not preserve one-off implementation details
 
 ---
@@ -109,4 +122,11 @@ lattice/
 ├── plans/
 ├── state/
 └── skills/
+
+.lattice/
+└── sdd/
+    └── {spec-id}/
+        └── {task-id}/
+            ├── brief.md
+            └── review-package.md
 ```

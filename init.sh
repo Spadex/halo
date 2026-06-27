@@ -197,6 +197,9 @@ copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/_lib.sh" "lattice/kernel/_lib.s
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/templates/spec-template.md" "lattice/kernel/orchestrator/templates/spec-template.md"
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/rules.md" "lattice/kernel/orchestrator/rules.md"
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/flow.yaml" "lattice/kernel/orchestrator/flow.yaml"
+for f in task-brief.sh review-package.sh; do
+  copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/sdd/$f" "lattice/kernel/orchestrator/sdd/$f"
+done
 
 for f in loader.sh sync.sh README.md; do
   copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/knowledge/$f" "lattice/kernel/knowledge/$f"
@@ -216,7 +219,19 @@ for dir in requirements specs plans state skills; do
   [[ -f "lattice/$dir/.gitkeep" ]] || touch "lattice/$dir/.gitkeep"
 done
 
-chmod +x lattice/kernel/_lib.sh lattice/kernel/knowledge/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh 2>/dev/null || true
+chmod +x lattice/kernel/_lib.sh lattice/kernel/knowledge/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh lattice/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
+
+if [[ -d ".git" ]]; then
+  touch .gitignore
+  if ! grep -qxF ".lattice/sdd/" .gitignore; then
+    {
+      echo ""
+      echo "# Lattice transient SDD evidence"
+      echo ".lattice/sdd/"
+    } >> .gitignore
+    echo "  ✅ .gitignore: .lattice/sdd/"
+  fi
+fi
 
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/index.md" "lattice/knowledge/index.md"
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/synonyms.txt" "lattice/knowledge/synonyms.txt"

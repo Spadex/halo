@@ -492,6 +492,8 @@ Lattice exposes a small AI Coding skill chain (slash commands in Claude Code; na
 
 The core chain is `Brainstorming -> Planning -> Implementation(plan|tdd) -> Verification -> Finishing`. Knowledge loading, spec templates, AC naming, drift detection, and delivery gates are activated via `rules.md` and the skill files.
 
+Implementation can also generate file-backed evidence under `.lattice/sdd/` with `task-brief.sh` and `review-package.sh`, so agents/reviewers read compact files instead of pasted briefs or diffs.
+
 ---
 
 ## Language Support Matrix
