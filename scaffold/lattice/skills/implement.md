@@ -41,7 +41,9 @@ Use when `execution_mode: plan`.
 2. For each task, read `.lattice/sdd/<spec-id>/<task-id>/brief.md`.
 3. Add tests when behavior changes or the plan requires them.
 4. Keep changes scoped to the spec and task interfaces.
-5. If the implementation discovers spec drift, stop and update the spec/plan before continuing.
+5. If implementation discovers spec drift or TDD-level risk, stop and update the spec/plan before continuing.
+   - `plan -> tdd` escalation is allowed when new risk is found.
+   - `tdd -> plan` downgrade requires explicit user override.
 6. Generate a review package when the task is complete:
 
 ```bash
@@ -111,6 +113,7 @@ Implementation is ready for verification only when:
 
 - all planned tasks are complete or explicitly deferred;
 - focused tests pass;
+- any plan-to-tdd escalation has been reflected in `spec.md` and `plan.md`;
 - `tdd` mode has red/green evidence;
 - each completed task has a task brief and review package;
 - no known spec drift remains unresolved;

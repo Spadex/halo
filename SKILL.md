@@ -4,7 +4,7 @@ version: 1.0.0
 description: >
   Lattice — team-native AI Coding framework for reusable, verifiable delivery.
   Provides Context / Spec / Harness / Eval-oriented project scaffolding;
-  brainstorm persistent specs, plan execution, implement with plan/tdd policies,
+  guide or resume the SDD workflow, brainstorm persistent specs, plan execution, implement with plan/tdd policies,
   generate task briefs and review packages, verify with gates, finish with evidence,
   and capture knowledge with /learn.
   Triggers: "initialize framework", "initialize harness", "lattice init", "configure dev environment".
@@ -53,6 +53,7 @@ my-project/
 | Trigger | Action |
 |---------|--------|
 | `lattice init` / initialize framework | Run Init flow |
+| `sdd` / guided workflow | Execute `lattice/skills/sdd.md`; route or resume the full SDD workflow from artifacts |
 | `brainstorm` / draft spec | Run Brainstorming flow and write `lattice/specs/<id>/spec.md` |
 | `plan` / write plan | Run Planning flow and write `lattice/specs/<id>/plan.md` |
 | `implement` / tdd | Execute `plan` or `tdd` policy from the spec |
@@ -74,6 +75,7 @@ my-project/
 - User assets never overwritten: `lattice/manifest.yaml`, `lattice/knowledge/`, `lattice/specs/`
 - `manifest.yaml` is the single project configuration entry point
 - Spec template: `lattice/kernel/orchestrator/templates/spec-template.md`
+- Guided SDD entry point: `lattice/skills/sdd.md`
 - SDD evidence helpers: `lattice/kernel/orchestrator/sdd/task-brief.sh`, `lattice/kernel/orchestrator/sdd/review-package.sh`
 - Verification entry point: `lattice/kernel/delivery/pipeline.sh`
-- Explicit skills: `/init`, `/brainstorm`, `/plan`, `/implement`, `/verify`, `/finish`, `/learn`
+- Explicit skills: `/init`, `/sdd`, `/brainstorm`, `/plan`, `/implement`, `/verify`, `/finish`, `/learn`

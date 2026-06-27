@@ -36,9 +36,12 @@ Before planning:
 4. Decompose into tasks that are independently reviewable and can complete their own focused test cycle.
 5. Reference Scope or `AC-{n}` for every task.
 6. For each task, declare interfaces: inputs consumed, outputs produced, touched files/contracts, and verification evidence.
-7. If `execution_mode: tdd`, add test-first tasks before implementation tasks.
-8. Write `lattice/specs/<spec-id>/plan.md`.
-9. Update spec front matter status to `planned` if possible.
+7. Re-check execution mode against the discovered task risk.
+   - If the spec says `plan` but the plan reveals bug-fix, money/security/permission/state-machine, concurrency, idempotency, or regression risk, upgrade to `tdd` before implementation.
+   - If the spec says `tdd`, do not downgrade to `plan` without explicit user override.
+8. If `execution_mode: tdd`, add test-first tasks before implementation tasks.
+9. Write `lattice/specs/<spec-id>/plan.md`.
+10. Update spec front matter status to `planned` if possible.
 
 ## Task Sizing
 
@@ -113,6 +116,7 @@ Planning is complete only when:
 - global constraints capture the few rules all tasks must carry;
 - the plan is reviewable without reading unrelated context;
 - `tdd` mode includes explicit red-test tasks;
+- `plan` mode has been checked for TDD escalation risk;
 - verification expectations are visible before implementation.
 
 User input: $ARGUMENTS

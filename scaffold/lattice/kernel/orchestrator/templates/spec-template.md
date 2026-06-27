@@ -1,13 +1,16 @@
 ---
 id: {spec-id}
 status: drafted
-execution_mode: plan
+execution_mode: {plan|tdd}
 owner: {owner}
 created_at: {timestamp}
 updated_at: {timestamp}
 ---
 
 # Spec: {Title}
+
+> Default Lattice template. Projects may override `specs.template` in
+> `lattice/manifest.yaml` with a team/domain-specific template.
 
 ## Intent
 
@@ -57,10 +60,11 @@ updated_at: {timestamp}
 
 ## Execution Policy
 
-- Mode: `plan` <!-- plan | tdd -->
-- Reason: {why this mode is enough}
+- Mode: `{plan|tdd}`
+- Reason: {why this mode was selected}
+- Source: model-selected | project-default | user-override
 
-Use `tdd` when behavior must be pinned by red tests first: bug fixes, core flows, money/security/permission/state-machine logic, concurrency, idempotency, or historical regression points.
+Use `plan` for low-risk, routine changes where a reviewed plan plus normal tests is enough. Use `tdd` when behavior must be pinned by red tests first: bug fixes, core flows, money/security/permission/state-machine logic, concurrency, idempotency, or historical regression points.
 
 ## Verification Plan
 

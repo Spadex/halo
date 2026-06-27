@@ -57,6 +57,21 @@ Lattice is intentionally modular. Each component can be used on its own, while t
 | **Harness** | Run agent-independent verification gates before delivery claims. | `pipeline.sh`, build/lint/test, AC coverage, drift check |
 | **Eval** | Produce repeatable quality evidence from acceptance coverage and drift checks. | Evidence-oriented gate output; extensible through `drift.plugins[]` |
 
+### Spec Template Policy
+
+The default spec template is intentionally compact and inspired by Superpowers-style workflow discipline plus Lattice's Spec Coding model: lock intent, scope, acceptance criteria, one-way decisions, risks, and verification; leave regenerable implementation detail to the model.
+
+Teams can override the template per project in `lattice/manifest.yaml`:
+
+```yaml
+specs:
+  template: "lattice/kernel/orchestrator/templates/spec-template.md"
+  default_execution_mode: "auto"   # auto | plan | tdd
+  allow_execution_mode_override: true
+```
+
+`auto` lets the model choose `plan` or `tdd` by risk. A project may force a default, and a user can override the mode for a single spec. Plan mode may escalate to TDD when planning or implementation discovers higher risk; TDD should not be downgraded silently.
+
 ---
 
 ## Quick Start
@@ -203,7 +218,7 @@ When you describe a requirement, the agent enters the brainstorming phase:
 You: "Add a coupon redemption API"
 
 Agent (with Lattice rules):
-  1. Reads manifest.yaml for project context
+  1. Reads manifest.yaml for spec/knowledge/verification routing
   2. Runs: bash lattice/kernel/knowledge/loader.sh coupon redemption payment
      → Finds: payment-idempotency.md, coupon-business-rules.md
   3. Evaluates: "Is this context sufficient?" If not → asks you
@@ -211,7 +226,7 @@ Agent (with Lattice rules):
      - AC-1: Redeem valid coupon → 200, balance deducted
      - AC-2: Redeem expired coupon → 400, no side effects
      - AC-3: Concurrent redemption → only one succeeds (idempotency)
-     - execution_mode: tdd
+     - execution_mode: tdd  # model-selected | project-default | user-override
      ...
 ```
 
@@ -483,6 +498,7 @@ Lattice exposes a small AI Coding skill chain (slash commands in Claude Code; na
 | Skill | Trigger | What It Does |
 |-------|---------|-------------|
 | **init** | `/init` | Interactive project setup: detect language → generate manifest → copy scaffold → inject rules |
+| **sdd** | `/sdd "requirement"` | Guide or resume the full SDD workflow from existing artifacts |
 | **brainstorm** | `/brainstorm` | Clarify intent, load knowledge, and write persistent `spec.md` |
 | **plan** | `/plan` | Decompose `spec.md` into AC-traced `plan.md` |
 | **implement** | `/implement` | Execute `plan` or `tdd` policy from the spec |
@@ -490,7 +506,7 @@ Lattice exposes a small AI Coding skill chain (slash commands in Claude Code; na
 | **finish** | `/finish` | Close delivery, link evidence, and extract durable knowledge |
 | **learn** | `/learn "lesson"` | Write a knowledge entry to `knowledge/`, update index |
 
-The core chain is `Brainstorming -> Planning -> Implementation(plan|tdd) -> Verification -> Finishing`. Knowledge loading, spec templates, AC naming, drift detection, and delivery gates are activated via `rules.md` and the skill files.
+The core chain is `Brainstorming -> Planning -> Implementation(plan|tdd) -> Verification -> Finishing`. `/sdd` is the guided entry point for that chain: it resolves the spec, mode, and next stage, then delegates to the stage skills. Knowledge loading, spec templates, AC naming, drift detection, and delivery gates are activated via `rules.md` and the skill files.
 
 Implementation can also generate file-backed evidence under `.lattice/sdd/` with `task-brief.sh` and `review-package.sh`, so agents/reviewers read compact files instead of pasted briefs or diffs.
 
@@ -650,6 +666,8 @@ commands:
 specs:
   dir: "lattice/specs"
   template: "lattice/kernel/orchestrator/templates/spec-template.md"
+  default_execution_mode: "auto"        # auto | plan | tdd
+  allow_execution_mode_override: true
   required_sections:                    # Override defaults
     - "Intent"
     - "Scope"

@@ -88,6 +88,14 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "manifest.yaml not found after init"
   fi
 
+  DEFAULT_MODE=$(yq -r '.specs.default_execution_mode // ""' "$SANDBOX/lattice/manifest.yaml")
+  ALLOW_MODE_OVERRIDE=$(yq -r '.specs.allow_execution_mode_override // ""' "$SANDBOX/lattice/manifest.yaml")
+  if [[ "$DEFAULT_MODE" == "auto" ]] && [[ "$ALLOW_MODE_OVERRIDE" == "true" ]]; then
+    pass "execution mode policy configured"
+  else
+    fail "execution mode policy missing from manifest"
+  fi
+
   if [[ -f "$SANDBOX/lattice/kernel/_lib.sh" ]]; then
     pass "kernel files installed"
   else
@@ -100,7 +108,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "CLAUDE.md not created"
   fi
 
-  for skill in brainstorm plan implement finish; do
+  for skill in sdd brainstorm plan implement finish; do
     if [[ -f "$SANDBOX/lattice/skills/${skill}.md" ]] && [[ -f "$SANDBOX/.claude/commands/${skill}.md" ]]; then
       pass "$skill skill and slash command installed"
     else

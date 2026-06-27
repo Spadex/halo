@@ -11,6 +11,7 @@
 |---------|------|-------------|
 | Describe a requirement (default) | **Brainstorming** | Clarify intent, load knowledge, write persistent spec |
 | `/init` | **Init Skill** | Set up harness, generate `lattice/manifest.yaml`, inject `CLAUDE.md` |
+| `/sdd` | **Guided SDD Skill** | Route or resume the full SDD workflow from artifacts |
 | `/brainstorm` | **Brainstorm Skill** | Produce `lattice/specs/<id>/spec.md` |
 | `/plan` | **Plan Skill** | Produce `lattice/specs/<id>/plan.md` |
 | `/implement` | **Implement Skill** | Execute plan or tdd policy from the spec |
@@ -28,15 +29,16 @@
 #### Phase: Brainstorming — Spec format and knowledge injection
 
 - **Spec path**: `lattice/specs/{spec-id}/spec.md`
-- **Template**: `lattice/kernel/orchestrator/templates/spec-template.md`
+- **Template**: read `specs.template` from `lattice/manifest.yaml`; default is `lattice/kernel/orchestrator/templates/spec-template.md`
 - **Dual-audience principle**: diagrams for humans, DDL/AC/API examples for AI execution
 - **AC numbering**: globally unique `AC-{nn}`, traced through spec -> test -> coverage
-- **Execution policy**: choose `plan` or `tdd`; do not create separate workflows
+- **Execution policy**: read `specs.default_execution_mode`; `auto` means choose `plan` or `tdd` by risk
 
 Before drafting the spec:
 1. Read `lattice/manifest.yaml`
 2. Run `bash lattice/kernel/knowledge/loader.sh <requirement keywords>`
 3. Use matched knowledge entries as design input; if context is insufficient, ask the user first — do not guess
+4. Record whether the execution mode came from model selection, project default, or user override
 
 #### Phase: Planning — AC traceability
 
@@ -44,7 +46,8 @@ Before drafting the spec:
 - Each task must reference its associated AC number
 - Plan must include `Global Constraints` for versions, dependencies, naming, security, data, compatibility, and out-of-scope limits
 - Each task must declare interfaces: inputs, outputs, touched files/contracts, and verification evidence
-- If `execution_mode: tdd`, include test-first tasks
+- If `execution_mode: plan` but planning reveals bug-fix, money/security/permission/state-machine, concurrency, idempotency, or regression risk, upgrade to `tdd`
+- If `execution_mode: tdd`, include test-first tasks; do not downgrade to `plan` without explicit user override
 - If spec drift is discovered during coding, update the spec first, then continue implementation
 
 #### Phase: Implementation — Plan/TDD policy
@@ -96,6 +99,7 @@ Before merge/PR, confirm:
 | Skill | Trigger | Capability |
 |-------|---------|------------|
 | `init` | `/init`, initialize Lattice | Generate manifest, copy scaffold, inject CLAUDE.md |
+| `sdd` | `/sdd`, guided workflow | Route/resume Brainstorming -> Planning -> Implementation -> Verification -> Finishing |
 | `brainstorm` | `/brainstorm`, draft spec | Clarify intent, load knowledge, write persistent spec |
 | `plan` | `/plan`, write plan | Decompose spec into AC-traced tasks |
 | `implement` | `/implement`, tdd | Execute plan or tdd policy |

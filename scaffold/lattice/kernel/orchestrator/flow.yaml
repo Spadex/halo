@@ -1,6 +1,11 @@
 # flow.yaml — Lattice phase behavior guide (not a runtime config)
 # Engine-agnostic phase definitions. For engine-specific mappings, see docs/adapters/
 
+controller:
+  command: "/sdd"
+  skill: "lattice/skills/sdd.md"
+  description: "Resolve spec, mode, and next stage; delegate to stage skills"
+
 stages:
   - name: brainstorming
     output: "lattice/specs/{spec-id}/spec.md"
@@ -52,5 +57,7 @@ transitions:
 behavioral_rules:
   hard_gate: brainstorming
   retry_budget: 3
+  default_execution_mode: "manifest:specs.default_execution_mode"
+  allow_execution_mode_override: "manifest:specs.allow_execution_mode_override"
   scratch_dir: ".lattice/sdd"
   spec_lock: "bash lattice/kernel/delivery/gates/spec-lock.sh acquire <spec-file>"

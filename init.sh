@@ -236,11 +236,11 @@ fi
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/index.md" "lattice/knowledge/index.md"
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/synonyms.txt" "lattice/knowledge/synonyms.txt"
 
-for f in init.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
+for f in init.md sdd.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
   copy_if_not_exists "$SCAFFOLD_DIR/lattice/skills/$f" "lattice/skills/$f"
 done
 
-for f in init.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
+for f in init.md sdd.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
   copy_if_not_exists "$SCAFFOLD_DIR/.claude/commands/$f" ".claude/commands/$f"
 done
 
@@ -362,7 +362,14 @@ commands:
 
 specs:
   dir: "lattice/specs"
+  # Override this path to use a project/team-specific spec template.
+  # The default template is a compact contract inspired by Superpowers-style
+  # discipline and Lattice's "lock only what matters" Spec Coding model.
   template: "lattice/kernel/orchestrator/templates/spec-template.md"
+  # auto = model selects plan or tdd by risk; plan/tdd force a project default.
+  # A user may still override the mode for a single spec in /sdd or /brainstorm.
+  default_execution_mode: "auto"
+  allow_execution_mode_override: true
   required_sections:
     - "Intent"
     - "Scope"
@@ -464,6 +471,7 @@ echo "  lattice/knowledge/           — Knowledge base"
 echo "  .claude/commands/                — Slash commands"
 echo ""
 echo "Usage:"
+echo "  /sdd \"requirement\" — Guided workflow with artifact-based resume"
 echo "  /brainstorm       — Draft persistent spec"
 echo "  /plan             — Create AC-traced plan"
 echo "  /implement        — Execute plan/tdd policy"

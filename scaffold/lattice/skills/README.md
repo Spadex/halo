@@ -1,12 +1,13 @@
 # Lattice Skills — Agent Capability Interface
 
-Skills are discoverable, invokable capability declarations for the AI agent. Lattice keeps the AI Coding workflow intentionally small: Brainstorming, Planning, Implementation, Verification, Finishing, plus init and learn.
+Skills are discoverable, invokable capability declarations for the AI agent. Lattice keeps the AI Coding workflow intentionally small: a guided SDD controller over Brainstorming, Planning, Implementation, Verification, Finishing, plus init and learn.
 
 ## Built-in Skills
 
 | Skill | File | Trigger | Dependency Layer |
 |-------|------|---------|-----------------|
 | init | `init.md` | `/init`, initialize Lattice | Orchestrator + Delivery |
+| sdd | `sdd.md` | `/sdd`, guided SDD workflow | Orchestrator |
 | brainstorm | `brainstorm.md` | `/brainstorm`, clarify, draft spec | Orchestrator + Knowledge |
 | plan | `plan.md` | `/plan`, write plan | Orchestrator |
 | implement | `implement.md` | `/implement`, execute plan, tdd | Orchestrator + Delivery |
