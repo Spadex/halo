@@ -115,6 +115,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-sink.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-dashboard.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-query.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-report.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
@@ -872,6 +873,28 @@ if [[ -f "$EVAL_DASHBOARD_HTML" ]] \
 else
   fail "eval-dashboard output invalid"
   echo "$EVAL_DASHBOARD_OUTPUT" | tail -20
+fi
+
+EVAL_QUERY_SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-query.sh" summary --sink-dir="$EVAL_SINK_DIR" 2>&1)
+if echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "Lattice Eval Query" \
+  && echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "| Projects | 1 |" \
+  && echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "testapp"; then
+  pass "eval-query summarizes central sink"
+else
+  fail "eval-query summary output invalid"
+  echo "$EVAL_QUERY_SUMMARY_OUTPUT" | tail -20
+fi
+
+EVAL_QUERY_RUNS_JSON="$SANDBOX/lattice/state/eval-query-runs.json"
+EVAL_QUERY_OUTCOMES_JSON="$SANDBOX/lattice/state/eval-query-outcomes.json"
+bash "$SANDBOX/lattice/kernel/delivery/eval-query.sh" runs --sink-dir="$EVAL_SINK_DIR" --project=testapp --format=json > "$EVAL_QUERY_RUNS_JSON"
+bash "$SANDBOX/lattice/kernel/delivery/eval-query.sh" outcomes --sink-dir="$EVAL_SINK_DIR" --project=testapp --type=review_finding --format=json > "$EVAL_QUERY_OUTCOMES_JSON"
+if yq -e '.kind == "eval-query" and .action == "runs" and .metrics.eval_runs >= 1 and .items[0].project == "testapp"' "$EVAL_QUERY_RUNS_JSON" >/dev/null 2>&1 \
+  && yq -e '.kind == "eval-query" and .action == "outcomes" and .metrics.outcomes >= 1 and .items[0].type == "review_finding" and .items[0].summary == "missing regression test evidence"' "$EVAL_QUERY_OUTCOMES_JSON" >/dev/null 2>&1; then
+  pass "eval-query emits filtered JSON"
+else
+  fail "eval-query JSON output invalid"
+  cat "$EVAL_QUERY_RUNS_JSON" "$EVAL_QUERY_OUTCOMES_JSON" | tail -40
 fi
 rm -f /tmp/lattice-ac-json.log /tmp/lattice-drift-json.log /tmp/lattice-compliance-json.log /tmp/lattice-pipeline-gate-json.log /tmp/lattice-pipeline-escalation.log /tmp/lattice-pipeline-custom-category.log /tmp/lattice-failure-category-lint.log /tmp/lattice-failure-category-lint-invalid.log
 echo ""

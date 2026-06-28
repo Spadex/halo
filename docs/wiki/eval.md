@@ -8,7 +8,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 2. Agent 的工作过程是否可靠？
 3. 团队的 AI Coding 质量是否在变好？
 
-当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、context-run、review summary、TDD red/green evidence、loop state、outcome link、outcome attribution report、central eval sink、static eval dashboard、可配置 failure category、failure category lint、escalation learn draft、knowledge review event、learn promotion event、knowledge governance lint 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON、当前 spec 对应的 context-run、process evidence 以及 loop state；失败时，loop state 会包含 `failure_category` 和 `default_action`，分类规则来自 `lattice/config/failure-categories.yaml`；`failure-category-lint.sh` 和 doctor 会前置检查分类配置；当 retry budget 耗尽时，它会在 `lattice/context/drafts/` 生成待确认 learn draft；确认后，`knowledge-review.sh` 会记录 approve/reject 证据，`learn-draft.sh` 会记录 promotion/discard 事件，并运行 advisory knowledge lint；交付后的 review finding、返工、逃逸缺陷、事故或成功反馈可以用 `outcome-link.sh` 关联回 eval run，并用 `outcome-report.sh` 汇总归因线索。`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 和 outcome link 聚合为趋势报告；`eval-sink.sh` 可以把单项目 evidence 发布到本地 central sink；`eval-dashboard.sh` 可以从 central sink 生成无需服务端的静态 dashboard。
+当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、context-run、review summary、TDD red/green evidence、loop state、outcome link、outcome attribution report、central eval sink、static eval dashboard、eval query、可配置 failure category、failure category lint、escalation learn draft、knowledge review event、learn promotion event、knowledge governance lint 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON、当前 spec 对应的 context-run、process evidence 以及 loop state；失败时，loop state 会包含 `failure_category` 和 `default_action`，分类规则来自 `lattice/config/failure-categories.yaml`；`failure-category-lint.sh` 和 doctor 会前置检查分类配置；当 retry budget 耗尽时，它会在 `lattice/context/drafts/` 生成待确认 learn draft；确认后，`knowledge-review.sh` 会记录 approve/reject 证据，`learn-draft.sh` 会记录 promotion/discard 事件，并运行 advisory knowledge lint；交付后的 review finding、返工、逃逸缺陷、事故或成功反馈可以用 `outcome-link.sh` 关联回 eval run，并用 `outcome-report.sh` 汇总归因线索。`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 和 outcome link 聚合为趋势报告；`eval-sink.sh` 可以把单项目 evidence 发布到本地 central sink；`eval-dashboard.sh` 可以从 central sink 生成无需服务端的静态 dashboard；`eval-query.sh` 可以用 Markdown/JSON 查询 central sink。
 
 ## 当前形态
 
@@ -29,6 +29,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 | `outcome-report.sh` | attribution Markdown | outcome 类型、严重度、context refs 和风险线索 |
 | `eval-sink.sh` | central sink files | 将 eval/outcome/report 发布到多项目汇总目录 |
 | `eval-dashboard.sh` | static HTML | central sink 项目、eval/outcome/report 和最近 outcome 概览 |
+| `eval-query.sh` | Markdown / JSON | central sink summary、runs、outcomes 的过滤查询 |
 | `knowledge-lint.sh` | governance diagnostics | source、placeholder、conflict marker、expiry、duplicate heading 检查 |
 | `eval-history.sh` | history Markdown | 多次运行的 pass rate、AC coverage、review/TDD/outcome 趋势 |
 | build/lint/test | terminal output | 工程基础质量 |
@@ -230,6 +231,16 @@ bash lattice/kernel/delivery/eval-dashboard.sh --sink-dir=lattice/state/eval-sin
 
 dashboard 直接消费 central sink 文件，输出一个可本地打开的 HTML。它适合试点阶段展示项目数、eval runs、outcomes、reports 和最近 outcome；它不是交互式平台，也不替代 CI artifact、Markdown report 或后续结构化查询。
 
+查询 central eval sink：
+
+```bash
+bash lattice/kernel/delivery/eval-query.sh summary --sink-dir=lattice/state/eval-sink
+bash lattice/kernel/delivery/eval-query.sh runs --sink-dir=lattice/state/eval-sink --project=<project> --format=json
+bash lattice/kernel/delivery/eval-query.sh outcomes --sink-dir=lattice/state/eval-sink --type=review_finding --format=json
+```
+
+`eval-query.sh` 是 dashboard 之前的更底层能力：它保留文件协议，不启动服务端，输出可以被人阅读的 Markdown，也可以输出 Agent/CI 易消费的 JSON。适合做周报、质量巡检、跨项目风险筛选和后续 dashboard 数据源。
+
 ## 指标
 
 短期指标：
@@ -283,10 +294,10 @@ Lattice 在 `harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
 | outcome attribution 仍是线索级 | 已有 outcome report、central sink 和静态 dashboard，但还不能做因果判定 | analysis |
-| dashboard 仍是静态文件 | 已能本地查看，但缺少交互过滤、跨项目趋势和查询 API | dashboard query |
+| dashboard 仍是静态文件 | 已有 CLI/JSON 查询，但缺少交互过滤和跨项目趋势视图 | dashboard trend |
 
 ## 演进顺序
 
-1. 增强 dashboard 查询、过滤和趋势视图。
+1. 增强 dashboard 过滤和趋势视图。
 2. 增加跨项目 outcome attribution 分析。
 3. 扩展更多语言的 drift parser。

@@ -88,6 +88,8 @@ bash lattice/kernel/delivery/outcome-link.sh record --eval=<run-id|eval.json> --
 bash lattice/kernel/delivery/outcome-report.sh --out=lattice/state/outcome-report.md
 bash lattice/kernel/delivery/eval-sink.sh publish --sink-dir=lattice/state/eval-sink
 bash lattice/kernel/delivery/eval-dashboard.sh --sink-dir=lattice/state/eval-sink --out=lattice/state/eval-sink/dashboard.html
+bash lattice/kernel/delivery/eval-query.sh summary --sink-dir=lattice/state/eval-sink
+bash lattice/kernel/delivery/eval-query.sh outcomes --sink-dir=lattice/state/eval-sink --type=review_finding --format=json
 bash lattice/kernel/delivery/pr-comment.sh lattice/state/eval-runs/<run-id>.md --dry-run
 bash lattice/kernel/delivery/pipeline.sh --only=spec-lint
 bash lattice/kernel/doctor.sh
@@ -109,14 +111,14 @@ Implemented:
 
 - install/init/upgrade and smoke tests;
 - standalone PrismSpec skill pack manifest and Lattice-hosted mode;
-- doctor, `pipeline --json-out` structured eval runs, central eval sink/static dashboard, loop state JSON, outcome link events and attribution reports, context-run evidence, learn promotion audit events, knowledge review evidence, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
+- doctor, `pipeline --json-out` structured eval runs, central eval sink/static dashboard/query, loop state JSON, outcome link events and attribution reports, context-run evidence, learn promotion audit events, knowledge review evidence, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
 - spec lint, AC coverage, drift check, compliance, spec lock;
 - context map, knowledge backend, context-run evidence, knowledge metadata lint, knowledge governance lint, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
-- dashboard query/trend improvements and stronger semantic conflict governance;
+- dashboard trend improvements and stronger semantic conflict governance;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;
 - multi-agent state and lease model.

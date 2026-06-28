@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - `eval-history.sh` to aggregate eval run JSON files into a Markdown trend report.
 - `eval-sink.sh` to publish eval runs, outcome links, and Markdown reports to a local central eval sink with per-project manifests and an index.
 - `eval-dashboard.sh` to render a static HTML dashboard from the central eval sink.
+- `eval-query.sh` to query central eval sink summaries, runs, and outcomes as Markdown or JSON.
 - `outcome-link.sh` to link post-run review findings, rework, escaped defects, incidents, or success signals back to eval runs under `lattice/state/outcomes/`.
 - `outcome-report.sh` to render outcome attribution signals, context references, severity distribution, and runs needing review.
 - Loop state JSON under `lattice/state/loops/`, embedded into eval runs and summarized in eval reports.
