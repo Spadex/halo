@@ -136,7 +136,7 @@ PrismSpec 只支持两种实现策略：
 | `skills/finish/SKILL.md` | 生成 summary，沉淀后续工作和可复用经验 |
 | `skills/learn/SKILL.md` | 捕获可复用知识 |
 
-每个 canonical skill 都包含 frontmatter、工作流、输入输出、停机条件、常见跳步借口、红旗和验证清单。旧的 `skills/*.md` 文件保留为兼容入口。
+每个 canonical skill 都包含 frontmatter、工作流、输入输出、停机条件、常见跳步借口、红旗和验证清单。PrismSpec 不再维护 flat `skills/*.md` 入口，避免同一流程出现多个事实源。
 
 ## References 与 Reviewer
 

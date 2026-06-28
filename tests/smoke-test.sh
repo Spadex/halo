@@ -108,16 +108,21 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "CLAUDE.md not created"
   fi
 
-  for skill in sdd brainstorm plan implement finish; do
-    if [[ -f "$SANDBOX/lattice/skills/${skill}.md" ]] && [[ -f "$SANDBOX/.claude/commands/${skill}.md" ]]; then
-      pass "$skill skill and slash command installed"
+  if [[ -f "$SANDBOX/lattice/skills/init.md" ]]; then
+    pass "Lattice init skill installed"
+  else
+    fail "Lattice init skill missing"
+  fi
+
+  for command in sdd brainstorm plan implement verify finish learn; do
+    if [[ -f "$SANDBOX/.claude/commands/${command}.md" ]]; then
+      pass "$command slash command installed"
     else
-      fail "$skill skill or slash command missing"
+      fail "$command slash command missing"
     fi
   done
 
-  if [[ -f "$SANDBOX/prismspec/skills/sdd.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/sdd/SKILL.md" ]] \
+  if [[ -f "$SANDBOX/prismspec/skills/sdd/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/brainstorm/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/plan/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/implement/SKILL.md" ]] \
@@ -138,6 +143,14 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     pass "PrismSpec deliverable module installed"
   else
     fail "PrismSpec standalone module missing"
+  fi
+
+  FLAT_SKILL_COUNT=$(find "$SANDBOX/prismspec/skills" -maxdepth 1 -type f -name '*.md' -not -name 'README.md' | wc -l | tr -d ' ')
+  LATTICE_SDD_SKILL_COUNT=$(find "$SANDBOX/lattice/skills" -maxdepth 1 -type f \( -name 'sdd.md' -o -name 'brainstorm.md' -o -name 'plan.md' -o -name 'implement.md' -o -name 'verify.md' -o -name 'finish.md' -o -name 'learn.md' \) | wc -l | tr -d ' ')
+  if [[ "$FLAT_SKILL_COUNT" == "0" ]] && [[ "$LATTICE_SDD_SKILL_COUNT" == "0" ]]; then
+    pass "SDD workflow has a single canonical skill source"
+  else
+    fail "Duplicate SDD skill files found"
   fi
 
   GUIDE_OUTPUT=$(bash "$SANDBOX/prismspec/bin/guide.sh" --json)

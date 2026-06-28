@@ -53,13 +53,13 @@ my-project/
 | Trigger | Action |
 |---------|--------|
 | `lattice init` / initialize framework | Run Init flow |
-| `sdd` / guided workflow | Execute `lattice/skills/sdd.md`; route or resume the full SDD workflow from artifacts |
+| `sdd` / guided workflow | Execute `prismspec/skills/sdd/SKILL.md`; route or resume the full SDD workflow from artifacts |
 | `brainstorm` / draft spec | Run Brainstorming flow and write `lattice/specs/<id>/spec.md` |
 | `plan` / write plan | Run Planning flow and write `lattice/specs/<id>/plan.md` |
 | `implement` / tdd | Execute `plan` or `tdd` policy from the spec |
 | `verify` / run pipeline | Execute `lattice/kernel/delivery/pipeline.sh` |
 | `finish` / close out | Write delivery summary and extract durable knowledge |
-| `learn` / capture / remember | Execute `lattice/skills/learn.md` flow |
+| `learn` / capture / remember | Execute `prismspec/skills/learn/SKILL.md` flow |
 
 ## Init Flow
 
@@ -75,7 +75,7 @@ my-project/
 - User assets never overwritten: `lattice/manifest.yaml`, `lattice/knowledge/`, `lattice/specs/`
 - `manifest.yaml` is the single project configuration entry point
 - Spec template: `lattice/kernel/orchestrator/templates/spec-template.md`
-- Guided SDD entry point: `lattice/skills/sdd.md`
+- Guided SDD entry point: `prismspec/skills/sdd/SKILL.md`
 - SDD evidence helpers: `lattice/kernel/orchestrator/sdd/task-brief.sh`, `lattice/kernel/orchestrator/sdd/review-package.sh`
 - Verification entry point: `lattice/kernel/delivery/pipeline.sh`
 - Explicit skills: `/init`, `/sdd`, `/brainstorm`, `/plan`, `/implement`, `/verify`, `/finish`, `/learn`

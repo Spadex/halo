@@ -215,7 +215,7 @@ prismspec/skills/
 └── learn/SKILL.md
 ```
 
-flat Markdown 文件只作为兼容 wrapper，主入口应优先读取 canonical `SKILL.md`。
+PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKILL.md`，避免同一流程出现多个事实源。
 
 ## 当前实现边界
 

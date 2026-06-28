@@ -2,7 +2,7 @@
 
 These skills are self-contained workflow instructions for AI coding agents.
 
-Use `sdd/SKILL.md` as the canonical entry point. The legacy `*.md` files remain as compatibility wrappers.
+Use `sdd/SKILL.md` as the canonical entry point. PrismSpec does not maintain flat `skills/*.md` files.
 
 ```text
 sdd -> brainstorm -> plan -> implement -> verify -> finish

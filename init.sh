@@ -270,9 +270,7 @@ fi
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/index.md" "lattice/knowledge/index.md"
 copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/synonyms.txt" "lattice/knowledge/synonyms.txt"
 
-for f in init.md sdd.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
-  copy_if_not_exists "$SCAFFOLD_DIR/lattice/skills/$f" "lattice/skills/$f"
-done
+copy_if_not_exists "$SCAFFOLD_DIR/lattice/skills/init.md" "lattice/skills/init.md"
 
 for f in init.md sdd.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
   copy_if_not_exists "$SCAFFOLD_DIR/.claude/commands/$f" ".claude/commands/$f"

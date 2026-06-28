@@ -36,7 +36,7 @@ prismspec/
 └── specs/                 # standalone durable artifacts
 ```
 
-Legacy `skills/*.md` files are kept as compatibility entry points.
+PrismSpec ships only canonical skill folders. `skills/*/SKILL.md` is the single source of truth.
 
 ## Core Beliefs
 

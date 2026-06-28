@@ -4,7 +4,6 @@
 controller:
   command: "/sdd"
   skill: "prismspec/skills/sdd/SKILL.md"
-  fallback_skill: "lattice/skills/sdd.md"
   description: "Resolve spec, mode, and next stage; delegate to stage skills"
 
 stages:

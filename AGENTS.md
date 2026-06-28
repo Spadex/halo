@@ -8,7 +8,7 @@ This repository is the source repository for Lattice, a Chinese-first AI Coding 
 
 - Keep the public product experience Chinese-first while preserving English docs for international readers.
 - Treat `prismspec/skills/*/SKILL.md` as the canonical PrismSpec skill source.
-- Treat flat files under `prismspec/skills/*.md` and `scaffold/lattice/skills/*.md` as compatibility entry points.
+- Do not duplicate SDD workflow logic under `scaffold/lattice/skills/`; that directory is for Lattice-specific skills such as `init.md`.
 - Preserve the install boundary: `scaffold/` is copied into target projects; project-owned data must not be overwritten on upgrade.
 
 ## Common Checks
