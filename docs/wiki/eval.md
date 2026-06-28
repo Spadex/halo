@@ -8,7 +8,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 2. Agent 的工作过程是否可靠？
 3. 团队的 AI Coding 质量是否在变好？
 
-当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，后续再把 review/TDD 语义证据接入同一模型。
+当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON。后续再把 review/TDD 语义证据接入同一模型。
 
 ## 当前形态
 
@@ -77,6 +77,17 @@ lattice/state/eval-runs/
       "duration_ms": 210,
       "summary": "5/5 ACs covered"
     }
+  ],
+  "gates": [
+    {
+      "gate": "ac-coverage",
+      "status": "pass",
+      "metrics": {
+        "ac_total": 5,
+        "ac_covered": 5
+      },
+      "findings": []
+    }
   ]
 }
 ```
@@ -125,14 +136,12 @@ CI 是 eval 的天然执行环境：
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| eval JSON 仍是 pipeline-level | review、TDD、人工检查还不能统一入库 | `review-summary.json`、`tdd-evidence.json` |
-| metrics 仍偏 step 统计 | AC coverage / drift finding 未结构化汇总 | gate 输出 JSON |
+| review/TDD 语义证据未结构化 | review、TDD、人工检查还不能统一入库 | `review-summary.json`、`tdd-evidence.json` |
+| CI artifact 约定较弱 | 数据不稳定沉淀 | GitHub Actions 上传 eval JSON |
 | review verdict 未结构化 | 语义质量无法进入指标 | `review-summary.json` |
-| 无 CI artifact 约定 | 数据不稳定沉淀 | GitHub Actions 上传 eval JSON |
 
 ## 演进顺序
 
-1. 把 AC coverage 和 drift findings 写入 JSON。
-2. 接入 CI artifact。
-3. 引入 review verdict 和 TDD red/green evidence。
-4. 增加趋势报告。
+1. 接入 CI artifact。
+2. 引入 review verdict 和 TDD red/green evidence。
+3. 增加趋势报告。

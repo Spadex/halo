@@ -496,6 +496,45 @@ elif [[ $AC_EXIT -eq 0 ]]; then
 else
   pass "ac-coverage ran (exit=$AC_EXIT)"
 fi
+
+AC_JSON="$SANDBOX/lattice/state/ac-coverage-smoke.json"
+AC_JSON_EXIT=0
+bash "$SANDBOX/lattice/kernel/delivery/gates/ac-coverage.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$AC_JSON" >/tmp/lattice-ac-json.log 2>&1 || AC_JSON_EXIT=$?
+if [[ $AC_JSON_EXIT -eq 1 ]] && yq -e '.gate == "ac-coverage" and .metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.findings | length == 2)' "$AC_JSON" >/dev/null 2>&1; then
+  pass "ac-coverage writes structured gate JSON"
+else
+  fail "ac-coverage gate JSON invalid"
+  cat /tmp/lattice-ac-json.log | tail -20
+fi
+
+DRIFT_JSON="$SANDBOX/lattice/state/drift-smoke.json"
+bash "$SANDBOX/lattice/kernel/delivery/gates/drift-check.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$DRIFT_JSON" >/tmp/lattice-drift-json.log 2>&1 || true
+if yq -e '.gate == "drift-check" and .metrics.drift_count == 0 and (.findings | length > 0)' "$DRIFT_JSON" >/dev/null 2>&1; then
+  pass "drift-check writes structured gate JSON"
+else
+  fail "drift-check gate JSON invalid"
+  cat /tmp/lattice-drift-json.log | tail -20
+fi
+
+COMPLIANCE_JSON="$SANDBOX/lattice/state/compliance-smoke.json"
+bash "$SANDBOX/lattice/kernel/delivery/gates/compliance.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$COMPLIANCE_JSON" >/tmp/lattice-compliance-json.log 2>&1 || true
+if yq -e '.gate == "compliance" and .metrics.warnings >= 0 and (.findings | length > 0)' "$COMPLIANCE_JSON" >/dev/null 2>&1; then
+  pass "compliance writes structured gate JSON"
+else
+  fail "compliance gate JSON invalid"
+  cat /tmp/lattice-compliance-json.log | tail -20
+fi
+
+PIPELINE_GATE_JSON="$SANDBOX/lattice/state/pipeline-ac-smoke.json"
+PIPELINE_GATE_EXIT=0
+bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_GATE_JSON" >/tmp/lattice-pipeline-gate-json.log 2>&1 || PIPELINE_GATE_EXIT=$?
+if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
+  pass "pipeline embeds structured gate JSON in eval run"
+else
+  fail "pipeline gate JSON embedding invalid"
+  cat /tmp/lattice-pipeline-gate-json.log | tail -20
+fi
+rm -f /tmp/lattice-ac-json.log /tmp/lattice-drift-json.log /tmp/lattice-compliance-json.log /tmp/lattice-pipeline-gate-json.log
 echo ""
 
 # ── 8. Context knowledge backend ──

@@ -41,6 +41,13 @@ RUN_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 RUN_STARTED_SEC="$(date +%s)"
 RUN_ID="${RUN_STARTED_AT//:/}"
 RUN_ID="${RUN_ID//-/}"
+GATE_JSON_DIR="$PROJECT_ROOT/lattice/state/eval-runs/${RUN_ID}.gates"
+gate_json_files=()
+METRIC_AC_TOTAL=0
+METRIC_AC_COVERED=0
+METRIC_AC_UNCOVERED=0
+METRIC_DRIFT_COUNT=0
+METRIC_COMPLIANCE_WARNINGS=0
 
 json_escape() {
   local s="${1:-}"
@@ -50,6 +57,10 @@ json_escape() {
   s="${s//$'\r'/}"
   s="${s//$'\t'/\\t}"
   printf '%s' "$s"
+}
+
+shell_quote() {
+  printf '%q' "$1"
 }
 
 hash_file() {
@@ -74,6 +85,25 @@ record_step() {
     "${exit_code:-null}" \
     "${duration_ms:-0}" \
     "$(json_escape "$summary")")")
+}
+
+collect_gate_json() {
+  local gate_name="$1" file="$2"
+  [[ -f "$file" ]] || return 0
+  gate_json_files+=("$file")
+  case "$gate_name" in
+    ac-coverage)
+      METRIC_AC_TOTAL=$((METRIC_AC_TOTAL + $(yq -r '.metrics.ac_total // 0' "$file" 2>/dev/null || echo 0)))
+      METRIC_AC_COVERED=$((METRIC_AC_COVERED + $(yq -r '.metrics.ac_covered // 0' "$file" 2>/dev/null || echo 0)))
+      METRIC_AC_UNCOVERED=$((METRIC_AC_UNCOVERED + $(yq -r '.metrics.ac_uncovered // 0' "$file" 2>/dev/null || echo 0)))
+      ;;
+    drift-check)
+      METRIC_DRIFT_COUNT=$((METRIC_DRIFT_COUNT + $(yq -r '.metrics.drift_count // 0' "$file" 2>/dev/null || echo 0)))
+      ;;
+    compliance)
+      METRIC_COMPLIANCE_WARNINGS=$((METRIC_COMPLIANCE_WARNINGS + $(yq -r '.metrics.warnings // 0' "$file" 2>/dev/null || echo 0)))
+      ;;
+  esac
 }
 
 echo "══════════════════════════════════"
@@ -152,6 +182,17 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
   run="${run//\$\{commands.test\}/$(manifest_get_cmd 'commands.test')}"
   run="${run//\$\{commands.integration_test\}/$(manifest_get_cmd 'commands.integration_test')}"
 
+  gate_json_file=""
+  if [[ "$WRITE_JSON" == "true" ]]; then
+    case "$name" in
+      ac-coverage|drift-check|compliance)
+        mkdir -p "$GATE_JSON_DIR"
+        gate_json_file="$GATE_JSON_DIR/${name}.json"
+        run="$run --json-out=$(shell_quote "$gate_json_file")"
+        ;;
+    esac
+  fi
+
   printf "🔄 [%d] %-20s → %s\n" "$STEP_NUM" "$name" "$run"
 
   step_started_sec="$(date +%s)"
@@ -161,6 +202,7 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
     printf "✅ [%d] %-20s PASS\n\n" "$STEP_NUM" "$name"
     ((STEP_PASS++)) || true
     record_step "$name" "pass" "$run" "0" "$step_duration_ms" "$(printf '%s\n' "$output" | tail -20)"
+    [[ -n "$gate_json_file" ]] && collect_gate_json "$name" "$gate_json_file"
   else
     step_exit=$?
     step_duration_ms=$(( ($(date +%s) - step_started_sec) * 1000 ))
@@ -168,6 +210,7 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
     printf "❌ [%d] %-20s FAIL\n\n" "$STEP_NUM" "$name"
     ((STEP_FAIL++)) || true
     record_step "$name" "fail" "$run" "$step_exit" "$step_duration_ms" "$(printf '%s\n' "$output" | tail -40)"
+    [[ -n "$gate_json_file" ]] && collect_gate_json "$name" "$gate_json_file"
     echo "⛔ Pipeline stopped at step $STEP_NUM: $name"
     break
   fi
@@ -232,13 +275,26 @@ write_eval_json() {
     printf '    "steps_total": %s,\n' "$STEP_NUM"
     printf '    "steps_passed": %s,\n' "$STEP_PASS"
     printf '    "steps_failed": %s,\n' "$STEP_FAIL"
-    printf '    "steps_skipped": %s\n' "$STEP_SKIP"
+    printf '    "steps_skipped": %s,\n' "$STEP_SKIP"
+    printf '    "ac_total": %s,\n' "$METRIC_AC_TOTAL"
+    printf '    "ac_covered": %s,\n' "$METRIC_AC_COVERED"
+    printf '    "ac_uncovered": %s,\n' "$METRIC_AC_UNCOVERED"
+    printf '    "drift_count": %s,\n' "$METRIC_DRIFT_COUNT"
+    printf '    "compliance_warnings": %s\n' "$METRIC_COMPLIANCE_WARNINGS"
     printf '  },\n'
     printf '  "steps": [\n'
     local idx
     for idx in "${!json_step_entries[@]}"; do
       printf '    %s' "${json_step_entries[$idx]}"
       [[ "$idx" -lt $((${#json_step_entries[@]} - 1)) ]] && printf ','
+      printf '\n'
+    done
+    printf '  ],\n'
+    printf '  "gates": [\n'
+    local gate_idx
+    for gate_idx in "${!gate_json_files[@]}"; do
+      sed 's/^/    /' "${gate_json_files[$gate_idx]}"
+      [[ "$gate_idx" -lt $((${#gate_json_files[@]} - 1)) ]] && printf ','
       printf '\n'
     done
     printf '  ]\n'

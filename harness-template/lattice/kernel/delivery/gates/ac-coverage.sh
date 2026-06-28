@@ -6,15 +6,20 @@ for arg in "$@"; do
   [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "delivery gate ac-coverage" "Check AC number to test coverage" \
     "ac-coverage.sh [spec-file] [test-dir]    Check spec AC vs TestAC{nn} mapping" \
     "ac-coverage.sh --deep [spec] [test-dir]  Also detect empty tests and assertion drift" \
+    "ac-coverage.sh --json-out[=<file>]       Write structured gate JSON" \
     "" \
     "Omit arguments to auto-discover latest spec and search project root"
 done
 
 DEEP_MODE=false
+WRITE_JSON=false
+JSON_OUT=""
 POSITIONAL=()
 for arg in "$@"; do
   case "$arg" in
     --deep) DEEP_MODE=true ;;
+    --json-out) WRITE_JSON=true ;;
+    --json-out=*) WRITE_JSON=true; JSON_OUT="${arg#--json-out=}" ;;
     --help|-h) ;;
     *) POSITIONAL+=("$arg") ;;
   esac
@@ -30,6 +35,58 @@ TEST_DIR="${TEST_DIR_ARG:-$PROJECT_ROOT}"
 [[ -f "$SPEC" ]] || { echo "Spec file not found: $SPEC"; exit 1; }
 
 LANG=$(get_language)
+GATE_FINDINGS=()
+
+json_escape() {
+  local s="${1:-}"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/}"
+  s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
+
+record_finding() {
+  local ac="$1" status="$2" test_name="$3" message="$4"
+  GATE_FINDINGS+=("$(printf '{"ac":"%s","status":"%s","test":"%s","message":"%s"}' \
+    "$(json_escape "$ac")" \
+    "$(json_escape "$status")" \
+    "$(json_escape "$test_name")" \
+    "$(json_escape "$message")")")
+}
+
+write_gate_json() {
+  [[ "$WRITE_JSON" == "true" ]] || return 0
+  local status="$1" out="$JSON_OUT"
+  [[ -n "$out" ]] || out="$PROJECT_ROOT/lattice/state/gates/ac-coverage.json"
+  [[ "$out" == /* ]] || out="$PROJECT_ROOT/$out"
+  mkdir -p "$(dirname "$out")"
+  {
+    printf '{\n'
+    printf '  "gate": "ac-coverage",\n'
+    printf '  "status": "%s",\n' "$(json_escape "$status")"
+    printf '  "spec_file": "%s",\n' "$(json_escape "${SPEC#$PROJECT_ROOT/}")"
+    printf '  "language": "%s",\n' "$(json_escape "$LANG")"
+    printf '  "metrics": {\n'
+    printf '    "ac_total": %s,\n' "${SPEC_COUNT:-0}"
+    printf '    "ac_covered": %s,\n' "${COVERED_COUNT:-0}"
+    printf '    "ac_uncovered": %s,\n' "$(( ${SPEC_COUNT:-0} - ${COVERED_COUNT:-0} ))"
+    printf '    "coverage_percent": %s,\n' "${PERCENT:-0}"
+    printf '    "deep_warnings": %s\n' "${DEEP_WARNINGS:-0}"
+    printf '  },\n'
+    printf '  "findings": [\n'
+    local idx
+    for idx in "${!GATE_FINDINGS[@]}"; do
+      printf '    %s' "${GATE_FINDINGS[$idx]}"
+      [[ "$idx" -lt $((${#GATE_FINDINGS[@]} - 1)) ]] && printf ','
+      printf '\n'
+    done
+    printf '  ]\n'
+    printf '}\n'
+  } > "$out"
+}
+
 echo "🔍 AC Coverage: $(basename "$SPEC") [$LANG]"
 echo ""
 
@@ -54,6 +111,7 @@ SPEC_COUNT=$(echo "$SPEC_ACS" | grep -c . || true)
 
 if [[ "$SPEC_COUNT" -eq 0 ]]; then
   echo "⚠️  No AC numbers found in spec"
+  write_gate_json "skip"
   exit 0
 fi
 
@@ -108,9 +166,11 @@ while IFS= read -r ac; do
   if [[ -n "$func_name" ]]; then
     echo "| $ac | $desc | \`$func_name\` | ✅ |"
     ((COVERED_COUNT++))
+    record_finding "$ac" "covered" "$func_name" "$desc"
   else
     echo "| $ac | $desc | — | ❌ Uncovered |"
     UNCOVERED="$UNCOVERED $ac"
+    record_finding "$ac" "uncovered" "" "$desc"
   fi
 done <<< "$SPEC_ACS"
 
@@ -130,6 +190,7 @@ if [[ "$DEEP_MODE" == "true" ]] && [[ -n "$TEST_FILES" ]]; then
       if grep -A 5 "$func_name" "$test_file" 2>/dev/null | grep -qiE 't\.Skip|pytest\.skip|\.skip\(|pending\('; then
         echo "  ⚠️  $ac ($func_name): contains Skip/Pending — test not actually running"
         ((DEEP_WARNINGS++))
+        record_finding "$ac" "warning" "$func_name" "contains Skip/Pending"
       fi
 
       func_body=$(sed -n "/func.*$func_name/,/^}/p" "$test_file" 2>/dev/null || \
@@ -139,6 +200,7 @@ if [[ "$DEEP_MODE" == "true" ]] && [[ -n "$TEST_FILES" ]]; then
         if [[ "$has_assert" -eq 0 ]]; then
           echo "  ⚠️  $ac ($func_name): no assertions detected — may be empty test"
           ((DEEP_WARNINGS++))
+          record_finding "$ac" "warning" "$func_name" "no assertions detected"
         fi
       fi
     done <<< "$TEST_FILES"
@@ -161,8 +223,10 @@ echo "📊 AC Coverage: $COVERED_COUNT/$SPEC_COUNT ($PERCENT%)"
 
 if [[ -n "$UNCOVERED" ]]; then
   echo "❌ FAIL — uncovered:$UNCOVERED"
+  write_gate_json "fail"
   exit 1
 else
   echo "✅ PASS — all ACs covered"
+  write_gate_json "pass"
   exit 0
 fi

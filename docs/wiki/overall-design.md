@@ -67,7 +67,7 @@ flowchart TB
 | Orchestrator | Agent 规则、阶段定义、模板入口 | `lattice/kernel/orchestrator/` |
 | Context | 给 Agent 提供项目上下文地图、项目知识、外部知识入口，并沉淀 per-spec context | `lattice/context/`、`lattice/kernel/context/` |
 | Delivery | 运行可复现验证卡口 | `lattice/kernel/delivery/` |
-| Eval | 从 gate output 提炼质量证据 | `pipeline --json-out` 生成 eval run，gate/review/TDD 结构化继续演进 |
+| Eval | 从 gate output 提炼质量证据 | `pipeline --json-out` 生成 eval run，并嵌入 AC/drift/compliance gate JSON；review/TDD 继续演进 |
 
 ## 数据流
 

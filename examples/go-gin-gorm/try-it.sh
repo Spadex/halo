@@ -27,6 +27,7 @@ git init --quiet
 # Copy framework pieces used by this standalone demo.
 cp -r "$REPO_DIR/harness-template/lattice/kernel" "$SANDBOX/lattice/kernel"
 cp -r "$REPO_DIR/prismspec" "$SANDBOX/prismspec"
+chmod +x lattice/kernel/*.sh lattice/kernel/context/*.sh lattice/kernel/context/backends/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh prismspec/bin/*.sh 2>/dev/null || true
 
 SPEC="lattice/specs/create-item-api/spec.md"
 
@@ -48,6 +49,11 @@ echo ""
 
 echo "── 5. Context Knowledge Backend ──"
 bash lattice/kernel/context/backends/knowledge.sh naming
+echo ""
+
+echo "── 6. Pipeline Eval JSON ──"
+bash lattice/kernel/delivery/pipeline.sh --only=ac-coverage --spec="$SPEC" --json-out=lattice/state/eval-runs/example.json
+yq '.metrics, .gates[0].metrics' lattice/state/eval-runs/example.json
 echo ""
 
 echo "══════════════════════════════════"
