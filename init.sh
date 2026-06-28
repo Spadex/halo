@@ -208,6 +208,7 @@ copy_tree_files_if_not_exists() {
 }
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/_lib.sh" "lattice/kernel/_lib.sh"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/doctor.sh" "lattice/kernel/doctor.sh"
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/templates/spec-template.md" "lattice/kernel/orchestrator/templates/spec-template.md"
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/rules.md" "lattice/kernel/orchestrator/rules.md"
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/flow.yaml" "lattice/kernel/orchestrator/flow.yaml"
@@ -226,7 +227,7 @@ done
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/VERSION" "lattice/kernel/VERSION"
 
-for dir in specs state skills context context/knowledge context/knowledge/decisions context/drafts state/context-runs; do
+for dir in specs state state/eval-runs skills context context/knowledge context/knowledge/decisions context/drafts state/context-runs; do
   mkdir -p "lattice/$dir"
   [[ -f "lattice/$dir/.gitkeep" ]] || touch "lattice/$dir/.gitkeep"
 done
@@ -238,11 +239,12 @@ if [[ -d "$PRISMSPEC_SOURCE" ]]; then
       copy_tree_files_if_not_exists "$PRISMSPEC_SOURCE/$dir" "prismspec/$dir"
     fi
   done
+  copy_if_not_exists "$PRISMSPEC_SOURCE/skillpack.yaml" "prismspec/skillpack.yaml"
   copy_if_not_exists "$PRISMSPEC_SOURCE/README.md" "prismspec/README.md"
   copy_if_not_exists "$PRISMSPEC_SOURCE/README.en.md" "prismspec/README.en.md"
 fi
 
-chmod +x lattice/kernel/_lib.sh lattice/kernel/context/*.sh lattice/kernel/context/backends/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh lattice/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
+chmod +x lattice/kernel/*.sh lattice/kernel/context/*.sh lattice/kernel/context/backends/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh lattice/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
 chmod +x prismspec/bin/*.sh 2>/dev/null || true
 
 if [[ -d ".git" ]]; then

@@ -102,6 +102,12 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "kernel files not installed"
   fi
 
+  if [[ -x "$SANDBOX/lattice/kernel/doctor.sh" ]]; then
+    pass "lattice doctor installed"
+  else
+    fail "lattice doctor missing or not executable"
+  fi
+
   if [[ -f "$SANDBOX/lattice/kernel/context/backends/knowledge.sh" ]] \
     && [[ -f "$SANDBOX/lattice/context/README.md" ]] \
     && [[ -f "$SANDBOX/lattice/context/sources.yaml" ]] \
@@ -132,6 +138,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   done
 
   if [[ -f "$SANDBOX/prismspec/skills/sdd/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skillpack.yaml" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/brainstorm/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/plan/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/implement/SKILL.md" ]] \
@@ -194,6 +201,15 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   else
     fail ".prismspec/runs not ignored"
   fi
+
+  DOCTOR_EXIT=0
+  DOCTOR_OUTPUT=$(bash "$SANDBOX/lattice/kernel/doctor.sh" 2>&1) || DOCTOR_EXIT=$?
+  if [[ $DOCTOR_EXIT -eq 0 ]] && echo "$DOCTOR_OUTPUT" | grep -q "PASS"; then
+    pass "lattice doctor passes installed project"
+  else
+    fail "lattice doctor failed"
+    echo "$DOCTOR_OUTPUT" | tail -20
+  fi
 else
   fail "init.sh exited non-zero"
 fi
@@ -239,6 +255,21 @@ elif echo "$PIPELINE_OUTPUT" | grep -q "FAIL"; then
   fi
 else
   pass "Pipeline executed (exit=$PIPELINE_EXIT)"
+fi
+
+PIPELINE_JSON_EXIT=0
+PIPELINE_JSON_OUTPUT=$(bash lattice/kernel/delivery/pipeline.sh --skip-spec --skip-integration --json-out 2>&1) || PIPELINE_JSON_EXIT=$?
+LATEST_EVAL_JSON=$(find "$SANDBOX/lattice/state/eval-runs" -name '*.json' -type f -print 2>/dev/null | sort | tail -1)
+if [[ -n "$LATEST_EVAL_JSON" ]] \
+  && grep -q '"run_id"' "$LATEST_EVAL_JSON" \
+  && grep -q '"pipeline"' "$LATEST_EVAL_JSON" \
+  && grep -q '"steps"' "$LATEST_EVAL_JSON" \
+  && yq -e '.pipeline.status and .steps' "$LATEST_EVAL_JSON" >/dev/null 2>&1; then
+  pass "Pipeline writes structured eval JSON"
+else
+  fail "Pipeline did not write structured eval JSON"
+  echo "$PIPELINE_JSON_OUTPUT" | tail -20
+  echo "exit=$PIPELINE_JSON_EXIT file=${LATEST_EVAL_JSON:-<missing>}"
 fi
 echo ""
 

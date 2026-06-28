@@ -70,7 +70,7 @@ upgrade_project_kernel() {
 
   mkdir -p "$target_root"
   cp -R "$src_kernel" "$target_kernel"
-  chmod +x "$target_kernel"/_lib.sh "$target_kernel"/context/*.sh "$target_kernel"/context/backends/*.sh "$target_kernel"/delivery/*.sh "$target_kernel"/delivery/gates/*.sh 2>/dev/null || true
+  chmod +x "$target_kernel"/*.sh "$target_kernel"/context/*.sh "$target_kernel"/context/backends/*.sh "$target_kernel"/delivery/*.sh "$target_kernel"/delivery/gates/*.sh 2>/dev/null || true
   echo "✅ Kernel upgraded"
 }
 
@@ -106,6 +106,7 @@ upgrade_project_prismspec() {
   [ -d "$src_module/references" ] && cp -R "$src_module/references" "$target_module/references"
   [ -d "$src_module/agents" ] && cp -R "$src_module/agents" "$target_module/agents"
   [ -d "$src_module/commands" ] && cp -R "$src_module/commands" "$target_module/commands"
+  [ -f "$src_module/skillpack.yaml" ] && cp "$src_module/skillpack.yaml" "$target_module/skillpack.yaml"
   cp "$src_module/README.md" "$target_module/README.md"
   [ -f "$src_module/README.en.md" ] && cp "$src_module/README.en.md" "$target_module/README.en.md"
   chmod +x "$target_module"/bin/*.sh 2>/dev/null || true

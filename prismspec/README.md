@@ -48,6 +48,7 @@ prismspec/
 ├── templates/
 └── specs/
     └── {spec-id}/
+        ├── context.md
         ├── spec.md
         ├── plan.md
         ├── verify.md
@@ -64,9 +65,11 @@ prismspec/
 如果项目存在 `lattice/manifest.yaml`，PrismSpec 会进入 Lattice-hosted 模式，并使用 Lattice 的宿主路径：
 
 ```text
-lattice/specs/{spec-id}/{spec.md,plan.md,summary.md}
+lattice/specs/{spec-id}/{context.md,spec.md,plan.md,verify.md,summary.md}
 .lattice/sdd/{spec-id}/{task-id}/
 ```
+
+`skillpack.yaml` 是 PrismSpec 的可分发契约，声明 workflow stages、skills、templates、references、host modes 和质量门禁。Agent 或安装器应该把它当作技能包索引，而不是从 README 猜目录结构。
 
 ## 流程引导
 
@@ -129,7 +132,7 @@ PrismSpec 只支持两种实现策略：
 | Skill | 作用 |
 |-------|------|
 | `skills/sdd/SKILL.md` | 引导式 controller，解析当前阶段并从产物恢复 |
-| `skills/brainstorm/SKILL.md` | 澄清需求并生成 `spec.md` |
+| `skills/brainstorm/SKILL.md` | 澄清需求并生成 `context.md`、`spec.md` |
 | `skills/plan/SKILL.md` | 把 `spec.md` 拆成可执行、可审查、可追踪 AC 的 `plan.md` |
 | `skills/implement/SKILL.md` | 按 plan 或 TDD 策略执行 |
 | `skills/verify/SKILL.md` | 运行本地验证并记录证据 |

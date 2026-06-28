@@ -1,0 +1,91 @@
+api_version: prismspec.lattice.dev/v1
+kind: SkillPack
+metadata:
+  name: prismspec
+  version: 0.1.0
+  description: Progressive Spec-Driven Development skill pack for AI coding agents.
+  language: zh-CN
+  license: MIT
+compatibility:
+  agents:
+    - claude-code
+    - codex
+    - cursor
+    - aider
+    - superpowers
+  host_modes:
+    - standalone
+    - lattice-hosted
+entrypoints:
+  command: prismspec/commands/sdd.md
+  router: prismspec/bin/guide.sh
+  lint: prismspec/bin/lint.sh
+workflow:
+  stages:
+    - id: brainstorm
+      skill: prismspec/skills/brainstorm/SKILL.md
+      outputs:
+        - context.md
+        - spec.md
+    - id: plan
+      skill: prismspec/skills/plan/SKILL.md
+      inputs:
+        - context.md
+        - spec.md
+      outputs:
+        - plan.md
+    - id: implement
+      skill: prismspec/skills/implement/SKILL.md
+      inputs:
+        - spec.md
+        - plan.md
+      outputs:
+        - code
+        - tests
+        - task evidence
+    - id: verify
+      skill: prismspec/skills/verify/SKILL.md
+      inputs:
+        - spec.md
+        - plan.md
+        - code
+        - tests
+      outputs:
+        - verify.md
+    - id: finish
+      skill: prismspec/skills/finish/SKILL.md
+      inputs:
+        - spec.md
+        - plan.md
+        - verify.md
+      outputs:
+        - summary.md
+templates:
+  context: prismspec/templates/context-template.md
+  default: prismspec/templates/spec-template.md
+  lite: prismspec/templates/spec-template-lite.md
+  service: prismspec/templates/spec-template-service.md
+  frontend: prismspec/templates/spec-template-frontend.md
+  tdd: prismspec/templates/spec-template-tdd.md
+references:
+  mode_selection: prismspec/references/mode-selection.md
+  definition_of_done: prismspec/references/definition-of-done.md
+  spec_quality: prismspec/references/spec-quality-checklist.md
+  tdd_evidence: prismspec/references/tdd-evidence-checklist.md
+  review_evidence: prismspec/references/review-evidence-checklist.md
+contracts:
+  standalone_spec_root: prismspec/specs
+  lattice_spec_root: lattice/specs
+  required_artifacts:
+    - context.md
+    - spec.md
+    - plan.md
+    - verify.md
+    - summary.md
+  execution_modes:
+    - auto
+    - plan
+    - tdd
+quality_gates:
+  - bash prismspec/bin/guide.sh --json
+  - bash prismspec/bin/lint.sh <spec-dir>

@@ -21,7 +21,7 @@ Lattice is a repo-local AI Coding framework. It does not replace Claude Code, Cu
 - **PrismSpec** turns requirements into `context.md`, `spec.md`, `plan.md`, `verify.md`, and `summary.md`.
 - **Context** loads project rules, decisions, code facts, and pitfalls before spec drafting.
 - **Delivery Harness** runs build, lint, test, AC coverage, drift checks, and other gates before delivery claims.
-- **Evidence** turns "the agent says it is done" into command-backed proof. Structured Eval runs are planned.
+- **Evidence** turns "the agent says it is done" into command-backed proof and structured `eval-runs/*.json`.
 
 In short: **Lattice turns individual AI Coding practice into reusable team engineering assets.**
 
@@ -69,17 +69,19 @@ bash prismspec/bin/guide.sh --json
 
 | Component | Role | Key Paths |
 |-----------|------|-----------|
-| PrismSpec | Standalone spec-coding skill pack | `prismspec/skills/*/SKILL.md`, `prismspec/bin/`, `prismspec/templates/` |
+| PrismSpec | Standalone spec-coding skill pack | `prismspec/skillpack.yaml`, `prismspec/skills/*/SKILL.md`, `prismspec/bin/`, `prismspec/templates/` |
 | Orchestrator | Agent rules and phase definitions | `lattice/kernel/orchestrator/` |
 | Context | Agent-readable context map, project knowledge assets, external context entry, and optional retrieval backend | `lattice/context/`, `lattice/kernel/context/` |
 | Delivery | Independent verification pipeline and gates | `lattice/kernel/delivery/` |
-| Evidence | Gate output today; structured Eval run records later | pipeline output, AC coverage, drift diagnostics |
+| Evidence | Gate output and structured Eval run records | `lattice/state/eval-runs/*.json`, AC coverage, drift diagnostics |
 
 ## Common Commands
 
 ```bash
 bash lattice/kernel/delivery/pipeline.sh
+bash lattice/kernel/delivery/pipeline.sh --json-out
 bash lattice/kernel/delivery/pipeline.sh --only=spec-lint
+bash lattice/kernel/doctor.sh
 bash prismspec/bin/guide.sh --json
 bash prismspec/bin/lint.sh lattice/specs/<spec-id>
 cat lattice/context/README.md
@@ -91,14 +93,15 @@ bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
 Implemented:
 
 - install/init/upgrade and smoke tests;
-- standalone PrismSpec skill pack and Lattice-hosted mode;
+- standalone PrismSpec skill pack manifest and Lattice-hosted mode;
+- doctor and `pipeline --json-out` structured eval runs;
 - spec lint, AC coverage, drift check, compliance, spec lock;
 - context map, knowledge backend, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
-- structured eval JSON and trend metrics;
+- gate/review/TDD evidence JSON and trend metrics;
 - stronger context/knowledge metadata and stale/conflict checks;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;

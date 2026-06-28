@@ -27,16 +27,22 @@ PrismSpec is packaged as a real skill pack:
 
 ```text
 prismspec/
+├── skillpack.yaml           # skill-pack contract
 ├── skills/*/SKILL.md      # canonical skills
 ├── references/            # loaded on demand
 ├── agents/                # lightweight reviewer personas
 ├── commands/              # slash-command entry points
 ├── bin/                   # deterministic guide/lint helpers
 ├── templates/             # spec templates
-└── specs/                 # standalone durable artifacts
+└── specs/{spec-id}/       # standalone durable artifacts
+    ├── context.md
+    ├── spec.md
+    ├── plan.md
+    ├── verify.md
+    └── summary.md
 ```
 
-PrismSpec ships only canonical skill folders. `skills/*/SKILL.md` is the single source of truth.
+PrismSpec ships only canonical skill folders. `skills/*/SKILL.md` is the single source of truth, and `skillpack.yaml` is the machine-readable package index for agents and installers.
 
 ## Core Beliefs
 
@@ -102,7 +108,7 @@ The lint checks that:
 | Skill | Canonical File | Purpose |
 |-------|----------------|---------|
 | sdd | `skills/sdd/SKILL.md` | Workflow controller and resume router |
-| brainstorm | `skills/brainstorm/SKILL.md` | Clarify requirements and write `spec.md` |
+| brainstorm | `skills/brainstorm/SKILL.md` | Clarify requirements and write `context.md` + `spec.md` |
 | plan | `skills/plan/SKILL.md` | Write AC-traced `plan.md` |
 | implement | `skills/implement/SKILL.md` | Execute plan or TDD mode with evidence |
 | verify | `skills/verify/SKILL.md` | Run verification and write `verify.md` |

@@ -13,9 +13,10 @@ Do not treat this repository as a target project already using Lattice. The inst
 | Public product docs | `README.md`, `README.en.md` |
 | System design docs | `docs/wiki/` |
 | PrismSpec workflow | `prismspec/skills/*/SKILL.md` |
+| PrismSpec package contract | `prismspec/skillpack.yaml` |
 | PrismSpec templates | `prismspec/templates/` |
 | Lattice install template | `harness-template/` |
-| Delivery pipeline and gates | `harness-template/lattice/kernel/delivery/` |
+| Delivery pipeline, doctor, and gates | `harness-template/lattice/kernel/`, `harness-template/lattice/kernel/delivery/` |
 | Context layer | `harness-template/lattice/context/`, `harness-template/lattice/kernel/context/` |
 | Target-project Claude import | `harness-template/CLAUDE.lattice.md` |
 
