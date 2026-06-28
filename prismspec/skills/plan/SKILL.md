@@ -22,27 +22,43 @@ Decompose `spec.md` into small, ordered, verifiable tasks. The plan is the imple
 3. Build dependency order and prefer thin vertical slices.
 4. Upgrade `plan -> tdd` when discovered risk requires red-test evidence.
 5. Write `plan.md` next to `spec.md`.
-6. Include interfaces, likely files, acceptance links, and verification per task.
+6. Include mode, scope, interfaces, files/contracts, AC links, verification, evidence paths, and done conditions per task.
 7. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/plan-lint.sh <spec-id>` before implementation starts.
 8. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` after plan-lint passes.
 
 ## Task Shape
 
-```markdown
-## T1: <short task title>
+Use checkbox task rows so Lattice can track execution state. Every AC in `spec.md` must be referenced by at least one task.
 
-- AC: AC-1, AC-2
-- Mode: plan | tdd
-- Scope: <one sentence>
-- Files likely touched:
-  - `<path>`
-- Verification:
-  - `<exact command or evidence>`
-- Done when:
-  - [ ] <observable condition>
+```markdown
+- [ ] T1: <short implementation title>
+  - Ref: AC-1, AC-2
+  - Mode: plan | tdd
+  - Scope: <one sentence; one thin vertical slice>
+  - Interfaces:
+    - Inputs: <request/event/file/config>
+    - Outputs: <response/state/artifact>
+    - Touched files/contracts: <module/api/schema/ui/config>
+  - Files: `<path>`, `<path>`
+  - Verification: `<exact command, test name, or gate>`
+  - Evidence:
+    - Brief: `.lattice/sdd/<spec-id>/T1/brief.md`
+    - Review package: `.lattice/sdd/<spec-id>/T1/review-package.md`
+  - Done when:
+    - [ ] <observable condition>
 ```
 
-For TDD tasks, add explicit red tasks before implementation tasks.
+For TDD tasks, list explicit `RED-{n}` tasks before implementation tasks:
+
+```markdown
+- [ ] RED-1: <short red-test title>
+  - Ref: AC-1
+  - Expected failure: <why this should fail before implementation>
+  - Test file: `<path>`
+  - Verification: `<exact command or test name>`
+  - Done when:
+    - [ ] Expected failure is captured in the related task evidence.
+```
 
 ## Outputs
 

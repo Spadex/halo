@@ -47,6 +47,7 @@ All notable changes to this project will be documented in this file.
 - Default architecture and glossary knowledge templates now include `Source` columns for promotion governance.
 - Default project knowledge templates now include `owner`, `verified_at`, and `applies_to` front matter.
 - PrismSpec README now documents `context.md` in both standalone and Lattice-hosted artifact layouts.
+- Plan lint now enforces a stricter task schema with AC coverage, mode/scope, evidence paths, done conditions, stable task order, and TDD red-test ordering.
 
 ### Fixed
 

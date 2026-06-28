@@ -585,8 +585,26 @@ cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
 
 ## Tasks
 
+- [ ] RED-1: Add failing test for AC-1
+  - Ref: AC-1
+  - Expected failure: handler does not create items yet
+  - Test file: `internal/handler/item_test.go`
+  - Verification: `go test ./internal/handler -run TestAC1_CreateItem`
+  - Done when:
+    - [ ] Expected failure is captured in `.lattice/sdd/modern-feature/T1/tdd-evidence.json`
+
+- [ ] RED-2: Add failing test for AC-2
+  - Ref: AC-2
+  - Expected failure: handler does not return created items yet
+  - Test file: `internal/handler/item_test.go`
+  - Verification: `go test ./internal/handler -run TestAC2_GetItem`
+  - Done when:
+    - [ ] Expected failure is captured in `.lattice/sdd/modern-feature/T2/tdd-evidence.json`
+
 - [ ] T1: Add create behavior
   - Ref: AC-1
+  - Mode: tdd
+  - Scope: Implement the smallest create path needed for AC-1.
   - Interfaces:
     - Inputs: create request
     - Outputs: 201 response
@@ -596,12 +614,24 @@ cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
   - Evidence:
     - Brief: `.lattice/sdd/modern-feature/T1/brief.md`
     - Review package: `.lattice/sdd/modern-feature/T1/review-package.md`
+  - Done when:
+    - [ ] AC-1 passes focused verification and evidence exists.
 
-## Test-first Tasks
-
-- [ ] RED-1: Add failing test for AC-1
-  - Expected failure: handler not implemented
-  - Test file: `internal/handler/item_test.go`
+- [ ] T2: Add get behavior
+  - Ref: AC-2
+  - Mode: tdd
+  - Scope: Implement the smallest get path needed for AC-2.
+  - Interfaces:
+    - Inputs: get request
+    - Outputs: item response
+    - Touched files/contracts: handler
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC2_GetItem`
+  - Evidence:
+    - Brief: `.lattice/sdd/modern-feature/T2/brief.md`
+    - Review package: `.lattice/sdd/modern-feature/T2/review-package.md`
+  - Done when:
+    - [ ] AC-2 passes focused verification and evidence exists.
 PLAN
 
 PRISMSPEC_PLAN_LINT_EXIT=0
@@ -658,7 +688,7 @@ else
   tail -20 /tmp/lattice-spec-status-incomplete.log
 fi
 
-perl -0pi -e 's/- \[ \] T1:/- [x] T1:/g; s/- \[ \] RED-1:/- [x] RED-1:/g' "$SANDBOX/lattice/specs/modern-feature/plan.md"
+perl -0pi -e 's/- \[ \] T1:/- [x] T1:/g; s/- \[ \] T2:/- [x] T2:/g; s/- \[ \] RED-1:/- [x] RED-1:/g; s/- \[ \] RED-2:/- [x] RED-2:/g' "$SANDBOX/lattice/specs/modern-feature/plan.md"
 SPEC_STATUS_NO_EVIDENCE_EXIT=0
 bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned >/tmp/lattice-spec-status-no-evidence.log 2>&1 || SPEC_STATUS_NO_EVIDENCE_EXIT=$?
 if [[ $SPEC_STATUS_NO_EVIDENCE_EXIT -ne 0 ]] && grep -q "missing brief.md" /tmp/lattice-spec-status-no-evidence.log; then
@@ -706,6 +736,40 @@ if yq -e '.kind == "tdd-evidence" and .status == "pass" and .red.exit_code == 1 
 else
   fail "tdd-evidence JSON invalid"
   echo "$TDD_EVIDENCE_OUTPUT" | tail -10
+fi
+
+BRIEF_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" modern-feature T2 2>&1)
+if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T2/brief.md" ]] && grep -q "Global Constraints" "$SANDBOX/.lattice/sdd/modern-feature/T2/brief.md"; then
+  pass "task-brief generates second task evidence"
+else
+  fail "task-brief did not generate second task evidence"
+  echo "$BRIEF_OUTPUT_T2" | tail -10
+fi
+
+REVIEW_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" modern-feature T2 2>&1)
+if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T2/review-package.md" ]] && grep -q "cannot-verify" "$SANDBOX/.lattice/sdd/modern-feature/T2/review-package.md"; then
+  pass "review-package generates second read-only review package"
+else
+  fail "review-package did not generate second package"
+  echo "$REVIEW_OUTPUT_T2" | tail -10
+fi
+
+TDD_EVIDENCE_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/tdd-evidence.sh" modern-feature T2 \
+  --ac=AC-2 \
+  --test=TestAC2_GetItem \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestAC2_GetItem" \
+  --red-exit=1 \
+  --red-summary="handler does not return created items yet" \
+  --green-command="go test ./internal/handler -run TestAC2_GetItem" \
+  --green-exit=0 \
+  --green-summary="focused AC test passes" \
+  --refactor=none 2>&1)
+if yq -e '.kind == "tdd-evidence" and .status == "pass" and .red.exit_code == 1 and .green.exit_code == 0 and (.ac_ids | length == 1)' "$SANDBOX/.lattice/sdd/modern-feature/T2/tdd-evidence.json" >/dev/null 2>&1; then
+  pass "tdd-evidence writes second structured red/green JSON"
+else
+  fail "second tdd-evidence JSON invalid"
+  echo "$TDD_EVIDENCE_OUTPUT_T2" | tail -10
 fi
 
 TASK_EVIDENCE_LINT_EXIT=0
@@ -770,6 +834,52 @@ if [[ $BAD_PLAN_LINT_EXIT -ne 0 ]] && grep -q "No stable task ids" /tmp/lattice-
 else
   fail "plan-lint accepted untraceable plan"
   tail -20 /tmp/lattice-plan-lint-bad.log
+fi
+
+mkdir -p "$SANDBOX/lattice/specs/bad-plan-schema"
+cat > "$SANDBOX/lattice/specs/bad-plan-schema/spec.md" << 'BAD_SCHEMA_SPEC'
+---
+id: bad-plan-schema
+execution_mode: plan
+---
+
+# Spec: Bad Plan Schema
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Something happens | It works | Test |
+BAD_SCHEMA_SPEC
+cat > "$SANDBOX/lattice/specs/bad-plan-schema/plan.md" << 'BAD_SCHEMA_PLAN'
+# Plan: Bad Plan Schema
+
+## Source
+
+- Spec: `lattice/specs/bad-plan-schema/spec.md`
+- Execution mode: plan
+
+## Global Constraints
+
+- Keep scope small.
+
+## Tasks
+
+- [ ] T1: Do the work
+  - Ref: AC-1
+  - Files: `internal/example.go`
+  - Verification: `go test ./...`
+BAD_SCHEMA_PLAN
+BAD_PLAN_SCHEMA_EXIT=0
+bash "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" bad-plan-schema >/tmp/lattice-plan-lint-bad-schema.log 2>&1 || BAD_PLAN_SCHEMA_EXIT=$?
+if [[ $BAD_PLAN_SCHEMA_EXIT -ne 0 ]] \
+  && grep -q "T1 missing Mode" /tmp/lattice-plan-lint-bad-schema.log \
+  && grep -q "T1 missing Evidence" /tmp/lattice-plan-lint-bad-schema.log \
+  && grep -q "T1 missing Done when" /tmp/lattice-plan-lint-bad-schema.log; then
+  pass "plan-lint rejects incomplete task schema"
+else
+  fail "plan-lint accepted incomplete task schema"
+  tail -30 /tmp/lattice-plan-lint-bad-schema.log
 fi
 
 cat > "$SANDBOX/lattice/specs/modern-feature/verify.md" << 'VERIFY'
@@ -903,7 +1013,7 @@ fi
 PIPELINE_GATE_JSON="$SANDBOX/lattice/state/pipeline-ac-smoke.json"
 PIPELINE_GATE_EXIT=0
 bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_GATE_JSON" >/tmp/lattice-pipeline-gate-json.log 2>&1 || PIPELINE_GATE_EXIT=$?
-if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 1 and .metrics.tdd_complete == 1 and .metrics.context_run_total == 1 and .metrics.context_selected_facts == 3 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .process_evidence.context_runs[0].kind == "context-run" and .process_evidence.context_runs[0].metrics.selected_facts == 3 and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
+if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 2 and .metrics.tdd_complete == 2 and .metrics.context_run_total == 1 and .metrics.context_selected_facts == 3 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .process_evidence.context_runs[0].kind == "context-run" and .process_evidence.context_runs[0].metrics.selected_facts == 3 and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
   pass "pipeline embeds structured gate JSON in eval run"
 else
   fail "pipeline gate JSON embedding invalid"

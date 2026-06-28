@@ -86,6 +86,15 @@ extract_task_id() {
   sed -E 's/^- \[[ xX]\] ((T[0-9]+|RED-[0-9]+)):.*/\1/' <<< "$line"
 }
 
+require_task_pattern() {
+  local task_id="$1" body="$2" pattern="$3" message="$4"
+  if grep -qiE "$pattern" <<< "$body"; then
+    return 0
+  fi
+  fail_msg "$task_id $message"
+  return 0
+}
+
 execution_mode() {
   local spec="$1" plan="$2" value
   value="$(grep -Eim1 '^execution_mode:[[:space:]]*(plan|tdd)' "$spec" 2>/dev/null | sed -E 's/.*execution_mode:[[:space:]]*//; s/[`"]//g' || true)"
@@ -138,38 +147,58 @@ echo ""
 
 echo "── Task contract ──"
 TASK_COUNT=0
-BAD_TASKS=0
 AC_REFERENCES="$({ grep -oE 'AC-[0-9]+' "$PLAN_FILE" || true; } | sort -u | tr '\n' ' ')"
+SPEC_AC_REFERENCES=""
+if [[ -n "$SPEC_FILE" && -f "$SPEC_FILE" ]]; then
+  SPEC_AC_REFERENCES="$({ grep -oE 'AC-[0-9]+' "$SPEC_FILE" || true; } | sort -u)"
+fi
+SEEN_TASK_IDS=""
+EXPECTED_T=1
+EXPECTED_RED=1
+FIRST_T_LINE=0
+FIRST_RED_LINE=0
 while IFS= read -r line; do
   [[ -n "$line" ]] || continue
   task_id="$(extract_task_id "$line")"
   body="$(task_body "$task_id" "$PLAN_FILE")"
   TASK_COUNT=$((TASK_COUNT + 1))
-  if [[ "$task_id" == RED-* ]]; then
-    if ! grep -qiE 'Expected failure:' <<< "$body"; then
-      fail_msg "$task_id missing Expected failure"
-      BAD_TASKS=$((BAD_TASKS + 1))
-    fi
-    if ! grep -qiE 'Test file:' <<< "$body"; then
-      fail_msg "$task_id missing Test file"
-      BAD_TASKS=$((BAD_TASKS + 1))
-    fi
-  elif [[ "$task_id" == T* ]]; then
-    if ! grep -qE 'AC-[0-9]+' <<< "$body"; then
-      fail_msg "$task_id missing AC reference"
-      BAD_TASKS=$((BAD_TASKS + 1))
-    fi
-    if ! grep -qiE 'Verification:' <<< "$body"; then
-      fail_msg "$task_id missing Verification"
-      BAD_TASKS=$((BAD_TASKS + 1))
-    fi
-    if ! grep -qiE 'Files:|Touched files/contracts:' <<< "$body"; then
-      fail_msg "$task_id missing files/contracts boundary"
-      BAD_TASKS=$((BAD_TASKS + 1))
-    fi
+  line_number="$(grep -nF -- "$line" "$PLAN_FILE" | head -1 | cut -d: -f1)"
+  if grep -qxF "$task_id" <<< "$SEEN_TASK_IDS"; then
+    fail_msg "$task_id duplicate task id"
   fi
-  if ! grep -qiE 'Done when:|Evidence:' <<< "$body"; then
-    warn_msg "$task_id has no Done when or Evidence"
+  SEEN_TASK_IDS="${SEEN_TASK_IDS}${task_id}"$'\n'
+
+  if [[ "$task_id" == RED-* ]]; then
+    red_number="${task_id#RED-}"
+    if [[ "$red_number" -ne "$EXPECTED_RED" ]]; then
+      fail_msg "$task_id should be RED-$EXPECTED_RED"
+    fi
+    EXPECTED_RED=$((EXPECTED_RED + 1))
+    [[ "$FIRST_RED_LINE" -eq 0 ]] && FIRST_RED_LINE="$line_number"
+    require_task_pattern "$task_id" "$body" 'AC-[0-9]+' "missing AC reference"
+    require_task_pattern "$task_id" "$body" 'Expected failure:' "missing Expected failure"
+    require_task_pattern "$task_id" "$body" 'Test file:' "missing Test file"
+    require_task_pattern "$task_id" "$body" 'Verification:' "missing Verification"
+    require_task_pattern "$task_id" "$body" 'Done when:' "missing Done when"
+  elif [[ "$task_id" == T* ]]; then
+    t_number="${task_id#T}"
+    if [[ "$t_number" -ne "$EXPECTED_T" ]]; then
+      fail_msg "$task_id should be T$EXPECTED_T"
+    fi
+    EXPECTED_T=$((EXPECTED_T + 1))
+    [[ "$FIRST_T_LINE" -eq 0 ]] && FIRST_T_LINE="$line_number"
+    require_task_pattern "$task_id" "$body" 'AC-[0-9]+' "missing AC reference"
+    require_task_pattern "$task_id" "$body" 'Mode:[[:space:]]*(plan|tdd|`plan`|`tdd`)' "missing Mode"
+    require_task_pattern "$task_id" "$body" 'Scope:' "missing Scope"
+    require_task_pattern "$task_id" "$body" 'Verification:' "missing Verification"
+    require_task_pattern "$task_id" "$body" 'Files:|Touched files/contracts:' "missing files/contracts boundary"
+    require_task_pattern "$task_id" "$body" 'Evidence:' "missing Evidence"
+    require_task_pattern "$task_id" "$body" 'Brief:' "missing Evidence Brief"
+    require_task_pattern "$task_id" "$body" 'Review package:' "missing Evidence Review package"
+    require_task_pattern "$task_id" "$body" 'Done when:' "missing Done when"
+  fi
+  if grep -Eiq '\b(TODO|TBD|FIXME)\b|<[^>]+>|\{[^}]+\}' <<< "$body"; then
+    fail_msg "$task_id contains unresolved placeholder text"
   fi
 done < <(task_lines "$PLAN_FILE")
 
@@ -183,6 +212,14 @@ if [[ -n "$AC_REFERENCES" ]]; then
 else
   fail_msg "No AC references in plan"
 fi
+while IFS= read -r ac_id; do
+  [[ -n "$ac_id" ]] || continue
+  if grep -qw "$ac_id" <<< "$AC_REFERENCES"; then
+    pass_msg "$ac_id planned"
+  else
+    fail_msg "$ac_id from spec.md is not referenced in plan.md"
+  fi
+done <<< "$SPEC_AC_REFERENCES"
 echo ""
 
 echo "── Mode-specific checks ──"
@@ -192,6 +229,9 @@ if [[ "$MODE" == "tdd" ]]; then
     pass_msg "TDD red-test task(s): $RED_COUNT"
   else
     fail_msg "TDD plan requires RED-{n} test-first tasks"
+  fi
+  if [[ "$FIRST_T_LINE" -gt 0 && "$FIRST_RED_LINE" -gt 0 && "$FIRST_T_LINE" -lt "$FIRST_RED_LINE" ]]; then
+    fail_msg "TDD plan must list RED-{n} tasks before implementation T{n} tasks"
   fi
 else
   pass_msg "Mode: $MODE"

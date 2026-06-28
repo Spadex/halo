@@ -77,6 +77,12 @@ check_plan() {
   grep -qE 'AC-[0-9]+' "$PLAN_FILE" || bad "plan.md has no AC references"
   grep -qiE 'verify|verification|test|lint|build|验证|测试' "$PLAN_FILE" || bad "plan.md has no verification steps"
   grep -qE '(^|[[:space:]])(T[0-9]+|RED-[0-9]+)[:.) -]' "$PLAN_FILE" || bad "plan.md has no stable task ids"
+  grep -qiE 'Mode:[[:space:]]*`?(plan|tdd)' "$PLAN_FILE" || bad "plan.md tasks have no Mode"
+  grep -qiE 'Scope:' "$PLAN_FILE" || bad "plan.md tasks have no Scope"
+  grep -qiE 'Evidence:' "$PLAN_FILE" || bad "plan.md tasks have no Evidence block"
+  grep -qiE 'Brief:' "$PLAN_FILE" || bad "plan.md tasks have no Brief evidence path"
+  grep -qiE 'Review package:' "$PLAN_FILE" || bad "plan.md tasks have no Review package evidence path"
+  grep -qiE 'Done when:' "$PLAN_FILE" || bad "plan.md tasks have no Done when condition"
 
   if grep -qiE 'execution[_ -]?mode:[[:space:]]*tdd|Mode:[[:space:]]*`?tdd' "$SPEC_FILE" 2>/dev/null; then
     grep -qE 'RED-[0-9]+|red test|failing test|红灯|失败测试' "$PLAN_FILE" || bad "tdd spec requires red-test tasks in plan.md"
