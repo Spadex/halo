@@ -13,7 +13,8 @@ flowchart LR
     FIX --> V
     R -->|"no"| E["Escalate"]
     E --> LD["Learn draft"]
-    LD --> K["Context knowledge"]
+    LD --> PD["Promote / Discard"]
+    PD --> K["Context knowledge"]
 ```
 
 Loop 的目标不是让 Agent 无限自修复，而是让失败可控：
@@ -35,11 +36,13 @@ Loop 的目标不是让 Agent 无限自修复，而是让失败可控：
 - 基于 `lattice/config/failure-categories.yaml` 生成 `failure_category` 与 `default_action`，缺失配置时回退到内置规则；
 - 用 `failure-category-lint.sh` 校验分类配置，并由 doctor 执行；
 - retry 耗尽时在 `lattice/context/drafts/escalation-<run-id>.md` 生成 learn draft；
+- 用 `lattice/kernel/context/learn-draft.sh` promote 或 discard 待确认 draft；
+- 在 `lattice/state/learn-promotions/*.json` 记录 promotion/discard 审计事件；
 - 在 eval run 中嵌入 `loop_state`，并把 retry/escalation 指标汇总到 summary 和 history。
 
 当前缺失：
 
-- learn draft 的 promotion / discard 流程仍需人工执行。
+- promotion 前的重复、冲突和过期检测仍需要人工判断。
 
 ## 状态模型
 
@@ -132,7 +135,14 @@ draft 内容：
 **Evidence**: lattice/state/eval-runs/<run-id>.json
 ```
 
-进入正式 knowledge 前必须人工或 reviewer 确认，避免把一次性实现细节污染知识库。
+进入正式 knowledge 前必须人工或 reviewer 确认，避免把一次性实现细节污染知识库。确认后使用命令完成归档和审计：
+
+```bash
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --to=lattice/context/knowledge/pitfalls.md
+bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
+```
+
+promotion 会把 `## Lesson Candidate` 追加到目标 knowledge 文件，把原 draft 移到 `lattice/context/drafts/promoted/`，并写出 `lattice/state/learn-promotions/*.json`。discard 会把原 draft 移到 `lattice/context/drafts/discarded/`，并要求记录废弃原因。
 
 ## 与 PrismSpec 的关系
 
@@ -147,10 +157,10 @@ Loop 不新增 SDD 阶段，它嵌入 Verification：
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| learn draft promotion 未流程化 | 候选经验可能长期停留在 drafts | promotion / discard workflow |
+| promotion 前缺少重复/冲突检测 | 候选经验可能与已有 knowledge 重复或矛盾 | metadata + conflict/stale check |
 
 ## 演进顺序
 
 1. Finishing 引用 loop state 和 learn draft。
-2. 增加 learn draft promotion / discard workflow。
+2. 增强 promotion 前的重复、冲突和过期提示。
 3. 将 loop history 接入 central eval sink 或 dashboard。

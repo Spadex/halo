@@ -92,6 +92,8 @@ bash prismspec/bin/guide.sh --json
 bash prismspec/bin/lint.sh lattice/specs/<spec-id>
 cat lattice/context/README.md
 bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --to=lattice/context/knowledge/pitfalls.md
+bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
 ```
 
 ## Current Status
@@ -100,14 +102,13 @@ Implemented:
 
 - install/init/upgrade and smoke tests;
 - standalone PrismSpec skill pack manifest and Lattice-hosted mode;
-- doctor, `pipeline --json-out` structured eval runs, loop state JSON, configurable failure categories, failure category lint, escalation learn drafts, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
+- doctor, `pipeline --json-out` structured eval runs, loop state JSON, learn promotion audit events, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
 - spec lint, AC coverage, drift check, compliance, spec lock;
 - context map, knowledge backend, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
-- learn draft promotion workflow;
 - stronger context/knowledge metadata and stale/conflict checks;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;

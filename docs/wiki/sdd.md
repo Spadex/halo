@@ -228,17 +228,18 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - 多模板策略。
 - Lattice-hosted 与 standalone 路径分流。
 - task brief / review package / review summary / TDD evidence helper。
+- learn draft promotion/discard workflow。
 
 尚未完成：
 
 - spec state machine 强校验。
 - plan schema。
-- learn draft promotion workflow。
+- promotion 前 duplicate/conflict/stale diagnostics。
 
 ## 演进优先级
 
 1. 强化 `spec-lint` 对 front matter、mode、status 的校验。
 2. 增加 plan schema 或 plan-lint。
-3. 增加 learn draft promotion workflow。
+3. 增加 promotion 前 duplicate/conflict/stale diagnostics。
 4. 增加 dashboard 或 central eval sink。
 5. 用真实项目迭代模板和 mode 选择策略。

@@ -70,7 +70,9 @@ your-project/
 │   │   ├── knowledge/
 │   │   └── drafts/
 │   ├── state/
-│   │   └── eval-runs/
+│   │   ├── eval-runs/
+│   │   ├── loops/
+│   │   └── learn-promotions/
 │   └── specs/
 │       └── <spec-id>/
 │           ├── context.md
@@ -172,6 +174,10 @@ cat lattice/context/README.md
 
 # 可选：检索项目内 curated knowledge
 bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
+
+# Promote or discard a confirmed learn draft
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --to=lattice/context/knowledge/pitfalls.md
+bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
 ```
 
 ## 当前状态
@@ -182,14 +188,13 @@ bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
 - PrismSpec 独立 skill pack manifest 与 Lattice-hosted 模式；
 - 目录化 spec、per-spec context、模板和 artifact lint；
 - doctor、spec lint、AC coverage、drift check、compliance、spec lock；
-- `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、AC/drift/compliance gate JSON、可配置 failure category、learn draft 和 review/TDD process evidence；
+- `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/state/learn-promotions/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、AC/drift/compliance gate JSON、可配置 failure category、learn draft promotion/discard 和 review/TDD process evidence；
 - GitHub Actions eval artifact、Step Summary 与 best-effort PR comment workflow 模板；
 - Context map、knowledge backend、中心知识 sync 和基础 `/learn` 约定；
 - Go/Gin/GORM 可运行示例与多 Agent adapter 文档。
 
 仍在演进：
 
-- learn draft promotion workflow；
 - context/knowledge metadata、过期检测和冲突治理；
 - Node/Python 等更多 drift parser；
 - 插件 manifest/schema/versioning 与多 Agent lease 模型。

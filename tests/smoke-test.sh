@@ -108,6 +108,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
     && [[ -f "$SANDBOX/lattice/config/failure-categories.yaml" ]]; then
     pass "kernel files installed"
   else
@@ -617,6 +618,59 @@ if [[ $PIPELINE_ESCALATION_EXIT -eq 2 ]] \
 else
   fail "pipeline escalation learn draft invalid"
   cat /tmp/lattice-pipeline-escalation.log | tail -20
+fi
+
+PROMOTE_TARGET="$SANDBOX/lattice/context/knowledge/pitfalls.md"
+PROMOTE_EXIT=0
+bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --to="$PROMOTE_TARGET" >/tmp/lattice-learn-promote.log 2>&1 || PROMOTE_EXIT=$?
+PROMOTED_DRAFT="$SANDBOX/lattice/context/drafts/promoted/$(basename "$ESCALATION_LEARN_DRAFT")"
+PROMOTE_EVENT=$(find "$SANDBOX/lattice/state/learn-promotions" -type f -name '*.json' -print | head -1)
+if [[ $PROMOTE_EXIT -eq 0 ]] \
+  && [[ -f "$PROMOTED_DRAFT" ]] \
+  && grep -q "Promoted Learn Draft" "$PROMOTE_TARGET" \
+  && [[ -n "$PROMOTE_EVENT" ]] \
+  && yq -e '.kind == "learn-promotion" and .action == "promote" and .target == "lattice/context/knowledge/pitfalls.md" and .failure_category == "ac_gap" and .default_action == "add_or_map_tests"' "$PROMOTE_EVENT" >/dev/null 2>&1; then
+  pass "learn-draft promotes draft with audit event"
+else
+  fail "learn-draft promote invalid"
+  cat /tmp/lattice-learn-promote.log | tail -20
+fi
+
+DISCARD_DRAFT="$SANDBOX/lattice/context/drafts/manual-discard.md"
+cat > "$DISCARD_DRAFT" <<'MD'
+---
+run_id: "manual-discard"
+failure_category: "unknown"
+default_action: "escalate"
+---
+
+# Learn Draft: Manual Discard
+
+## Lesson Candidate
+
+This candidate is intentionally discarded by smoke test.
+MD
+
+DISCARD_EXIT=0
+bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" discard "$DISCARD_DRAFT" --reason="not reusable" >/tmp/lattice-learn-discard.log 2>&1 || DISCARD_EXIT=$?
+DISCARDED_DRAFT="$SANDBOX/lattice/context/drafts/discarded/$(basename "$DISCARD_DRAFT")"
+DISCARD_EVENT=$(
+  for event in "$SANDBOX"/lattice/state/learn-promotions/*.json; do
+    [[ -f "$event" ]] || continue
+    if yq -e '.action == "discard"' "$event" >/dev/null 2>&1; then
+      printf '%s\n' "$event"
+      break
+    fi
+  done
+)
+if [[ $DISCARD_EXIT -eq 0 ]] \
+  && [[ -f "$DISCARDED_DRAFT" ]] \
+  && [[ -n "$DISCARD_EVENT" ]] \
+  && yq -e '.kind == "learn-promotion" and .action == "discard" and .reason == "not reusable" and .failure_category == "unknown" and .default_action == "escalate"' "$DISCARD_EVENT" >/dev/null 2>&1; then
+  pass "learn-draft discards draft with audit event"
+else
+  fail "learn-draft discard invalid"
+  cat /tmp/lattice-learn-discard.log | tail -20
 fi
 
 if bash "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" >/tmp/lattice-failure-category-lint.log 2>&1; then
