@@ -6,15 +6,16 @@ User says "initialize Lattice", "/init", or project root has no `lattice/manifes
 
 ## Flow
 
-1. **Check existing state**: if `lattice/manifest.yaml` exists, ask to overwrite
-2. **Collect project info**: language, framework, ORM, database
-3. **Generate manifest.yaml**: based on answers
-4. **Inject CLAUDE.md**: append `@import lattice/kernel/orchestrator/rules.md`
-5. **Create directory structure**: specs/, context/, context/knowledge/, state/
-6. **Verify**: run `bash lattice/kernel/delivery/pipeline.sh --skip-spec --skip-integration`
+1. Detect the project language, framework, ORM, database, and CI profile.
+2. Copy the Lattice kernel, context template, PrismSpec module, and slash commands.
+3. Generate `lattice/manifest.yaml` when it does not already exist.
+4. Configure `CLAUDE.md` with `@import lattice/kernel/orchestrator/rules.md`.
+5. Create project-owned directories: `lattice/specs/`, `lattice/context/`, `lattice/state/`.
+6. Run `bash lattice/kernel/delivery/bootstrap.sh check`.
 
 ## Output
 
-- `lattice/manifest.yaml` — Project declaration
-- `CLAUDE.md` — With @import
-- Empty directory structure and starter context index
+- `lattice/manifest.yaml` — project declaration
+- `CLAUDE.md` — Claude Code import entry
+- `lattice/context/README.md` — project context map
+- `lattice/specs/` — directory spec artifacts

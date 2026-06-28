@@ -268,7 +268,6 @@ fi
 copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/context" "lattice/context"
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/skills/init.md" "lattice/skills/init.md"
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/skills/README.md" "lattice/skills/README.md"
 
 for f in init.md sdd.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
   copy_if_not_exists "$HARNESS_TEMPLATE_DIR/.claude/commands/$f" ".claude/commands/$f"
