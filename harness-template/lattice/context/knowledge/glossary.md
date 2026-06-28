@@ -1,9 +1,9 @@
 # Glossary
 
-Record domain terms, abbreviations, naming conventions, and shared vocabulary.
+Record domain terms, abbreviations, naming conventions, and shared vocabulary. Include a source for every durable term or convention.
 
-| Term | Meaning | Notes |
-|------|---------|-------|
+| Term | Meaning | Notes | Source |
+|------|---------|-------|--------|
 
 ## Naming Conventions
 

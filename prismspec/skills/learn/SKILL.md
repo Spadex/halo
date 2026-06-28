@@ -22,6 +22,7 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 3. Write one concise knowledge entry per rule or pitfall.
 4. Include trigger context, rule, source, and practical guidance.
 5. Update the relevant knowledge file or context map.
+6. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
 
 ## Knowledge Entry Shape
 
@@ -39,6 +40,7 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 
 - Knowledge draft in `lattice/context/drafts/`, promoted project knowledge in `lattice/context/knowledge/`, or standalone `prismspec/knowledge/`.
 - Updated `index.md`.
+- Lattice advisory output from `bash lattice/kernel/context/knowledge-lint.sh --target=<knowledge-file>` when available.
 
 ## Stop Conditions
 
@@ -67,4 +69,5 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 - [ ] Existing knowledge was checked.
 - [ ] New entry is concise and sourced.
 - [ ] Relevant context entry is discoverable from `lattice/context/README.md` or the appropriate knowledge file.
+- [ ] `knowledge-lint.sh` has no unresolved warnings, or warnings are explicitly accepted by a reviewer.
 - [ ] No secrets or raw sensitive data are included.

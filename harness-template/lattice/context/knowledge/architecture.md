@@ -1,16 +1,16 @@
 # Architecture
 
-Record durable architecture context that helps agents understand module boundaries and system flows.
+Record durable architecture context that helps agents understand module boundaries and system flows. Include a source for every durable fact.
 
 ## Modules
 
-| Module | Responsibility | Notes |
-|--------|----------------|-------|
+| Module | Responsibility | Notes | Source |
+|--------|----------------|-------|--------|
 
 ## Key Flows
 
-| Flow | Entry | Core modules | Notes |
-|------|-------|--------------|-------|
+| Flow | Entry | Core modules | Notes | Source |
+|------|-------|--------------|-------|--------|
 
 ## Boundaries
 

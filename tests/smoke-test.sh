@@ -109,6 +109,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" ]] \
     && [[ -f "$SANDBOX/lattice/config/failure-categories.yaml" ]]; then
     pass "kernel files installed"
   else
@@ -672,6 +673,39 @@ else
   fail "learn-draft discard invalid"
   cat /tmp/lattice-learn-discard.log | tail -20
 fi
+
+if bash "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" --strict >/tmp/lattice-knowledge-lint-default.log 2>&1; then
+  pass "knowledge-lint passes default knowledge templates"
+else
+  fail "knowledge-lint should pass default knowledge templates"
+  cat /tmp/lattice-knowledge-lint-default.log | tail -20
+fi
+
+BAD_KNOWLEDGE="$SANDBOX/lattice/context/knowledge/bad-governance.md"
+cat > "$BAD_KNOWLEDGE" <<'MD'
+---
+expires_at: "2000-01-01"
+---
+
+# Bad Governance Fixture
+
+TODO: resolve this before promotion.
+
+## Duplicate
+
+CONFLICT: contradicts existing knowledge.
+
+## Duplicate
+
+Same heading repeated.
+MD
+
+if bash "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" --strict --target="$BAD_KNOWLEDGE" >/tmp/lattice-knowledge-lint-bad.log 2>&1; then
+  fail "knowledge-lint should reject stale/conflicting knowledge"
+else
+  pass "knowledge-lint rejects stale/conflicting knowledge"
+fi
+rm -f "$BAD_KNOWLEDGE"
 
 if bash "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" >/tmp/lattice-failure-category-lint.log 2>&1; then
   pass "failure-category-lint passes default config"

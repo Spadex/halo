@@ -161,6 +161,9 @@ case "$ACTION" in
     write_event_json "promote" "$DRAFT_REL" "$ARCHIVE_REL" "$TARGET_REL" "" "$RUN_ID" "$FAILURE_CATEGORY" "$DEFAULT_ACTION" "$EVENT_FILE"
     echo "✅ Promoted learn draft → $TARGET_REL"
     echo "🧾 Event: $(rel_path "$EVENT_FILE")"
+    if [[ -x "$PROJECT_ROOT/lattice/kernel/context/knowledge-lint.sh" ]]; then
+      bash "$PROJECT_ROOT/lattice/kernel/context/knowledge-lint.sh" --target="$TARGET_REL" || true
+    fi
     ;;
   discard)
     [[ -n "$REASON" ]] || { echo "Discard requires --reason=<reason>"; exit 1; }

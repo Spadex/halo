@@ -236,6 +236,26 @@ lattice/kernel/context/backends/knowledge.sh
 
 `loader.sh` 只保留为兼容包装，不应在 Brainstorming 里写成必做主入口。
 
+## `knowledge-lint.sh` 的定位
+
+`knowledge-lint.sh` 是项目知识进入长期记忆前的轻量治理检查。它不是内容评审，也不替代 Agent / reviewer 判断知识是否正确，只负责发现最容易污染长期 context 的结构化风险：
+
+- 缺少 `Source` 字段或 `Source` 表格列；
+- 残留 `TODO` / `TBD` / `FIXME`；
+- 显式 `CONFLICT` / `冲突` 标记；
+- 已过期的 `expires_at: YYYY-MM-DD`；
+- 单个文件内重复的二级标题。
+
+推荐用法：
+
+```bash
+bash lattice/kernel/context/knowledge-lint.sh
+bash lattice/kernel/context/knowledge-lint.sh --strict
+bash lattice/kernel/context/knowledge-lint.sh --target=lattice/context/knowledge/pitfalls.md
+```
+
+默认模式只给 warning，适合 doctor 和本地日常检查；`--strict` 适合 CI、promotion 前检查或团队治理。
+
 ## 与 PrismSpec 的关系
 
 PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文。
@@ -255,12 +275,12 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 | 默认 context map 仍需项目化 | 初始化后需要补充真实模块、链路和风险 | P0 |
 | 项目知识文件仍需真实沉淀 | Agent 只能看到结构，缺少真实领域知识 | P0 |
 | `sources.yaml` 尚未被自动化消费 | 当前更多是未来扩展点 | P1 |
-| context metadata 不足 | 来源、owner、过期和冲突难治理 | P1 |
+| context metadata 不足 | 已有轻量 lint，但 owner、verified_at、适用范围仍难治理 | P1 |
 | context-runs 未落地 | 不知道哪些上下文真的有用 | P1 |
 
 ## 推荐演进
 
 1. 在真实示例中填充 `lattice/context/README.md`、`external.md` 和项目知识文件。
-2. 为项目知识增加轻量 front matter metadata。
+2. 为项目知识增加 owner、verified_at、applies_to 等 front matter metadata。
 3. 将 `sources.yaml` 保留为可选自动化配置，后续脚本真正消费后再提升权重。
 4. 记录 context-runs，用于后续 Eval 分析哪些上下文真的有用。
