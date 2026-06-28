@@ -43,7 +43,7 @@ lattice/
 │       ├── plan.md
 │       └── summary.md
 └── state/
-    └── context-runs/          # 可选：后续结构化记录命中与取舍
+    └── context-runs/          # 结构化记录每次 spec 采用的 context 依据
 ```
 
 最重要的是 `lattice/context/README.md`。它不是普通说明文档，而是 Agent 的上下文地图。
@@ -256,6 +256,30 @@ bash lattice/kernel/context/knowledge-lint.sh --target=lattice/context/knowledge
 
 默认模式只给 warning，适合 doctor 和本地日常检查；`--strict` 适合 CI、promotion 前检查或团队治理。
 
+## `context-run.sh` 的定位
+
+`context-run.sh` 把单次 `context.md` 的采用情况记录成结构化 JSON，解决“Agent 这次到底用了哪些上下文”的可追踪问题。它不判断上下文是否正确，只记录：
+
+- selected facts 数量和来源；
+- constraints、conflicts、exclusions、context gaps 数量；
+- blocking gaps 数量；
+- 被采用的 source 和被排除的 source。
+
+推荐用法：
+
+```bash
+bash lattice/kernel/context/context-run.sh <spec-id>
+bash lattice/kernel/context/context-run.sh <spec-id> --strict
+```
+
+输出位置：
+
+```text
+lattice/state/context-runs/<run-id>.json
+```
+
+`pipeline.sh --json-out` 在存在 spec context 时会自动生成并嵌入 context-run evidence，`eval-summary.sh` 和 `eval-history.sh` 会展示 Context Evidence。
+
 ## 与 PrismSpec 的关系
 
 PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文。
@@ -276,11 +300,11 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 | 项目知识文件仍需真实沉淀 | Agent 只能看到结构，缺少真实领域知识 | P0 |
 | `sources.yaml` 尚未被自动化消费 | 当前更多是未来扩展点 | P1 |
 | context metadata 不足 | 已有轻量 lint，但 owner、verified_at、适用范围仍难治理 | P1 |
-| context-runs 未落地 | 不知道哪些上下文真的有用 | P1 |
+| context-run 仍偏计数型 | 已能记录采用事实，但还不能判断语义质量和真实收益 | P1 |
 
 ## 推荐演进
 
 1. 在真实示例中填充 `lattice/context/README.md`、`external.md` 和项目知识文件。
 2. 为项目知识增加 owner、verified_at、applies_to 等 front matter metadata。
 3. 将 `sources.yaml` 保留为可选自动化配置，后续脚本真正消费后再提升权重。
-4. 记录 context-runs，用于后续 Eval 分析哪些上下文真的有用。
+4. 将 context-run 与真实 review finding / escaped defect 关联，分析哪些上下文真的有用。

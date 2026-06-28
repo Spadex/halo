@@ -8,7 +8,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 2. Agent 的工作过程是否可靠？
 3. 团队的 AI Coding 质量是否在变好？
 
-当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、review summary、TDD red/green evidence、loop state、可配置 failure category、failure category lint、escalation learn draft、learn promotion event、knowledge governance lint 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON、当前 spec 对应的 process evidence 以及 loop state；失败时，loop state 会包含 `failure_category` 和 `default_action`，分类规则来自 `lattice/config/failure-categories.yaml`；`failure-category-lint.sh` 和 doctor 会前置检查分类配置；当 retry budget 耗尽时，它会在 `lattice/context/drafts/` 生成待确认 learn draft；确认后，`learn-draft.sh` 会记录 promotion/discard 事件，并运行 advisory knowledge lint。`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 聚合为趋势报告。
+当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、context-run、review summary、TDD red/green evidence、loop state、可配置 failure category、failure category lint、escalation learn draft、learn promotion event、knowledge governance lint 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON、当前 spec 对应的 context-run、process evidence 以及 loop state；失败时，loop state 会包含 `failure_category` 和 `default_action`，分类规则来自 `lattice/config/failure-categories.yaml`；`failure-category-lint.sh` 和 doctor 会前置检查分类配置；当 retry budget 耗尽时，它会在 `lattice/context/drafts/` 生成待确认 learn draft；确认后，`learn-draft.sh` 会记录 promotion/discard 事件，并运行 advisory knowledge lint。`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 聚合为趋势报告。
 
 ## 当前形态
 
@@ -20,6 +20,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 | `compliance.sh` | warnings | 是否引用知识、是否有澄清痕迹 |
 | `review-summary.sh` | review verdict JSON | spec compliance、code quality、test coverage、risk 是否被审查 |
 | `tdd-evidence.sh` | TDD red/green JSON | TDD task 是否有红灯、绿灯和 AC trace |
+| `context-run.sh` | context-run JSON | 本次 spec 采用了哪些 context、排除了哪些、还剩哪些 gap |
 | `lattice/state/loops/*.json` | loop state JSON | retry 次数、失败步骤、失败分类、下一步动作和 escalation 状态 |
 | `lattice/context/drafts/escalation-*.md` | learn draft | retry 耗尽后的待确认经验候选 |
 | `lattice/state/learn-promotions/*.json` | learn promotion event | 经验候选被晋升或废弃的审计记录 |
@@ -190,11 +191,11 @@ Lattice 在 `harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub 
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| knowledge governance 仍偏轻量 | 已有 lint，但缺少 owner、verified_at、跨文件冲突和采用记录 | metadata + context-runs |
+| context evidence 仍偏计数型 | 已有 context-run，但还不能衡量 context 对缺陷率和返工率的影响 | outcome linkage |
 | dashboard 未实现 | history report 仍是 repo-local 文件，不能跨项目横向比较 | dashboard / central eval sink |
 
 ## 演进顺序
 
-1. 增加 context metadata 和 context-runs。
+1. 增加 context metadata 和 outcome linkage。
 2. 增加 dashboard 或 central eval sink。
 3. 扩展更多语言的 drift parser。

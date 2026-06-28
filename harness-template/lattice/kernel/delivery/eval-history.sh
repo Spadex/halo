@@ -91,6 +91,9 @@ REVIEW_CANNOT_VERIFY=0
 TDD_TOTAL=0
 TDD_COMPLETE=0
 TDD_INVALID=0
+CONTEXT_RUN_TOTAL=0
+CONTEXT_SELECTED_FACTS=0
+CONTEXT_BLOCKING_GAPS=0
 RETRY_TOTAL=0
 RETRY_RUNS=0
 LOOP_RETRY_ACTIONS=0
@@ -117,6 +120,9 @@ if [[ "$RUN_TOTAL" -gt 0 ]]; then
     TDD_TOTAL=$((TDD_TOTAL + $(json_num "$file" '.metrics.tdd_total')))
     TDD_COMPLETE=$((TDD_COMPLETE + $(json_num "$file" '.metrics.tdd_complete')))
     TDD_INVALID=$((TDD_INVALID + $(json_num "$file" '.metrics.tdd_invalid')))
+    CONTEXT_RUN_TOTAL=$((CONTEXT_RUN_TOTAL + $(json_num "$file" '.metrics.context_run_total')))
+    CONTEXT_SELECTED_FACTS=$((CONTEXT_SELECTED_FACTS + $(json_num "$file" '.metrics.context_selected_facts')))
+    CONTEXT_BLOCKING_GAPS=$((CONTEXT_BLOCKING_GAPS + $(json_num "$file" '.metrics.context_blocking_gaps')))
     retry_count="$(json_num "$file" '.loop_state.retry_count')"
     RETRY_TOTAL=$((RETRY_TOTAL + retry_count))
     [[ "$retry_count" -gt 0 ]] && ((RETRY_RUNS++)) || true
@@ -149,6 +155,7 @@ render_history() {
   echo "| Compliance Warnings | $COMPLIANCE_WARNINGS |"
   echo "| Review Verdicts | $REVIEW_PASSED pass / $REVIEW_FAILED fail / $REVIEW_CANNOT_VERIFY cannot_verify / $REVIEW_TOTAL total |"
   echo "| TDD Evidence | $TDD_COMPLETE complete / $TDD_INVALID invalid / $TDD_TOTAL total |"
+  echo "| Context Evidence | $CONTEXT_RUN_TOTAL run(s), $CONTEXT_SELECTED_FACTS selected fact(s), $CONTEXT_BLOCKING_GAPS blocking gap(s) |"
   echo "| Loop | $RETRY_TOTAL total retries / $RETRY_RUNS retry runs / $LOOP_RETRY_ACTIONS next retry / $LOOP_ESCALATE_ACTIONS next escalate / $LEARN_DRAFT_TOTAL learn drafts |"
   echo ""
   echo "## Recent Runs"
@@ -159,15 +166,15 @@ render_history() {
     return 0
   fi
 
-  echo "| Run | Status | Spec | Git | AC | Drift | Review | TDD | Loop |"
-  echo "|---|---|---|---|---|---|---|---|---|"
+  echo "| Run | Status | Spec | Git | AC | Drift | Review | TDD | Context | Loop |"
+  echo "|---|---|---|---|---|---|---|---|---|---|"
 
   local start_index=0
   if [[ "$RUN_TOTAL" -gt "$LIMIT" ]]; then
     start_index=$((RUN_TOTAL - LIMIT))
   fi
 
-  local i file run_id status spec git ac_total ac_covered drift review_total review_failed review_cannot_verify tdd_total tdd_invalid retry_count next_action failure_category learn_draft learn_flag
+  local i file run_id status spec git ac_total ac_covered drift review_total review_failed review_cannot_verify tdd_total tdd_invalid context_runs context_facts context_blocking_gaps retry_count next_action failure_category learn_draft learn_flag
   for ((i = RUN_TOTAL - 1; i >= start_index; i--)); do
     file="${EVAL_FILES[$i]}"
     run_id="$(json_get "$file" '.run_id')"
@@ -182,13 +189,16 @@ render_history() {
     review_cannot_verify="$(json_num "$file" '.metrics.review_cannot_verify')"
     tdd_total="$(json_num "$file" '.metrics.tdd_total')"
     tdd_invalid="$(json_num "$file" '.metrics.tdd_invalid')"
+    context_runs="$(json_num "$file" '.metrics.context_run_total')"
+    context_facts="$(json_num "$file" '.metrics.context_selected_facts')"
+    context_blocking_gaps="$(json_num "$file" '.metrics.context_blocking_gaps')"
     retry_count="$(json_num "$file" '.loop_state.retry_count')"
     next_action="$(json_get "$file" '.loop_state.next_action')"
     failure_category="$(json_get "$file" '.loop_state.failure_category')"
     learn_draft="$(json_get "$file" '.loop_state.learn_draft')"
     learn_flag="no"
     [[ -n "$learn_draft" ]] && learn_flag="yes"
-    echo "| $(md_escape "${run_id:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "${spec:-none}") | $(md_escape "${git:-unknown}") | $ac_covered/$ac_total | $drift | $review_failed fail / $review_cannot_verify cannot_verify / $review_total | $tdd_invalid invalid / $tdd_total | retry=$retry_count, next=$(md_escape "${next_action:-unknown}"), category=$(md_escape "${failure_category:-none}"), learn=$learn_flag |"
+    echo "| $(md_escape "${run_id:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "${spec:-none}") | $(md_escape "${git:-unknown}") | $ac_covered/$ac_total | $drift | $review_failed fail / $review_cannot_verify cannot_verify / $review_total | $tdd_invalid invalid / $tdd_total | runs=$context_runs, facts=$context_facts, blocking=$context_blocking_gaps | retry=$retry_count, next=$(md_escape "${next_action:-unknown}"), category=$(md_escape "${failure_category:-none}"), learn=$learn_flag |"
   done
 }
 

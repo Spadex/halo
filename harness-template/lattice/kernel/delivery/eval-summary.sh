@@ -98,6 +98,7 @@ render_summary() {
   local ac_total ac_covered ac_uncovered drift_count compliance_warnings
   local review_total review_passed review_failed review_cannot_verify
   local tdd_total tdd_complete tdd_invalid
+  local context_run_total context_selected_facts context_blocking_gaps
   local loop_retry_count loop_retry_max loop_next_action loop_failed_step loop_failure_category loop_default_action loop_learn_draft
 
   status="$(json_get ".pipeline.status")"
@@ -123,6 +124,9 @@ render_summary() {
   tdd_total="$(metric_value "tdd_total")"
   tdd_complete="$(metric_value "tdd_complete")"
   tdd_invalid="$(metric_value "tdd_invalid")"
+  context_run_total="$(metric_value "context_run_total")"
+  context_selected_facts="$(metric_value "context_selected_facts")"
+  context_blocking_gaps="$(metric_value "context_blocking_gaps")"
   loop_retry_count="$(json_get ".loop_state.retry_count")"
   loop_retry_max="$(json_get ".loop_state.retry_max")"
   loop_next_action="$(json_get ".loop_state.next_action")"
@@ -153,6 +157,7 @@ render_summary() {
   echo "| Compliance Warnings | $(md_escape "${compliance_warnings:-0}") |"
   echo "| Review Verdicts | $(md_escape "${review_passed:-0}") pass / $(md_escape "${review_failed:-0}") fail / $(md_escape "${review_cannot_verify:-0}") cannot_verify / $(md_escape "${review_total:-0}") total |"
   echo "| TDD Evidence | $(md_escape "${tdd_complete:-0}") complete / $(md_escape "${tdd_invalid:-0}") invalid / $(md_escape "${tdd_total:-0}") total |"
+  echo "| Context Evidence | $(md_escape "${context_run_total:-0}") run(s), $(md_escape "${context_selected_facts:-0}") selected fact(s), $(md_escape "${context_blocking_gaps:-0}") blocking gap(s) |"
   echo "| Loop | retry $(md_escape "${loop_retry_count:-0}") / $(md_escape "${loop_retry_max:-0}"), next=$(md_escape "${loop_next_action:-unknown}"), failed_step=$(md_escape "${loop_failed_step:-none}"), category=$(md_escape "${loop_failure_category:-none}"), action=$(md_escape "${loop_default_action:-none}") |"
   [[ -n "$loop_learn_draft" ]] && echo "| Learn Draft | $(md_escape "$loop_learn_draft") |"
   echo ""
@@ -214,6 +219,31 @@ render_summary() {
       ac_ids="$(yq -r "(.process_evidence.tdd_evidence[$i].ac_ids // []) | join(\", \")" "$EVAL_JSON")"
       test_name="$(json_get ".process_evidence.tdd_evidence[$i].test.name")"
       echo "| $(md_escape "${task:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "$ac_ids") | $(md_escape "$test_name") |"
+    done
+  fi
+
+  echo ""
+  echo "## Context Evidence"
+  echo ""
+
+  local context_count
+  context_count="$(yq -r '(.process_evidence.context_runs // []) | length' "$EVAL_JSON")"
+  if [[ "$context_count" -eq 0 ]]; then
+    echo "_No context-run.json captured._"
+  else
+    echo "| Spec | Context File | Selected Facts | Constraints | Conflicts | Exclusions | Gaps | Blocking Gaps |"
+    echo "|---|---|---|---|---|---|---|---|"
+    local i spec_id context_file selected_facts constraints conflicts exclusions gaps blocking_gaps
+    for i in $(seq 0 $((context_count - 1))); do
+      spec_id="$(json_get ".process_evidence.context_runs[$i].spec_id")"
+      context_file="$(json_get ".process_evidence.context_runs[$i].context_file")"
+      selected_facts="$(json_get ".process_evidence.context_runs[$i].metrics.selected_facts")"
+      constraints="$(json_get ".process_evidence.context_runs[$i].metrics.constraints")"
+      conflicts="$(json_get ".process_evidence.context_runs[$i].metrics.conflicts")"
+      exclusions="$(json_get ".process_evidence.context_runs[$i].metrics.exclusions")"
+      gaps="$(json_get ".process_evidence.context_runs[$i].metrics.context_gaps")"
+      blocking_gaps="$(json_get ".process_evidence.context_runs[$i].metrics.blocking_gaps")"
+      echo "| $(md_escape "${spec_id:-unknown}") | $(md_escape "${context_file:-none}") | $(md_escape "${selected_facts:-0}") | $(md_escape "${constraints:-0}") | $(md_escape "${conflicts:-0}") | $(md_escape "${exclusions:-0}") | $(md_escape "${gaps:-0}") | $(md_escape "${blocking_gaps:-0}") |"
     done
   fi
 

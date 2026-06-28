@@ -49,6 +49,7 @@ LEARN_DRAFT_FILE=""
 gate_json_files=()
 process_review_files=()
 process_tdd_files=()
+process_context_files=()
 FAILED_STEP=""
 FAILED_EXIT_CODE=0
 FAILED_SUMMARY=""
@@ -67,6 +68,9 @@ METRIC_REVIEW_CANNOT_VERIFY=0
 METRIC_TDD_TOTAL=0
 METRIC_TDD_COMPLETE=0
 METRIC_TDD_INVALID=0
+METRIC_CONTEXT_RUN_TOTAL=0
+METRIC_CONTEXT_SELECTED_FACTS=0
+METRIC_CONTEXT_BLOCKING_GAPS=0
 
 json_escape() {
   local s="${1:-}"
@@ -175,6 +179,25 @@ collect_process_evidence() {
       ((METRIC_TDD_INVALID++)) || true
     fi
   done < <(find "$evidence_dir" -type f -name 'tdd-evidence.json' -print 2>/dev/null | sort)
+}
+
+collect_context_run_evidence() {
+  [[ "$WRITE_JSON" == "true" ]] || return 0
+  [[ -n "$SPEC_FILE" && -f "$SPEC_FILE" ]] || return 0
+  local spec_id context_file out
+  spec_id="$(spec_id_from_spec "$SPEC_FILE" 2>/dev/null || true)"
+  [[ -n "$spec_id" ]] || return 0
+  context_file="$PROJECT_ROOT/lattice/specs/$spec_id/context.md"
+  [[ -f "$context_file" ]] || return 0
+  [[ -x "$PROJECT_ROOT/lattice/kernel/context/context-run.sh" ]] || return 0
+
+  out="$PROJECT_ROOT/lattice/state/context-runs/${RUN_ID}.json"
+  if bash "$PROJECT_ROOT/lattice/kernel/context/context-run.sh" "$context_file" --out="$out" >/dev/null 2>&1 && [[ -f "$out" ]]; then
+    process_context_files+=("$out")
+    ((METRIC_CONTEXT_RUN_TOTAL++)) || true
+    METRIC_CONTEXT_SELECTED_FACTS=$((METRIC_CONTEXT_SELECTED_FACTS + $(yq -r '.metrics.selected_facts // 0' "$out" 2>/dev/null || echo 0)))
+    METRIC_CONTEXT_BLOCKING_GAPS=$((METRIC_CONTEXT_BLOCKING_GAPS + $(yq -r '.metrics.blocking_gaps // 0' "$out" 2>/dev/null || echo 0)))
+  fi
 }
 
 resolve_failure_categories_file() {
@@ -580,6 +603,9 @@ write_eval_json() {
     printf '    "tdd_total": %s,\n' "$METRIC_TDD_TOTAL"
     printf '    "tdd_complete": %s,\n' "$METRIC_TDD_COMPLETE"
     printf '    "tdd_invalid": %s,\n' "$METRIC_TDD_INVALID"
+    printf '    "context_run_total": %s,\n' "$METRIC_CONTEXT_RUN_TOTAL"
+    printf '    "context_selected_facts": %s,\n' "$METRIC_CONTEXT_SELECTED_FACTS"
+    printf '    "context_blocking_gaps": %s,\n' "$METRIC_CONTEXT_BLOCKING_GAPS"
     printf '    "loop_retry_count": %s,\n' "$SH_RETRY_COUNT"
     printf '    "loop_retry_max": %s,\n' "$SH_RETRY_MAX"
     printf '    "loop_escalated": %s\n' "$([[ "$PIPELINE_STATUS" == "escalation" ]] && echo "true" || echo "false")"
@@ -616,6 +642,14 @@ write_eval_json() {
       [[ "$tdd_idx" -lt $((${#process_tdd_files[@]} - 1)) ]] && printf ','
       printf '\n'
     done
+    printf '    ],\n'
+    printf '    "context_runs": [\n'
+    local context_idx
+    for context_idx in "${!process_context_files[@]}"; do
+      sed 's/^/      /' "${process_context_files[$context_idx]}"
+      [[ "$context_idx" -lt $((${#process_context_files[@]} - 1)) ]] && printf ','
+      printf '\n'
+    done
     printf '    ]\n'
     printf '  },\n'
     printf '  "loop_state": '
@@ -632,6 +666,7 @@ write_eval_json() {
 }
 
 resolve_eval_json_out
+collect_context_run_evidence
 collect_process_evidence
 write_learn_draft
 write_loop_json

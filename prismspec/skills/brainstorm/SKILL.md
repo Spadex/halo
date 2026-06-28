@@ -33,15 +33,17 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
    - Follow the context map to relevant project knowledge, external references, historical specs, code, tests, schemas, and contracts.
    - Use `lattice/kernel/context/backends/knowledge.sh <keywords>` only as an optional curated-knowledge backend.
    - Write selected facts, constraints, conflicts, exclusions, and open questions to `context.md`.
-4. Surface assumptions before writing irreversible decisions.
-5. Ask only material questions. Do not interview for details the model can safely infer from local code.
-6. Write `spec.md` in the target spec directory.
-7. Record `execution_mode`, reason, and source.
+4. In Lattice-hosted mode, run `lattice/kernel/context/context-run.sh <spec-id> --strict` after `context.md` is written when the context has no blocking gaps.
+5. Surface assumptions before writing irreversible decisions.
+6. Ask only material questions. Do not interview for details the model can safely infer from local code.
+7. Write `spec.md` in the target spec directory.
+8. Record `execution_mode`, reason, and source.
 
 ## Outputs
 
 - `context.md` with selected knowledge, code facts, conflicts, and open questions.
 - `spec.md` with stable `AC-{n}` identifiers.
+- Optional Lattice context-run JSON under `lattice/state/context-runs/`.
 - Open questions only when they block planning or safe implementation.
 
 ## Stop Conditions
@@ -69,6 +71,7 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
 ## Verification
 
 - [ ] `context.md` exists in the routed spec directory.
+- [ ] Lattice context-run evidence exists when running in Lattice-hosted mode and no blocking context gaps remain.
 - [ ] `spec.md` exists in the routed spec directory.
 - [ ] AC identifiers are stable and testable.
 - [ ] Execution policy is recorded.

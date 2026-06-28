@@ -108,6 +108,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" ]] \
     && [[ -f "$SANDBOX/lattice/config/failure-categories.yaml" ]]; then
@@ -422,6 +423,18 @@ else
   fail "PrismSpec lint failed spec contract"
   echo "$PRISMSPEC_SPEC_LINT_OUTPUT" | tail -10
 fi
+
+CONTEXT_RUN_JSON="$SANDBOX/lattice/state/context-runs/modern-feature-smoke.json"
+CONTEXT_RUN_EXIT=0
+CONTEXT_RUN_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/context-run.sh" modern-feature --strict --out="$CONTEXT_RUN_JSON" 2>&1) || CONTEXT_RUN_EXIT=$?
+if [[ $CONTEXT_RUN_EXIT -eq 0 ]] \
+  && [[ -f "$CONTEXT_RUN_JSON" ]] \
+  && yq -e '.kind == "context-run" and .spec_id == "modern-feature" and .metrics.selected_facts == 3 and .metrics.constraints == 1 and .metrics.blocking_gaps == 0 and (.selected_sources | length == 3)' "$CONTEXT_RUN_JSON" >/dev/null 2>&1; then
+  pass "context-run records selected context evidence"
+else
+  fail "context-run output invalid"
+  echo "$CONTEXT_RUN_OUTPUT" | tail -20
+fi
 echo ""
 
 # ── 6c. SDD helper scripts ──
@@ -585,7 +598,7 @@ fi
 PIPELINE_GATE_JSON="$SANDBOX/lattice/state/pipeline-ac-smoke.json"
 PIPELINE_GATE_EXIT=0
 bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_GATE_JSON" >/tmp/lattice-pipeline-gate-json.log 2>&1 || PIPELINE_GATE_EXIT=$?
-if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 1 and .metrics.tdd_complete == 1 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
+if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 1 and .metrics.tdd_complete == 1 and .metrics.context_run_total == 1 and .metrics.context_selected_facts == 3 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .process_evidence.context_runs[0].kind == "context-run" and .process_evidence.context_runs[0].metrics.selected_facts == 3 and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
   pass "pipeline embeds structured gate JSON in eval run"
 else
   fail "pipeline gate JSON embedding invalid"
@@ -756,7 +769,7 @@ fi
 
 PIPELINE_SUMMARY_MD="$SANDBOX/lattice/state/eval-summary-smoke.md"
 SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" "$PIPELINE_GATE_JSON" --out="$PIPELINE_SUMMARY_MD" 2>&1)
-if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
+if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Context Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
   pass "eval-summary renders pipeline JSON as Markdown"
 else
   fail "eval-summary output invalid"
@@ -776,7 +789,7 @@ mkdir -p "$SANDBOX/lattice/state/eval-runs"
 cp "$PIPELINE_GATE_JSON" "$SANDBOX/lattice/state/eval-runs/pipeline-ac-smoke.json"
 EVAL_HISTORY_MD="$SANDBOX/lattice/state/eval-history-smoke.md"
 HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-history.sh" --out="$EVAL_HISTORY_MD" --limit=5 2>&1)
-if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
+if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Context Evidence" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
   pass "eval-history aggregates eval run JSON"
 else
   fail "eval-history output invalid"
