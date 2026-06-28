@@ -15,7 +15,7 @@ User says "initialize Lattice", "/init", or project root has no `lattice/manifes
 
 ## Output
 
-- `lattice/manifest.yaml` — project declaration
+- `lattice/manifest.yaml` — project-owned contract
 - `CLAUDE.md` — Claude Code import entry
 - `lattice/context/README.md` — project context map
 - `lattice/specs/` — directory spec artifacts

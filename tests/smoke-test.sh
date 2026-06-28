@@ -92,6 +92,32 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   ALLOW_MODE_OVERRIDE=$(yq -r '.specs.allow_execution_mode_override // ""' "$SANDBOX/lattice/manifest.yaml")
   CI_PLATFORM=$(yq -r '.deploy.ci.platform // ""' "$SANDBOX/lattice/manifest.yaml")
   EVAL_SINK_DIR=$(yq -r '.eval.sink.dir // ""' "$SANDBOX/lattice/manifest.yaml")
+  MANIFEST_SCHEMA=$(yq -r '.schema_version // ""' "$SANDBOX/lattice/manifest.yaml")
+  MANIFEST_KIND=$(yq -r '.kind // ""' "$SANDBOX/lattice/manifest.yaml")
+  KERNEL_ORCHESTRATOR=$(yq -r '.kernel.layers.orchestrator // ""' "$SANDBOX/lattice/manifest.yaml")
+  KERNEL_CONTEXT=$(yq -r '.kernel.layers.context // ""' "$SANDBOX/lattice/manifest.yaml")
+  KERNEL_DELIVERY=$(yq -r '.kernel.layers.delivery // ""' "$SANDBOX/lattice/manifest.yaml")
+  CONTEXT_MAP=$(yq -r '.context.map_file // ""' "$SANDBOX/lattice/manifest.yaml")
+  PIPELINE_FAILURE_CATEGORIES=$(yq -r '.pipeline.failure_categories_file // ""' "$SANDBOX/lattice/manifest.yaml")
+  if [[ "$MANIFEST_SCHEMA" == "lattice.manifest.v1" ]] && [[ "$MANIFEST_KIND" == "LatticeManifest" ]]; then
+    pass "manifest contract metadata configured"
+  else
+    fail "manifest contract metadata missing"
+  fi
+
+  if [[ "$KERNEL_ORCHESTRATOR" == "true" ]] && [[ "$KERNEL_CONTEXT" == "true" ]] && [[ "$KERNEL_DELIVERY" == "true" ]]; then
+    pass "manifest kernel capabilities configured"
+  else
+    fail "manifest kernel capabilities missing"
+  fi
+
+  if [[ "$CONTEXT_MAP" == "lattice/context/README.md" ]] \
+    && [[ "$PIPELINE_FAILURE_CATEGORIES" == "lattice/config/failure-categories.yaml" ]]; then
+    pass "manifest context and verification paths configured"
+  else
+    fail "manifest context or verification paths missing"
+  fi
+
   if [[ "$DEFAULT_MODE" == "auto" ]] && [[ "$ALLOW_MODE_OVERRIDE" == "true" ]]; then
     pass "execution mode policy configured"
   else

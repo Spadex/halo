@@ -30,7 +30,7 @@ Use the returned `stage`, `mode`, `skill`, `spec_dir`, `run_dir`, and `verify_co
 
 | Surface | Path |
 |---------|------|
-| Project declaration | `lattice/manifest.yaml` |
+| Project contract | `lattice/manifest.yaml` |
 | Project context map | `lattice/context/README.md` |
 | External context map | `lattice/context/external.md` |
 | Durable project knowledge | `lattice/context/knowledge/` |
