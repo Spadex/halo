@@ -39,6 +39,7 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
 7. Ask only material questions. Do not interview for details the model can safely infer from local code.
 8. Write `spec.md` in the target spec directory.
 9. Record `execution_mode`, reason, and source.
+10. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>` before leaving brainstorming.
 
 ## Outputs
 
@@ -75,6 +76,7 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
 - [ ] Lattice context-lint passes when running in Lattice-hosted mode.
 - [ ] Lattice context-run evidence exists when running in Lattice-hosted mode and no blocking context gaps remain.
 - [ ] `spec.md` exists in the routed spec directory.
+- [ ] Lattice spec-state-lint passes when running in Lattice-hosted mode.
 - [ ] AC identifiers are stable and testable.
 - [ ] Execution policy is recorded.
 - [ ] Verification plan names concrete commands or gates.

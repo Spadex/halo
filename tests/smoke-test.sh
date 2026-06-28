@@ -121,6 +121,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
@@ -367,6 +368,7 @@ cat > "$SANDBOX/lattice/specs/modern-feature/spec.md" << 'SPEC'
 id: modern-feature
 status: drafted
 execution_mode: tdd
+mode_source: model-selected
 owner: smoke
 created_at: 2026-06-26T00:00:00Z
 updated_at: 2026-06-26T00:00:00Z
@@ -443,6 +445,45 @@ if [[ $PRISMSPEC_SPEC_LINT_EXIT -eq 0 ]]; then
 else
   fail "PrismSpec lint failed spec contract"
   echo "$PRISMSPEC_SPEC_LINT_OUTPUT" | tail -10
+fi
+
+SPEC_STATE_LINT_EXIT=0
+SPEC_STATE_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" modern-feature 2>&1) || SPEC_STATE_LINT_EXIT=$?
+if [[ $SPEC_STATE_LINT_EXIT -eq 0 ]]; then
+  pass "spec-state-lint passes drafted spec state"
+else
+  fail "spec-state-lint failed drafted spec state"
+  echo "$SPEC_STATE_LINT_OUTPUT" | tail -20
+fi
+
+mkdir -p "$SANDBOX/lattice/specs/bad-state"
+cp "$SANDBOX/lattice/specs/modern-feature/context.md" "$SANDBOX/lattice/specs/bad-state/context.md"
+cat > "$SANDBOX/lattice/specs/bad-state/spec.md" << 'BAD_STATE_SPEC'
+---
+id: bad-state
+status: planned
+execution_mode: auto
+mode_source: model-selected
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Bad State
+
+## Intent
+
+Bad state fixture.
+BAD_STATE_SPEC
+BAD_STATE_LINT_EXIT=0
+bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" bad-state >/tmp/lattice-spec-state-lint-bad.log 2>&1 || BAD_STATE_LINT_EXIT=$?
+if [[ $BAD_STATE_LINT_EXIT -ne 0 ]] \
+  && grep -q "execution_mode must be resolved" /tmp/lattice-spec-state-lint-bad.log \
+  && grep -q "plan.md required" /tmp/lattice-spec-state-lint-bad.log; then
+  pass "spec-state-lint rejects invalid state metadata"
+else
+  fail "spec-state-lint accepted invalid state metadata"
+  tail -30 /tmp/lattice-spec-state-lint-bad.log
 fi
 
 CONTEXT_LINT_EXIT=0
