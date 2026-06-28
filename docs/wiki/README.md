@@ -57,8 +57,9 @@ flowchart LR
 
 - `install.sh` / `init.sh` 安装初始化。
 - `prismspec/skills/*/SKILL.md` canonical skills。
+- `prismspec/bin/doctor.sh` standalone / Lattice-hosted skill pack 健康检查。
 - `prismspec/bin/guide.sh` 阶段路由。
-- `prismspec/bin/lint.sh` artifact contract 校验。
+- `prismspec/bin/lint.sh` skillpack / artifact contract 校验。
 - `lattice/context/` 项目上下文资产与基础 knowledge backend。
 - `lattice/kernel/delivery/pipeline.sh` 和内置 gates。
 - `review-summary.json`、`tdd-evidence.json`、spec-state-lint、spec-status、spec transition events/history、plan-lint、task-next、task-complete、task-evidence-lint、summary-draft、summary-learn-draft、context-lint、context-run、loop state、outcome link/report、central eval sink、static eval dashboard、eval query、可配置 failure category、failure category lint、escalation learn draft、learn promotion event、knowledge review event、knowledge metadata lint、knowledge governance lint、eval run 数据集、Markdown summary 和 history report。

@@ -255,6 +255,7 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 已实现：
 
 - `guide.sh` artifact-based routing。
+- `doctor.sh` standalone / Lattice-hosted skill pack 健康检查。
 - `lint.sh` skillpack / spec / plan / evidence contract 校验。
 - canonical skill folders。
 - canonical skill `agents/openai.yaml` UI/发现元数据。

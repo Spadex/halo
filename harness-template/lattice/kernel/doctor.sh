@@ -98,7 +98,9 @@ check_file "prismspec/templates/context-template.md" "PrismSpec context template
 check_file "prismspec/templates/spec-template.md" "PrismSpec default template"
 check_executable "prismspec/bin/guide.sh" "PrismSpec guide"
 check_executable "prismspec/bin/lint.sh" "PrismSpec lint"
+check_executable "prismspec/bin/doctor.sh" "PrismSpec doctor"
 check_command "PrismSpec skillpack contract lint" bash "$PROJECT_ROOT/prismspec/bin/lint.sh" "$PROJECT_ROOT/prismspec" skillpack
+check_command "PrismSpec standalone doctor" bash "$PROJECT_ROOT/prismspec/bin/doctor.sh"
 echo ""
 
 echo "── Delivery contract ──"

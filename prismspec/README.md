@@ -38,7 +38,7 @@ prismspec/
 ├── references/                 # loaded on demand
 ├── agents/                     # lightweight reviewer personas
 ├── commands/                   # slash-command entry points
-└── bin/                        # deterministic guide/lint helpers
+└── bin/                        # deterministic guide/lint/doctor helpers
 ```
 
 `skills/*/SKILL.md` 是唯一 canonical skill source。不要再维护 flat `skills/*.md` 入口，避免同一流程出现多个事实源。
@@ -78,6 +78,12 @@ lattice/specs/<spec-id>/
 ```
 
 ## 使用入口
+
+先检查 skill pack 是否健康：
+
+```bash
+bash prismspec/bin/doctor.sh
+```
 
 先运行 guide，永远从当前文件状态路由，不从对话记忆猜阶段：
 
@@ -152,10 +158,13 @@ PrismSpec 只支持两种 implementation policy：
 Closeout 前运行：
 
 ```bash
+bash prismspec/bin/doctor.sh
 bash prismspec/bin/lint.sh prismspec skillpack
 bash prismspec/bin/lint.sh prismspec/specs/checkout-flow
 bash prismspec/bin/lint.sh lattice/specs/checkout-flow
 ```
+
+`doctor` 会检查 PrismSpec 在 standalone 或 Lattice-hosted 模式下是否可用，包括 skillpack contract、guide JSON 协议和宿主环境。
 
 `skillpack` 会检查 PrismSpec 分发包自身：
 

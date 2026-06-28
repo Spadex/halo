@@ -20,6 +20,7 @@ entrypoints:
   command: prismspec/commands/sdd.md
   router: prismspec/bin/guide.sh
   lint: prismspec/bin/lint.sh
+  doctor: prismspec/bin/doctor.sh
 skills:
   canonical:
     - id: sdd
@@ -117,6 +118,7 @@ contracts:
     - plan
     - tdd
 quality_gates:
+  - bash prismspec/bin/doctor.sh
   - bash prismspec/bin/guide.sh --json
   - bash prismspec/bin/lint.sh prismspec skillpack
   - bash prismspec/bin/lint.sh <spec-dir>

@@ -227,6 +227,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -f "$SANDBOX/prismspec/skills/learn/SKILL.md" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/guide.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/lint.sh" ]] \
+    && [[ -x "$SANDBOX/prismspec/bin/doctor.sh" ]] \
     && [[ -f "$SANDBOX/prismspec/templates/spec-template.md" ]] \
     && [[ -f "$SANDBOX/prismspec/templates/spec-template-lite.md" ]] \
     && [[ -f "$SANDBOX/prismspec/templates/spec-template-service.md" ]] \
@@ -240,6 +241,15 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     pass "PrismSpec deliverable module installed"
   else
     fail "PrismSpec standalone module missing"
+  fi
+
+  PRISMSPEC_DOCTOR_EXIT=0
+  PRISMSPEC_DOCTOR_OUTPUT=$(bash "$SANDBOX/prismspec/bin/doctor.sh" 2>&1) || PRISMSPEC_DOCTOR_EXIT=$?
+  if [[ $PRISMSPEC_DOCTOR_EXIT -eq 0 ]] && echo "$PRISMSPEC_DOCTOR_OUTPUT" | grep -q "PASS"; then
+    pass "PrismSpec doctor passes installed project"
+  else
+    fail "PrismSpec doctor failed"
+    echo "$PRISMSPEC_DOCTOR_OUTPUT" | tail -20
   fi
 
   PRISMSPEC_SKILLPACK_LINT_EXIT=0

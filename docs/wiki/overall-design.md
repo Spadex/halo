@@ -70,7 +70,7 @@ flowchart TB
 
 | 组件 | 专业定义 | 关键产物 | 当前实现 |
 |------|----------|----------|----------|
-| PrismSpec | Spec Coding skill pack，负责把 intent 推进到 durable artifacts | `context.md`、`spec.md`、`plan.md`、`verify.md`、`summary.md` | `prismspec/skills/`、`prismspec/bin/guide.sh`、`prismspec/bin/lint.sh`、`prismspec/templates/` |
+| PrismSpec | Spec Coding skill pack，负责把 intent 推进到 durable artifacts | `context.md`、`spec.md`、`plan.md`、`verify.md`、`summary.md` | `prismspec/skills/`、`prismspec/bin/doctor.sh`、`prismspec/bin/guide.sh`、`prismspec/bin/lint.sh`、`prismspec/templates/` |
 | Orchestrator | Agent 控制面，负责阶段路由、状态推进、任务选择和 evidence gating | spec status、transition events、task evidence | `lattice/kernel/orchestrator/`、`spec-status.sh`、`task-next.sh`、`task-complete.sh`、`plan-lint.sh` |
 | Context | 项目上下文供给层，负责让 Agent 精准找到并记录本次决策依据 | context map、project knowledge、external map、context-run | `lattice/context/`、`lattice/kernel/context/`、`context-lint.sh`、`context-run.sh` |
 | Verification | 可复现验证面，负责运行 build/lint/test/drift/compliance 等 gates | gate output、pipeline result | `lattice/kernel/delivery/pipeline.sh`、`gates/` |

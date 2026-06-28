@@ -38,7 +38,7 @@ prismspec/
 ├── references/                 # loaded on demand
 ├── agents/                     # lightweight reviewer personas
 ├── commands/                   # slash-command entry points
-└── bin/                        # deterministic guide/lint helpers
+└── bin/                        # deterministic guide/lint/doctor helpers
 ```
 
 `skills/*/SKILL.md` is the only canonical skill source. Do not maintain parallel flat `skills/*.md` entries.
@@ -78,6 +78,12 @@ lattice/specs/<spec-id>/
 ```
 
 ## Entry Point
+
+First check the skill pack health:
+
+```bash
+bash prismspec/bin/doctor.sh
+```
 
 Run the guide first. Route from current files, not conversation memory:
 
@@ -152,10 +158,13 @@ Every canonical skill follows the same quality bar: trigger-rich frontmatter, wo
 Run before closeout:
 
 ```bash
+bash prismspec/bin/doctor.sh
 bash prismspec/bin/lint.sh prismspec skillpack
 bash prismspec/bin/lint.sh prismspec/specs/checkout-flow
 bash prismspec/bin/lint.sh lattice/specs/checkout-flow
 ```
+
+`doctor` checks whether PrismSpec is usable in standalone or Lattice-hosted mode, including the skillpack contract, guide JSON protocol, and host environment.
 
 `skillpack` checks the PrismSpec distribution itself:
 

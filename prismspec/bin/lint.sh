@@ -111,11 +111,14 @@ check_skillpack() {
   check_contains "$manifest" '^[[:space:]]+command: prismspec/commands/sdd\.md$' "skillpack command entrypoint"
   check_contains "$manifest" '^[[:space:]]+router: prismspec/bin/guide\.sh$' "skillpack router entrypoint"
   check_contains "$manifest" '^[[:space:]]+lint: prismspec/bin/lint\.sh$' "skillpack lint entrypoint"
+  check_contains "$manifest" '^[[:space:]]+doctor: prismspec/bin/doctor\.sh$' "skillpack doctor entrypoint"
+  check_contains "$manifest" 'bash prismspec/bin/doctor\.sh' "skillpack doctor gate"
   check_contains "$manifest" 'bash prismspec/bin/lint\.sh prismspec skillpack' "skillpack self lint gate"
 
   check_file "$root/commands/sdd.md" "SDD command"
   check_executable "$root/bin/guide.sh" "guide"
   check_executable "$root/bin/lint.sh" "lint"
+  check_executable "$root/bin/doctor.sh" "doctor"
 
   local stage
   for stage in sdd brainstorm plan implement verify finish learn; do
