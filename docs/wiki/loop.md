@@ -166,4 +166,4 @@ Loop 不新增 SDD 阶段，它嵌入 Verification：
 
 1. Finishing 引用 loop state 和 learn draft。
 2. 增强 promotion 前的跨文件语义冲突提示。
-3. 将 loop history 接入 dashboard。
+3. 将 loop history 接入 dashboard 趋势视图。

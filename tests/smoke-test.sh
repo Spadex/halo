@@ -114,6 +114,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-sink.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-dashboard.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-report.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
@@ -858,6 +859,19 @@ if [[ -f "$EVAL_SINK_DIR/index.md" ]] \
 else
   fail "eval-sink output invalid"
   echo "$EVAL_SINK_OUTPUT" | tail -20
+fi
+
+EVAL_DASHBOARD_HTML="$EVAL_SINK_DIR/dashboard.html"
+EVAL_DASHBOARD_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-dashboard.sh" --sink-dir="$EVAL_SINK_DIR" --out="$EVAL_DASHBOARD_HTML" --limit=5 2>&1)
+if [[ -f "$EVAL_DASHBOARD_HTML" ]] \
+  && grep -q "Lattice Eval Dashboard" "$EVAL_DASHBOARD_HTML" \
+  && grep -q "testapp" "$EVAL_DASHBOARD_HTML" \
+  && grep -q "Recent Outcomes" "$EVAL_DASHBOARD_HTML" \
+  && grep -q "missing regression test evidence" "$EVAL_DASHBOARD_HTML"; then
+  pass "eval-dashboard renders central sink HTML"
+else
+  fail "eval-dashboard output invalid"
+  echo "$EVAL_DASHBOARD_OUTPUT" | tail -20
 fi
 rm -f /tmp/lattice-ac-json.log /tmp/lattice-drift-json.log /tmp/lattice-compliance-json.log /tmp/lattice-pipeline-gate-json.log /tmp/lattice-pipeline-escalation.log /tmp/lattice-pipeline-custom-category.log /tmp/lattice-failure-category-lint.log /tmp/lattice-failure-category-lint-invalid.log
 echo ""

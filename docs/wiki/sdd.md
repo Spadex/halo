@@ -236,17 +236,18 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - outcome link evidence。
 - outcome attribution report。
 - central eval sink。
+- static eval dashboard。
 
 尚未完成：
 
 - spec state machine 强校验。
 - plan schema。
-- dashboard。
+- dashboard 查询/趋势增强。
 
 ## 演进优先级
 
 1. 强化 `spec-lint` 对 front matter、mode、status 的校验。
 2. 增加 plan schema 或 plan-lint。
-3. 增加 dashboard。
+3. 增强 dashboard 查询、过滤和趋势视图。
 4. 增加跨项目 outcome attribution 分析。
 5. 用真实项目迭代模板和 mode 选择策略。

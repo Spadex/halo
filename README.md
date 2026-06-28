@@ -169,8 +169,11 @@ bash lattice/kernel/delivery/outcome-link.sh record --eval=<run-id|eval.json> --
 # 汇总 outcome 归因线索
 bash lattice/kernel/delivery/outcome-report.sh --out=lattice/state/outcome-report.md
 
-# 发布到本地 central eval sink，供多项目聚合或后续 dashboard 使用
+# 发布到本地 central eval sink，供多项目聚合和静态 dashboard 使用
 bash lattice/kernel/delivery/eval-sink.sh publish --sink-dir=lattice/state/eval-sink
+
+# 从 central eval sink 生成静态 dashboard
+bash lattice/kernel/delivery/eval-dashboard.sh --sink-dir=lattice/state/eval-sink --out=lattice/state/eval-sink/dashboard.html
 
 # 本地预览 PR comment 正文
 bash lattice/kernel/delivery/pr-comment.sh lattice/state/eval-runs/<run-id>.md --dry-run
@@ -207,14 +210,14 @@ bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escala
 - PrismSpec 独立 skill pack manifest 与 Lattice-hosted 模式；
 - 目录化 spec、per-spec context、模板和 artifact lint；
 - doctor、spec lint、AC coverage、drift check、compliance、spec lock；
-- `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/state/outcomes/*.json`、`lattice/state/eval-sink/`、`lattice/state/context-runs/*.json`、`lattice/state/learn-promotions/*.json`、`lattice/state/knowledge-reviews/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、central eval sink、outcome link/report、AC/drift/compliance gate JSON、可配置 failure category、context-run、learn draft promotion/discard、knowledge review evidence 和 review/TDD process evidence；
+- `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/state/outcomes/*.json`、`lattice/state/eval-sink/`、`lattice/state/context-runs/*.json`、`lattice/state/learn-promotions/*.json`、`lattice/state/knowledge-reviews/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、central eval sink/static dashboard、outcome link/report、AC/drift/compliance gate JSON、可配置 failure category、context-run、learn draft promotion/discard、knowledge review evidence 和 review/TDD process evidence；
 - GitHub Actions eval artifact、Step Summary 与 best-effort PR comment workflow 模板；
 - Context map、knowledge backend、context-run evidence、knowledge metadata lint、knowledge governance lint、中心知识 sync 和基础 `/learn` 约定；
 - Go/Gin/GORM 可运行示例与多 Agent adapter 文档。
 
 仍在演进：
 
-- dashboard 和更强语义冲突治理；
+- dashboard 查询/趋势增强和更强语义冲突治理；
 - Node/Python 等更多 drift parser；
 - 插件 manifest/schema/versioning 与多 Agent lease 模型。
 
