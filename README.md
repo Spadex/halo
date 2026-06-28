@@ -194,6 +194,9 @@ bash lattice/kernel/orchestrator/sdd/plan-lint.sh <spec-id>
 # 解析下一项未完成任务，供 implement 阶段恢复执行
 bash lattice/kernel/orchestrator/sdd/task-next.sh <spec-id> --json
 
+# 在证据满足后受控勾选单个任务
+bash lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> T1 --json
+
 # 检查已完成任务是否具备 brief/review/TDD evidence
 bash lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>
 

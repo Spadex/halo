@@ -29,7 +29,7 @@ Implement one planned slice at a time. Keep scope narrow, produce evidence, and 
 6. Run focused verification for the task.
 7. Generate a review package when helpers exist.
 8. In TDD mode, write `tdd-evidence.json` when the helper exists.
-9. Mark the task complete only when evidence exists.
+9. In Lattice-hosted mode, mark the task complete with `lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id>`; otherwise update `plan.md` only after evidence exists.
 10. In Lattice-hosted mode, re-run `task-next`; if another task is returned, stop or continue only when the user asked for multi-task execution.
 11. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` after completed implementation tasks are checked.
 12. In Lattice-hosted mode, when all planned tasks are complete, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> implemented --from=planned`.
@@ -68,6 +68,7 @@ Implement one planned slice at a time. Keep scope narrow, produce evidence, and 
 
 - More than one planned slice is implemented before running tests.
 - Implementation starts without resolving the next task from `task-next.sh` when available.
+- `plan.md` is edited directly instead of using `task-complete.sh` when available.
 - New abstractions appear before the third concrete need.
 - `plan.md` remains unchecked even after evidence exists.
 - Implementation changes unmentioned contracts without updating `spec.md`.

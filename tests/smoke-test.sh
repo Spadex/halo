@@ -122,6 +122,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-next.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-evidence-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" ]] \
@@ -229,6 +230,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
 
   if [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-next.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-evidence-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/review-summary.sh" ]] \
@@ -698,9 +700,22 @@ else
   tail -20 /tmp/lattice-spec-status-incomplete.log
 fi
 
-perl -0pi -e 's/- \[ \] T1:/- [x] T1:/g; s/- \[ \] T2:/- [x] T2:/g; s/- \[ \] RED-1:/- [x] RED-1:/g; s/- \[ \] RED-2:/- [x] RED-2:/g' "$SANDBOX/lattice/specs/modern-feature/plan.md"
+TASK_COMPLETE_MISSING_EXIT=0
+bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" modern-feature T1 >/tmp/lattice-task-complete-missing.log 2>&1 || TASK_COMPLETE_MISSING_EXIT=$?
+if [[ $TASK_COMPLETE_MISSING_EXIT -ne 0 ]] && grep -q "T1 missing brief.md" /tmp/lattice-task-complete-missing.log; then
+  pass "task-complete rejects task without evidence"
+else
+  fail "task-complete accepted task without evidence"
+  tail -20 /tmp/lattice-task-complete-missing.log
+fi
+
+mkdir -p "$SANDBOX/lattice/specs/missing-evidence"
+cp "$SANDBOX/lattice/specs/modern-feature/context.md" "$SANDBOX/lattice/specs/missing-evidence/context.md"
+cp "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX/lattice/specs/missing-evidence/spec.md"
+cp "$SANDBOX/lattice/specs/modern-feature/plan.md" "$SANDBOX/lattice/specs/missing-evidence/plan.md"
+perl -0pi -e 's/id: modern-feature/id: missing-evidence/; s/- \[ \] T1:/- [x] T1:/g; s/- \[ \] T2:/- [x] T2:/g; s/- \[ \] RED-1:/- [x] RED-1:/g; s/- \[ \] RED-2:/- [x] RED-2:/g' "$SANDBOX/lattice/specs/missing-evidence/spec.md" "$SANDBOX/lattice/specs/missing-evidence/plan.md"
 SPEC_STATUS_NO_EVIDENCE_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned >/tmp/lattice-spec-status-no-evidence.log 2>&1 || SPEC_STATUS_NO_EVIDENCE_EXIT=$?
+bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" missing-evidence implemented --from=planned >/tmp/lattice-spec-status-no-evidence.log 2>&1 || SPEC_STATUS_NO_EVIDENCE_EXIT=$?
 if [[ $SPEC_STATUS_NO_EVIDENCE_EXIT -ne 0 ]] && grep -q "missing brief.md" /tmp/lattice-spec-status-no-evidence.log; then
   pass "spec-status blocks completed tasks without evidence"
 else
@@ -781,6 +796,20 @@ else
   fail "second tdd-evidence JSON invalid"
   echo "$TDD_EVIDENCE_OUTPUT_T2" | tail -10
 fi
+
+for task_id in RED-1 RED-2 T1 T2; do
+  TASK_COMPLETE_EXIT=0
+  TASK_COMPLETE_JSON=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" modern-feature "$task_id" --json 2>&1) || TASK_COMPLETE_EXIT=$?
+  if [[ $TASK_COMPLETE_EXIT -eq 0 ]] \
+    && echo "$TASK_COMPLETE_JSON" | yq -e '.kind == "task-complete" and .status == "completed"' >/dev/null 2>&1 \
+    && echo "$TASK_COMPLETE_JSON" | grep -q "\"task_id\": \"$task_id\"" \
+    && grep -qE "^- \\[x\\] ${task_id}:" "$SANDBOX/lattice/specs/modern-feature/plan.md"; then
+    pass "task-complete marks $task_id complete"
+  else
+    fail "task-complete failed for $task_id"
+    echo "$TASK_COMPLETE_JSON"
+  fi
+done
 
 TASK_EVIDENCE_LINT_EXIT=0
 TASK_EVIDENCE_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-evidence-lint.sh" modern-feature 2>&1) || TASK_EVIDENCE_LINT_EXIT=$?

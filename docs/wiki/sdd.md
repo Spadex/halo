@@ -145,6 +145,14 @@ bash lattice/kernel/orchestrator/sdd/task-next.sh <spec-id> --json
 
 它返回下一项未完成任务或 `status=complete`。Agent 不应该凭最近修改时间或自然语言猜测下一项任务。
 
+任务完成后，应使用 `task-complete.sh` 勾选对应 task，而不是直接编辑 checkbox：
+
+```bash
+bash lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id> --json
+```
+
+该命令会先检查 task brief、review package 和 TDD evidence（当适用），证据不足时拒绝勾选。
+
 Plan Mode：
 
 1. 读取下一项任务。
