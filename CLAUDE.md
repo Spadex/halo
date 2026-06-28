@@ -17,7 +17,7 @@ Lattice is a **project-level AI Coding framework** that installs into target pro
 ├── install.sh             # Remote/local install entry point
 ├── init.sh                # Project initialization (detect language → generate manifest)
 ├── scaffold/              # ★ Installation template — copied to target projects
-│   ├── CLAUDE.ssd.md      #   CLAUDE.md append content for target projects
+│   ├── CLAUDE.lattice.md  #   CLAUDE.md append content for target projects
 │   ├── .claude/commands/  #   Slash commands (/init /verify /learn)
 │   └── lattice/
 │       ├── kernel/        #   Framework engine (upgradable as a unit)

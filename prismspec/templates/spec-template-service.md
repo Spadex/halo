@@ -104,3 +104,19 @@ sequenceDiagram
 - Mode: `{plan|tdd}`
 - Reason: {是否涉及状态机、幂等、权限、资金、安全、并发、历史回归}
 - Source: model-selected | project-default | user-override
+
+## Risk Notes
+
+| Risk / Invariant | Mitigation | Verification |
+|------------------|------------|--------------|
+| idempotency / permission / data consistency / concurrency / rollback | | |
+
+## Verification Plan
+
+| Gate / Test | Required? | Evidence |
+|-------------|-----------|----------|
+| build | yes / no | |
+| unit test | yes / no | |
+| integration / contract test | conditional | |
+| migration / rollback check | conditional | |
+| smoke | conditional | |

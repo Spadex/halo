@@ -38,6 +38,10 @@ updated_at: {timestamp}
 - Reason: {低风险 / 文档 / 配置 / 简单重构 / 现有测试覆盖充分}
 - Source: model-selected | project-default | user-override
 
+## Risk Notes
+
+- {低风险任务也要说明为什么风险可控；没有则写 N/A}
+
 ## Verification
 
 | Check | Required? | Notes |

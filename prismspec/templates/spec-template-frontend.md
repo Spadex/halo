@@ -66,7 +66,13 @@ updated_at: {timestamp}
 - Reason: {低风险 UI / 核心转化链路 / 回归风险 / 状态复杂度}
 - Source: model-selected | project-default | user-override
 
-## 9. Verification Plan
+## 9. Risk Notes
+
+| Risk | Mitigation | Verification |
+|------|------------|--------------|
+| responsive / accessibility / state regression | | |
+
+## 10. Verification Plan
 
 | Check | Required? | Evidence |
 |-------|-----------|----------|

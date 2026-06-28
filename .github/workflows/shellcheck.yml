@@ -13,13 +13,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Syntax check (bash -n)
-        run: bash -n init.sh install.sh tests/smoke-test.sh $(find scaffold -name '*.sh')
+        run: bash -n init.sh install.sh tests/smoke-test.sh $(find scaffold prismspec/bin -name '*.sh')
+
+      - name: Validate PrismSpec skill frontmatter
+        run: |
+          for file in prismspec/skills/*/SKILL.md; do
+            grep -q '^---$' "$file"
+            grep -q '^name: ' "$file"
+            grep -q '^description: ' "$file"
+          done
 
       - name: Install ShellCheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: ShellCheck
-        run: shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find scaffold -name '*.sh')
+        run: shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find scaffold prismspec/bin -name '*.sh')
 
   smoke-test:
     runs-on: ubuntu-latest

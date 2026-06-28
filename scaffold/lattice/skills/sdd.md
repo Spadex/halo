@@ -63,11 +63,11 @@ After a stage reaches its exit criteria, recompute routing from artifacts and co
 
 ## Stage Delegation
 
-- **Brainstorming**: execute `lattice/skills/brainstorm.md`; output `lattice/specs/<spec-id>/spec.md`.
-- **Planning**: execute `lattice/skills/plan.md`; output `lattice/specs/<spec-id>/plan.md`.
-- **Implementation**: execute `lattice/skills/implement.md`; output task changes and `.lattice/sdd/<spec-id>/<task-id>/` evidence.
-- **Verification**: execute `lattice/skills/verify.md`; run the manifest-driven delivery pipeline.
-- **Finishing**: execute `lattice/skills/finish.md`; output `lattice/specs/<spec-id>/summary.md` and durable knowledge candidates.
+- **Brainstorming**: prefer `prismspec/skills/brainstorm/SKILL.md`; output `lattice/specs/<spec-id>/spec.md`.
+- **Planning**: prefer `prismspec/skills/plan/SKILL.md`; output `lattice/specs/<spec-id>/plan.md`.
+- **Implementation**: prefer `prismspec/skills/implement/SKILL.md`; output task changes and `.lattice/sdd/<spec-id>/<task-id>/` evidence.
+- **Verification**: prefer `prismspec/skills/verify/SKILL.md`; run the manifest-driven delivery pipeline.
+- **Finishing**: prefer `prismspec/skills/finish/SKILL.md`; output `lattice/specs/<spec-id>/summary.md` and durable knowledge candidates.
 
 ## Operating Rules
 

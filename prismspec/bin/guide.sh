@@ -130,7 +130,7 @@ has_incomplete_tasks() {
 has_verification_evidence() {
   [[ -n "$VERIFY_FILE" && -f "$VERIFY_FILE" ]] && return 0
   [[ -n "$SUMMARY_FILE" && -f "$SUMMARY_FILE" ]] && grep -qiE 'verification|pipeline|test|pass|fail' "$SUMMARY_FILE" && return 0
-  [[ -n "$RUN_DIR" && -d "$RUN_DIR" ]] && find "$RUN_DIR" -type f \( -name 'verify.md' -o -name 'evidence.json' -o -name 'review-package.md' \) | grep -q .
+  [[ -n "$RUN_DIR" && -d "$RUN_DIR" ]] && find "$RUN_DIR" -type f \( -name 'verify.md' -o -name 'evidence.json' \) | grep -q .
 }
 
 stage_from_artifacts() {

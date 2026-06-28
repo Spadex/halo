@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **PrismSpec** standalone spec-coding skill pack with guided `/sdd`, canonical `SKILL.md` files, templates, references, and workflow scripts.
+- Chinese-first project entrypoint via the root `README.md`; English documentation moved to `README.en.md`.
+- CI validation for PrismSpec skill frontmatter and PrismSpec shell scripts.
+- Root `AGENTS.md` to make the repository easier for coding agents to navigate.
+
+### Fixed
+
+- `/sdd` guide now requires actual verification evidence and no longer treats review packages as verification output.
+- Public contribution docs now use Lattice naming and current paths.
+
 ## [1.0.0] — 2026-06-23
 
 ### Added
@@ -27,6 +41,6 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - All CLI output in English (previously Chinese).
-- All internal variables renamed from `ASD_*` / `_ASD_*` prefix to `SH_*` / `_SH_*`.
+- Internal delivery variables standardized on the `SH_*` / `_SH_*` prefix.
 - Spec template sections use English headers by default.
-- Install paths changed from `.asd/` to `.specharness/`.
+- Install paths standardized for the Lattice scaffold layout.

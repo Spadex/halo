@@ -467,18 +467,18 @@ fi
 echo ""
 echo "📝 Configuring CLAUDE.md..."
 
-SSD_RULES="$SCAFFOLD_DIR/CLAUDE.ssd.md"
+LATTICE_RULES="$SCAFFOLD_DIR/CLAUDE.lattice.md"
 if [[ -f "CLAUDE.md" ]]; then
-  if grep -q "Lattice\|lattice\|SpecHarness\|specharness" "CLAUDE.md" 2>/dev/null; then
+  if grep -q "Lattice\|lattice" "CLAUDE.md" 2>/dev/null; then
     echo "  ⏭️  CLAUDE.md already contains Lattice rules"
-  elif [[ -f "$SSD_RULES" ]]; then
+  elif [[ -f "$LATTICE_RULES" ]]; then
     echo "" >> CLAUDE.md
-    cat "$SSD_RULES" >> CLAUDE.md
+    cat "$LATTICE_RULES" >> CLAUDE.md
     echo "  ✅ Appended Lattice rules to CLAUDE.md"
   fi
 else
-  if [[ -f "$SSD_RULES" ]]; then
-    cp "$SSD_RULES" CLAUDE.md
+  if [[ -f "$LATTICE_RULES" ]]; then
+    cp "$LATTICE_RULES" CLAUDE.md
     echo "  ✅ Created CLAUDE.md"
   fi
 fi

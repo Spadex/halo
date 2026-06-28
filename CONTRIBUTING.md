@@ -1,61 +1,67 @@
-# Contributing to SpecHarness
+# Contributing to Lattice
 
-Thanks for your interest in contributing!
+Thanks for your interest in contributing.
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/user/specharness.git
-cd specharness
+git clone https://github.com/zdolphin07-dotcom/lattice.git
+cd lattice
 ```
 
-No build step required — SpecHarness is pure Bash + YAML.
+No build step is required. Lattice is a repository-delivered framework built from Bash, Markdown, and YAML.
 
 ## Testing
 
 ```bash
 # Syntax check all scripts
-bash -n init.sh install.sh $(find scaffold -name '*.sh')
+bash -n init.sh install.sh tests/smoke-test.sh $(find scaffold prismspec/bin -name '*.sh')
 
-# ShellCheck (if installed)
-shellcheck init.sh install.sh $(find scaffold -name '*.sh')
+# ShellCheck, if installed
+shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find scaffold prismspec/bin -name '*.sh')
 
-# Integration test in a sandbox
-mkdir /tmp/test-project && cd /tmp/test-project && git init
-bash /path/to/specharness/install.sh --init
-bash specharness/kernel/delivery/pipeline.sh
+# Integration smoke test
+bash tests/smoke-test.sh
+```
+
+For a target-project install test:
+
+```bash
+mkdir /tmp/lattice-test-project && cd /tmp/lattice-test-project && git init
+bash /path/to/lattice/install.sh --init
+bash lattice/kernel/delivery/pipeline.sh
 ```
 
 ## Pull Requests
 
-1. Fork the repo and create a feature branch
-2. Keep changes focused — one concern per PR
-3. Run `bash -n` and `shellcheck` before submitting
-4. All shell scripts must pass `bash -n` syntax validation
-5. User-facing output must be in English
+1. Keep changes focused: one concern per PR.
+2. Run syntax checks and smoke tests before submitting.
+3. Preserve project-owned data during install and upgrade flows.
+4. Keep public documentation Chinese-first, with English docs available where useful.
+5. Keep CLI output stable and automation-friendly.
 
 ## Code Style
 
-- Bash 4.0+ compatible
-- Use `set -euo pipefail` in all scripts
-- Functions prefixed with `_` for internal/library use
-- All paths relative to project root via `_find_project_root()`
-- No hardcoded paths — read from `manifest.yaml` via `yq`
+- Bash 4.0+ compatible.
+- Use `set -euo pipefail` in executable scripts.
+- Prefer project-root-relative paths discovered by helper functions.
+- Do not hardcode user machine paths.
+- Read project configuration from `manifest.yaml` when behavior is project-specific.
 
-## Adding a New Gate
+## Adding a Delivery Gate
 
-1. Create `scaffold/specharness/kernel/delivery/gates/your-gate.sh`
-2. Source `../../_lib.sh` for logging and manifest access
-3. Exit 0 = pass, exit 1 = retryable failure, exit 2 = escalation
-4. Add the gate to the default pipeline steps in `manifest.template.yaml`
-5. Document in README.md
+1. Create `scaffold/lattice/kernel/delivery/gates/your-gate.sh`.
+2. Source the shared library from the target-project layout.
+3. Use exit code `0` for pass, `1` for retryable failure, and `2` for escalation.
+4. Add the gate to `scaffold/lattice/manifest.template.yaml` when it should be enabled by default.
+5. Document the gate in the README or design wiki.
 
 ## Adding Language Support
 
-1. Add detection logic in `init.sh`
-2. Add test function regex in `manifest.template.yaml` under `testing.strategies`
-3. If adding drift detection, implement in `drift-check.sh` with the existing plugin pattern
-4. Update the language support matrix in README.md
+1. Add detection logic in `init.sh`.
+2. Add command defaults to `scaffold/lattice/manifest.template.yaml`.
+3. Add drift or contract checks only when they provide meaningful evidence.
+4. Update the language support matrix in the README.
 
 ## License
 
