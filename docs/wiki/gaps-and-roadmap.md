@@ -23,7 +23,7 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 |------|----------|------|
 | PrismSpec | canonical skills、guide.sh、lint.sh、多模板、Plan/TDD policy | 主链路成立 |
 | Harness | pipeline、spec-lint、AC coverage、drift、compliance、spec-lock | 最小验证闭环成立 |
-| Context | loader、sync、index、synonyms、learn 约定 | 最小可用 |
+| Context | repo-local context 目录、knowledge memory、sync、learn 约定 | 最小可用，但还缺 Agent 上下文地图 |
 | AI 友好 | AGENTS.md、SKILL.md、commands、JSON guide | 入口比早期清晰 |
 | 安装验证 | install/init/smoke test/CI | 可持续迭代 |
 
@@ -46,14 +46,16 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 | Spec 状态机较弱 | drafted/planned/verified 不可强校验 | front matter schema + spec-lint |
 | Plan lint 轻量 | 任务质量依赖 Agent 自觉 | plan schema 或 plan-lint |
 
-### P1：Context Governance
+### P1：Context Supply
 
 | Gap | 影响 | 建议 |
 |-----|------|------|
+| 缺少 Agent context map | Agent 不知道项目知识在哪里、如何取舍 | `lattice/context/README.md` |
+| 外部知识入口不清晰 | 中心知识、第三方协议容易散落 | `lattice/context/external.md` |
+| 项目知识过于 index 化 | 不利于 Agent 直接理解架构、规则和踩坑 | architecture/rules/pitfalls/glossary |
 | 无 metadata | 来源、owner、过期不可治理 | context/knowledge front matter |
-| 无 stale/conflict | 旧规则误导 Agent | `context-lint.sh` |
 | learn 仍靠人工 | 失败经验沉淀不稳定 | escalation learn draft |
-| 无命中记录 | 不知道 context 是否有效 | loader output 写 eval run |
+| 无使用记录 | 不知道 context 是否有效 | context-runs 记录采用事实和排除项 |
 
 ### P1：Eval 与 Loop
 
@@ -110,20 +112,21 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 
 ### Milestone 3：Context 治理
 
-目标：让每次 spec 的上下文依据和长期知识都成为可审计资产。
+目标：让 Agent 能稳定找到、筛选和压缩项目上下文，每次 spec 都有最小可信依据。
 
 任务：
 
+- `lattice/context/README.md` 作为 Agent 必读上下文地图。
+- `lattice/context/external.md` 作为外部关联知识入口。
+- 项目知识结构化为 architecture / rules / pitfalls / glossary / decisions。
 - context/knowledge front matter schema。
-- `context-lint.sh`。
-- stale/conflict detection。
 - learn draft workflow。
-- loader 命中记录进入 eval run。
+- context-runs 记录采用事实、排除项和未解决问题。
 
 验收：
 
-- 过期知识能被发现。
-- 每次 spec 能追踪使用了哪些知识。
+- Agent 能按上下文地图找到项目知识。
+- 每次 spec 能追踪采用了哪些事实、排除了哪些材料、还缺什么信息。
 
 ### Milestone 4：插件化与多语言
 
@@ -148,6 +151,6 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 
 1. 用 Lumi 真实业务示例验证框架。
 2. 做 `pipeline --json-out` 和 eval run schema。
-3. 做 knowledge front matter 与 `knowledge-lint.sh`。
+3. 补齐 `lattice/context/README.md`、`external.md` 和项目知识结构。
 4. 做 review/TDD evidence JSON。
 5. 再扩展多语言 drift 和插件协议。

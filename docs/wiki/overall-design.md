@@ -65,7 +65,7 @@ flowchart TB
 |----|------|----------|
 | PrismSpec | 独立 Spec Coding workflow | `prismspec/skills/*/SKILL.md`、`guide.sh`、`lint.sh` |
 | Orchestrator | Agent 规则、阶段定义、模板入口 | `lattice/kernel/orchestrator/` |
-| Context | 检索项目知识、同步中心知识、沉淀 per-spec context | `lattice/kernel/context/`、`lattice/context/` |
+| Context | 给 Agent 提供项目上下文地图、项目知识、外部知识入口，并沉淀 per-spec context | `lattice/context/`、`lattice/kernel/context/` |
 | Delivery | 运行可复现验证卡口 | `lattice/kernel/delivery/` |
 | Eval | 从 gate output 提炼质量证据 | 当前为 evidence，后续结构化为 JSON run |
 
@@ -82,8 +82,8 @@ sequenceDiagram
 
     User->>Agent: Describe requirement
     Agent->>PS: guide.sh routes stage
-    Agent->>K: loader.sh keywords
-    K-->>Agent: Matched rules and decisions
+    Agent->>K: Read context map and relevant knowledge
+    K-->>Agent: Selected project facts and constraints
     Agent->>Repo: Write context.md
     Agent->>Repo: Write spec.md
     Agent->>Repo: Write plan.md
@@ -99,7 +99,7 @@ sequenceDiagram
 |--------|------|------|
 | Agent adapter | 导入规则，执行 shell 命令 | Claude Code、Cursor、Aider、Superpowers |
 | Spec template | `manifest.yaml` 指定模板路径 | service、frontend、tdd templates |
-| Context source | `context.sources_file` 与 sync 脚本 | repo-local、central context repo |
+| Context source | Agent-readable context map，必要时辅以 sync 脚本 | repo-local、central context、external docs |
 | Delivery gate | `pipeline.steps[]` command | build、lint、test、drift、compliance |
 | Drift parser | `drift.plugins[]` command | route/schema/error-code parser |
 | Eval sink | 后续 `--json-out` | local JSON、CI artifact、dashboard |
@@ -121,7 +121,7 @@ Lattice 当前选择 repo-local 形态，因为它的核心资产本来就在项
 
 - Lattice 不做 Agent runtime。
 - PrismSpec 不做重型项目管理。
-- Context 不做大而全 RAG 平台。
+- Context 不做大而全 RAG 平台，也不追求把所有资料塞进 prompt。
 - Eval 不过早承诺智能评分，先把可复现证据结构化。
 
 真正的产品化重点是：稳定安装、清晰文档、真实示例、可靠 gates、可审计 evidence。

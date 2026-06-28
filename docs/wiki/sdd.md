@@ -23,7 +23,7 @@ PrismSpec 有两种运行形态：
 | Standalone | 无 `lattice/manifest.yaml` | `prismspec/specs/<id>/`、`.prismspec/runs/<id>/` | 检测本地 build/lint/test 命令 |
 | Lattice-hosted | 存在 `lattice/manifest.yaml` | `lattice/specs/<id>/`、`.lattice/sdd/<id>/` | `bash lattice/kernel/delivery/pipeline.sh` |
 
-Lattice-hosted 模式会额外使用 manifest、context loader、delivery gates 和项目配置。Standalone 模式只保留 Spec Coding 主链路，适合只想使用 skill pack 的用户。
+Lattice-hosted 模式会额外使用 manifest、项目 context 地图、delivery gates 和项目配置。Standalone 模式只保留 Spec Coding 主链路，适合只想使用 skill pack 的用户。
 
 ## 阶段与产物
 
@@ -59,12 +59,12 @@ Brainstorming 是第一阶段，产物是 `context.md` 和 `spec.md`。它不是
 在 Lattice-hosted 模式下，Brainstorming 需要读取 `lattice/manifest.yaml`，但目的不是把 manifest 当业务上下文，而是获取项目路由：
 
 - spec 放在哪里；
-- context 怎么检索；
+- context 地图在哪里；
 - 默认 execution mode 是什么；
 - verification command 是什么；
 - 项目启用了哪些 delivery gates。
 
-Brainstorming 不应该全量复制 manifest、代码或知识库到 spec。`context.md` 记录被采用的事实、引用、冲突和开放问题；`spec.md` 只保留影响 Scope、AC、Risk、Execution Policy 的结论。
+Brainstorming 不应该全量复制 manifest、代码或知识库到 spec。Agent 应先读取项目 context 地图，再按需查找相关代码、测试、schema、历史 spec、项目知识和外部知识。`context.md` 只记录被采用的事实、引用、冲突和开放问题；`spec.md` 只保留影响 Scope、AC、Risk、Execution Policy 的结论。
 
 ## Spec 模板策略
 
