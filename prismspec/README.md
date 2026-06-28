@@ -145,16 +145,24 @@ PrismSpec 只支持两种 implementation policy：
 
 每个 canonical skill 都遵循高质量 skill 的基本结构：frontmatter 触发语义、工作流、输入输出、停机条件、常见跳步借口、红旗和验证清单。
 
-## Artifact Lint
+## Lint
 
 Closeout 前运行：
 
 ```bash
+bash prismspec/bin/lint.sh prismspec skillpack
 bash prismspec/bin/lint.sh prismspec/specs/checkout-flow
 bash prismspec/bin/lint.sh lattice/specs/checkout-flow
 ```
 
-它会检查：
+`skillpack` 会检查 PrismSpec 分发包自身：
+
+- `skillpack.yaml` 的 entrypoints、workflow stages 和 quality gates；
+- canonical `skills/*/SKILL.md` 的 frontmatter、触发描述和核心章节；
+- templates、references、command、guide/lint 脚本是否齐全；
+- 是否误引入 flat skill wrappers。
+
+artifact lint 会检查：
 
 - `spec.md` 是否包含 AC、execution mode、risk、verification plan；
 - `plan.md` 是否引用 AC、包含稳定任务 ID 和验证步骤；

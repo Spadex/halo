@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# lint.sh — PrismSpec artifact lint.
-# Validates the minimum contract for context.md, spec.md, plan.md, and evidence files.
+# lint.sh — PrismSpec artifact and skill-pack lint.
+# Validates the minimum contract for artifacts, canonical skills, and distribution files.
 set -euo pipefail
 
 TARGET="${1:-}"
@@ -12,11 +12,13 @@ PrismSpec lint
 
 Usage:
   bash prismspec/bin/lint.sh <spec-dir|spec.md> [all|spec|plan|evidence]
+  bash prismspec/bin/lint.sh prismspec skillpack
 
 Checks:
   spec      context.md exists; spec.md has ACs, execution mode, risk, and verification plan
   plan      plan.md references AC ids and includes verification
   evidence  verify.md or summary.md records commands/results
+  skillpack canonical skills, templates, references, command, and routing contract exist
   all       run all available checks
 EOF
 }
@@ -27,9 +29,120 @@ if [[ -z "$TARGET" || "$TARGET" == "--help" || "$TARGET" == "-h" ]]; then
 fi
 
 case "$CHECK" in
-  all|spec|plan|evidence) ;;
+  all|spec|plan|evidence|skillpack) ;;
   *) echo "Invalid check: $CHECK" >&2; usage; exit 1 ;;
 esac
+
+FAIL=0
+
+ok() { printf "PASS %s\n" "$*"; }
+bad() { printf "FAIL %s\n" "$*" >&2; FAIL=1; }
+
+check_file() {
+  local file="$1" label="$2"
+  [[ -f "$file" ]] || bad "$label missing: $file"
+}
+
+check_executable() {
+  local file="$1" label="$2"
+  [[ -x "$file" ]] || bad "$label missing or not executable: $file"
+}
+
+check_contains() {
+  local file="$1" pattern="$2" label="$3"
+  grep -qE "$pattern" "$file" 2>/dev/null || bad "$label missing in $file"
+}
+
+check_skill_file() {
+  local root="$1" stage="$2"
+  local skill_file="$root/skills/$stage/SKILL.md"
+  check_file "$skill_file" "$stage skill"
+  [[ -f "$skill_file" ]] || return
+
+  local line_count
+  line_count=$(wc -l < "$skill_file" | tr -d ' ')
+  [[ "$line_count" -le 500 ]] || bad "$stage skill exceeds 500 lines"
+
+  head -1 "$skill_file" | grep -qxF -- '---' || bad "$stage skill frontmatter start missing"
+  check_contains "$skill_file" "^name: prismspec-$stage$" "$stage skill name"
+  check_contains "$skill_file" "^description: .+Use (when|after)" "$stage trigger-rich description"
+  check_contains "$skill_file" "^## Overview$" "$stage Overview section"
+  check_contains "$skill_file" "^## Stop Conditions$" "$stage Stop Conditions section"
+  check_contains "$skill_file" "^## Verification$" "$stage Verification section"
+
+  if [[ "$stage" == "sdd" ]]; then
+    check_contains "$skill_file" "^## Start Here$" "sdd Start Here section"
+    check_contains "$skill_file" "^## Routing$" "sdd Routing section"
+    check_contains "$skill_file" "prismspec/bin/guide\\.sh --json" "sdd deterministic guide"
+  else
+    check_contains "$skill_file" "^## Inputs$" "$stage Inputs section"
+    check_contains "$skill_file" "^## Workflow$" "$stage Workflow section"
+    check_contains "$skill_file" "^## Outputs$" "$stage Outputs section"
+  fi
+}
+
+check_skillpack() {
+  local root="$1"
+  local manifest="$root/skillpack.yaml"
+
+  if [[ -f "$root" && "$(basename "$root")" == "skillpack.yaml" ]]; then
+    manifest="$root"
+    root="$(dirname "$root")"
+  fi
+
+  check_file "$manifest" "skillpack manifest"
+  [[ -f "$manifest" ]] || return
+
+  check_contains "$manifest" '^api_version: prismspec\.lattice\.dev/v1$' "skillpack api_version"
+  check_contains "$manifest" '^kind: SkillPack$' "skillpack kind"
+  check_contains "$manifest" '^[[:space:]]+name: prismspec$' "skillpack metadata.name"
+  check_contains "$manifest" '^[[:space:]]+command: prismspec/commands/sdd\.md$' "skillpack command entrypoint"
+  check_contains "$manifest" '^[[:space:]]+router: prismspec/bin/guide\.sh$' "skillpack router entrypoint"
+  check_contains "$manifest" '^[[:space:]]+lint: prismspec/bin/lint\.sh$' "skillpack lint entrypoint"
+  check_contains "$manifest" 'bash prismspec/bin/lint\.sh prismspec skillpack' "skillpack self lint gate"
+
+  check_file "$root/commands/sdd.md" "SDD command"
+  check_executable "$root/bin/guide.sh" "guide"
+  check_executable "$root/bin/lint.sh" "lint"
+
+  local stage
+  for stage in sdd brainstorm plan implement verify finish learn; do
+    check_skill_file "$root" "$stage"
+    check_contains "$manifest" "path: prismspec/skills/$stage/SKILL\\.md" "$stage canonical skill catalog entry"
+  done
+
+  for stage in brainstorm plan implement verify finish; do
+    check_contains "$manifest" "skill: prismspec/skills/$stage/SKILL\\.md" "$stage workflow entry"
+  done
+
+  local template
+  for template in context-template.md spec-template.md spec-template-lite.md spec-template-service.md spec-template-frontend.md spec-template-tdd.md; do
+    check_file "$root/templates/$template" "template"
+  done
+
+  local reference
+  for reference in mode-selection.md definition-of-done.md spec-quality-checklist.md tdd-evidence-checklist.md review-evidence-checklist.md; do
+    check_file "$root/references/$reference" "reference"
+  done
+
+  local flat_count
+  flat_count=$(find "$root/skills" -maxdepth 1 -type f -name '*.md' -not -name 'README.md' 2>/dev/null | wc -l | tr -d ' ')
+  [[ "$flat_count" == "0" ]] || bad "flat skill wrappers found under $root/skills"
+
+  if [[ $FAIL -eq 0 ]]; then ok "skillpack contract"; fi
+}
+
+if [[ "$CHECK" == "skillpack" ]]; then
+  if [[ -d "$TARGET" ]]; then
+    check_skillpack "${TARGET%/}"
+  elif [[ -f "$TARGET" ]]; then
+    check_skillpack "$TARGET"
+  else
+    echo "Target not found: $TARGET" >&2
+    exit 1
+  fi
+  exit "$FAIL"
+fi
 
 if [[ -d "$TARGET" ]]; then
   SPEC_DIR="${TARGET%/}"
@@ -46,10 +159,6 @@ PLAN_FILE="$SPEC_DIR/plan.md"
 CONTEXT_FILE="$SPEC_DIR/context.md"
 VERIFY_FILE="$SPEC_DIR/verify.md"
 SUMMARY_FILE="$SPEC_DIR/summary.md"
-FAIL=0
-
-ok() { printf "PASS %s\n" "$*"; }
-bad() { printf "FAIL %s\n" "$*" >&2; FAIL=1; }
 
 contains_heading() {
   local file="$1" pattern="$2"

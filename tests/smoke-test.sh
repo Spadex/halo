@@ -242,6 +242,15 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "PrismSpec standalone module missing"
   fi
 
+  PRISMSPEC_SKILLPACK_LINT_EXIT=0
+  PRISMSPEC_SKILLPACK_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/prismspec" skillpack 2>&1) || PRISMSPEC_SKILLPACK_LINT_EXIT=$?
+  if [[ $PRISMSPEC_SKILLPACK_LINT_EXIT -eq 0 ]]; then
+    pass "PrismSpec skillpack contract passes lint"
+  else
+    fail "PrismSpec skillpack contract failed lint"
+    echo "$PRISMSPEC_SKILLPACK_LINT_OUTPUT" | tail -20
+  fi
+
   FLAT_SKILL_COUNT=$(find "$SANDBOX/prismspec/skills" -maxdepth 1 -type f -name '*.md' -not -name 'README.md' | wc -l | tr -d ' ')
   LATTICE_SDD_SKILL_COUNT=$(find "$SANDBOX/lattice/skills" -maxdepth 1 -type f \( -name 'sdd.md' -o -name 'brainstorm.md' -o -name 'plan.md' -o -name 'implement.md' -o -name 'verify.md' -o -name 'finish.md' -o -name 'learn.md' \) | wc -l | tr -d ' ')
   if [[ "$FLAT_SKILL_COUNT" == "0" ]] && [[ "$LATTICE_SDD_SKILL_COUNT" == "0" ]]; then

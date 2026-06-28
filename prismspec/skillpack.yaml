@@ -20,6 +20,29 @@ entrypoints:
   command: prismspec/commands/sdd.md
   router: prismspec/bin/guide.sh
   lint: prismspec/bin/lint.sh
+skills:
+  canonical:
+    - id: sdd
+      type: controller
+      path: prismspec/skills/sdd/SKILL.md
+    - id: brainstorm
+      type: stage
+      path: prismspec/skills/brainstorm/SKILL.md
+    - id: plan
+      type: stage
+      path: prismspec/skills/plan/SKILL.md
+    - id: implement
+      type: stage
+      path: prismspec/skills/implement/SKILL.md
+    - id: verify
+      type: stage
+      path: prismspec/skills/verify/SKILL.md
+    - id: finish
+      type: stage
+      path: prismspec/skills/finish/SKILL.md
+    - id: learn
+      type: support
+      path: prismspec/skills/learn/SKILL.md
 workflow:
   stages:
     - id: brainstorm
@@ -88,4 +111,5 @@ contracts:
     - tdd
 quality_gates:
   - bash prismspec/bin/guide.sh --json
+  - bash prismspec/bin/lint.sh prismspec skillpack
   - bash prismspec/bin/lint.sh <spec-dir>

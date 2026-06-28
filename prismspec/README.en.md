@@ -145,16 +145,24 @@ PrismSpec supports two implementation policies:
 
 Every canonical skill follows the same quality bar: trigger-rich frontmatter, workflow, inputs/outputs, stop conditions, common rationalizations, red flags, and verification checklist.
 
-## Artifact Lint
+## Lint
 
 Run before closeout:
 
 ```bash
+bash prismspec/bin/lint.sh prismspec skillpack
 bash prismspec/bin/lint.sh prismspec/specs/checkout-flow
 bash prismspec/bin/lint.sh lattice/specs/checkout-flow
 ```
 
-The lint checks:
+`skillpack` checks the PrismSpec distribution itself:
+
+- `skillpack.yaml` entrypoints, workflow stages, and quality gates;
+- canonical `skills/*/SKILL.md` frontmatter, trigger descriptions, and core sections;
+- templates, references, command, guide/lint scripts;
+- absence of flat skill wrappers.
+
+Artifact lint checks:
 
 - `spec.md` has ACs, execution mode, risk notes, and verification plan;
 - `plan.md` references ACs, has stable task ids, and includes verification;
