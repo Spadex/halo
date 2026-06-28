@@ -33,11 +33,12 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
    - Follow the context map to relevant project knowledge, external references, historical specs, code, tests, schemas, and contracts.
    - Use `lattice/kernel/context/backends/knowledge.sh <keywords>` only as an optional curated-knowledge backend.
    - Write selected facts, constraints, conflicts, exclusions, and open questions to `context.md`.
-4. In Lattice-hosted mode, run `lattice/kernel/context/context-run.sh <spec-id> --strict` after `context.md` is written when the context has no blocking gaps.
-5. Surface assumptions before writing irreversible decisions.
-6. Ask only material questions. Do not interview for details the model can safely infer from local code.
-7. Write `spec.md` in the target spec directory.
-8. Record `execution_mode`, reason, and source.
+4. In Lattice-hosted mode, run `lattice/kernel/context/context-lint.sh <spec-id>` after `context.md` is written. Use `--strict` only when planning should be blocked by unresolved context gaps.
+5. In Lattice-hosted mode, run `lattice/kernel/context/context-run.sh <spec-id> --strict` after `context.md` passes lint and has no blocking gaps.
+6. Surface assumptions before writing irreversible decisions.
+7. Ask only material questions. Do not interview for details the model can safely infer from local code.
+8. Write `spec.md` in the target spec directory.
+9. Record `execution_mode`, reason, and source.
 
 ## Outputs
 
@@ -71,6 +72,7 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
 ## Verification
 
 - [ ] `context.md` exists in the routed spec directory.
+- [ ] Lattice context-lint passes when running in Lattice-hosted mode.
 - [ ] Lattice context-run evidence exists when running in Lattice-hosted mode and no blocking context gaps remain.
 - [ ] `spec.md` exists in the routed spec directory.
 - [ ] AC identifiers are stable and testable.

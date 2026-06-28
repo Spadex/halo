@@ -197,7 +197,7 @@ prismspec/templates/context-template.md
 | 提供上下文地图和知识资产 | Lattice / 项目 | 让 Agent 知道去哪里找。 |
 | 提供模板和取舍规则 | Lattice / 项目 | 稳定输出结构，降低噪声。 |
 | 同步中心知识 | Lattice tooling | Git/文件同步适合脚本。 |
-| 轻量结构检查 | Lattice tooling | 只做 sanity check，不做重 gate。 |
+| 轻量结构检查 | Lattice tooling | 用 `context-lint.sh` 做 sanity check，不做语义裁判。 |
 
 Lattice 负责供给和约束，模型负责理解和选择。
 
@@ -296,6 +296,25 @@ bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escala
 
 `--require-review` 要求同一个 draft 已有 `approve` 事件且 `conflicts_checked=true`。这让轻量个人使用仍然顺滑，同时让团队知识库可以逐步收紧治理。
 
+## `context-lint.sh` 的定位
+
+`context-lint.sh` 检查 `context.md` 是否像一个可用的 Context Basis，而不是空模板：
+
+- 必备 section 是否齐全；
+- Decision Frame 是否有具体值；
+- Selected Facts 是否至少有一条完整事实；
+- 表格里是否残留空值、TODO/TBD/FIXME 或模板占位；
+- `--strict` 模式下是否还有 blocking context gaps。
+
+推荐用法：
+
+```bash
+bash lattice/kernel/context/context-lint.sh <spec-id>
+bash lattice/kernel/context/context-lint.sh <spec-id> --strict
+```
+
+它只做结构与占位符级别的 sanity check，不判断事实是否语义正确。事实是否可信、是否足够，仍由 Agent 和 reviewer 结合代码、测试、schema、项目知识来判断。
+
 ## `context-run.sh` 的定位
 
 `context-run.sh` 把单次 `context.md` 的采用情况记录成结构化 JSON，解决“Agent 这次到底用了哪些上下文”的可追踪问题。它不判断上下文是否正确，只记录：
@@ -340,7 +359,7 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 | 项目知识文件仍需真实沉淀 | Agent 只能看到结构，缺少真实领域知识 | P0 |
 | `sources.yaml` 尚未被自动化消费 | 当前更多是未来扩展点 | P1 |
 | 语义冲突处理仍依赖 reviewer | 已有 metadata lint 和 review evidence，但不能自动判断跨文件语义冲突 | P1 |
-| context-run 仍偏计数型 | 已能通过 outcome link/report 关联真实反馈，但还缺真实样本和跨项目统计 | P1 |
+| context-run 仍偏计数型 | 已有 context-lint 做基础 sanity check，但还缺真实样本和跨项目统计 | P1 |
 
 ## 推荐演进
 

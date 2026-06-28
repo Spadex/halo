@@ -238,6 +238,7 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - central eval sink。
 - static eval dashboard。
 - eval query。
+- context-lint。
 
 尚未完成：
 

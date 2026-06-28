@@ -120,6 +120,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-report.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/context/context-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-review.sh" ]] \
@@ -347,6 +348,12 @@ cat > "$SANDBOX/lattice/specs/modern-feature/context.md" << 'CONTEXT'
 |-------|---------|-------------------|
 | None | N/A | N/A |
 
+## Exclusions
+
+| Source / Topic | Why excluded |
+|----------------|--------------|
+| Production code | This fixture validates artifact contracts only. |
+
 ## Context Gaps
 
 | Gap | Blocks planning? | Question / Next action |
@@ -435,6 +442,64 @@ if [[ $PRISMSPEC_SPEC_LINT_EXIT -eq 0 ]]; then
 else
   fail "PrismSpec lint failed spec contract"
   echo "$PRISMSPEC_SPEC_LINT_OUTPUT" | tail -10
+fi
+
+CONTEXT_LINT_EXIT=0
+CONTEXT_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/context-lint.sh" modern-feature --strict 2>&1) || CONTEXT_LINT_EXIT=$?
+if [[ $CONTEXT_LINT_EXIT -eq 0 ]]; then
+  pass "context-lint passes complete context basis"
+else
+  fail "context-lint failed complete context basis"
+  echo "$CONTEXT_LINT_OUTPUT" | tail -20
+fi
+
+mkdir -p "$SANDBOX/lattice/specs/bad-context"
+cat > "$SANDBOX/lattice/specs/bad-context/context.md" << 'BAD_CONTEXT'
+# Context: bad-context
+
+## Decision Frame
+
+| Item | Value |
+|------|-------|
+| Requirement type | feature / bugfix / refactor / docs / config |
+
+## Selected Facts
+
+| Type | Source | Fact | Decision Impact |
+|------|--------|------|-----------------|
+| code | `path/to/file` | | |
+
+## Constraints
+
+| Type | Constraint | Source | Impact |
+|------|------------|--------|--------|
+| compatibility / security / data / performance / release | | | |
+
+## Conflicts / Ambiguities
+
+| Issue | Sources | Required Decision |
+|-------|---------|-------------------|
+| TODO | TBD | FIXME |
+
+## Exclusions
+
+| Source / Topic | Why excluded |
+|----------------|--------------|
+| | |
+
+## Context Gaps
+
+| Gap | Blocks planning? | Question / Next action |
+|-----|------------------|------------------------|
+| Unknown data contract | yes | Ask owner |
+BAD_CONTEXT
+BAD_CONTEXT_LINT_EXIT=0
+bash "$SANDBOX/lattice/kernel/context/context-lint.sh" bad-context --strict >/tmp/lattice-context-lint-bad.log 2>&1 || BAD_CONTEXT_LINT_EXIT=$?
+if [[ $BAD_CONTEXT_LINT_EXIT -ne 0 ]] && grep -q "Selected Facts" /tmp/lattice-context-lint-bad.log; then
+  pass "context-lint rejects unfinished context basis"
+else
+  fail "context-lint accepted unfinished context basis"
+  tail -20 /tmp/lattice-context-lint-bad.log
 fi
 
 CONTEXT_RUN_JSON="$SANDBOX/lattice/state/context-runs/modern-feature-smoke.json"
