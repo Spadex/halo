@@ -91,6 +91,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   DEFAULT_MODE=$(yq -r '.specs.default_execution_mode // ""' "$SANDBOX/lattice/manifest.yaml")
   ALLOW_MODE_OVERRIDE=$(yq -r '.specs.allow_execution_mode_override // ""' "$SANDBOX/lattice/manifest.yaml")
   CI_PLATFORM=$(yq -r '.deploy.ci.platform // ""' "$SANDBOX/lattice/manifest.yaml")
+  EVAL_SINK_DIR=$(yq -r '.eval.sink.dir // ""' "$SANDBOX/lattice/manifest.yaml")
   if [[ "$DEFAULT_MODE" == "auto" ]] && [[ "$ALLOW_MODE_OVERRIDE" == "true" ]]; then
     pass "execution mode policy configured"
   else
@@ -103,9 +104,16 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "CI platform not configured"
   fi
 
+  if [[ "$EVAL_SINK_DIR" == "lattice/state/eval-sink" ]]; then
+    pass "eval sink configured"
+  else
+    fail "eval sink not configured"
+  fi
+
   if [[ -f "$SANDBOX/lattice/kernel/_lib.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-sink.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-report.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
@@ -835,6 +843,21 @@ if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_
 else
   fail "eval-history output invalid"
   echo "$HISTORY_OUTPUT" | tail -10
+fi
+
+EVAL_SINK_DIR="$SANDBOX/lattice/state/central-sink"
+EVAL_SINK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-sink.sh" publish --sink-dir="$EVAL_SINK_DIR" 2>&1)
+EVAL_SINK_MANIFEST="$EVAL_SINK_DIR/projects/testapp/manifest.json"
+if [[ -f "$EVAL_SINK_DIR/index.md" ]] \
+  && [[ -f "$EVAL_SINK_MANIFEST" ]] \
+  && [[ -f "$EVAL_SINK_DIR/projects/testapp/eval-runs/pipeline-ac-smoke.json" ]] \
+  && [[ -n "$(find "$EVAL_SINK_DIR/projects/testapp/outcomes" -type f -name '*.json' -print -quit)" ]] \
+  && yq -e '.kind == "eval-sink-project" and .project == "testapp" and .counts.eval_runs >= 1 and .counts.outcomes >= 1 and .counts.reports >= 1' "$EVAL_SINK_MANIFEST" >/dev/null 2>&1 \
+  && grep -q "Lattice Central Eval Sink" "$EVAL_SINK_DIR/index.md"; then
+  pass "eval-sink publishes project evidence to central sink"
+else
+  fail "eval-sink output invalid"
+  echo "$EVAL_SINK_OUTPUT" | tail -20
 fi
 rm -f /tmp/lattice-ac-json.log /tmp/lattice-drift-json.log /tmp/lattice-compliance-json.log /tmp/lattice-pipeline-gate-json.log /tmp/lattice-pipeline-escalation.log /tmp/lattice-pipeline-custom-category.log /tmp/lattice-failure-category-lint.log /tmp/lattice-failure-category-lint-invalid.log
 echo ""

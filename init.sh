@@ -220,7 +220,7 @@ copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/context" "la
 
 copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/config" "lattice/config"
 
-for f in pipeline.sh bootstrap.sh deploy.sh eval-summary.sh eval-history.sh outcome-link.sh outcome-report.sh pr-comment.sh failure-category-lint.sh; do
+for f in pipeline.sh bootstrap.sh deploy.sh eval-summary.sh eval-history.sh eval-sink.sh outcome-link.sh outcome-report.sh pr-comment.sh failure-category-lint.sh; do
   copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/delivery/$f" "lattice/kernel/delivery/$f"
 done
 for f in spec-lint.sh ac-coverage.sh drift-check.sh compliance.sh spec-lock.sh; do
@@ -229,7 +229,7 @@ done
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/VERSION" "lattice/kernel/VERSION"
 
-for dir in specs state state/eval-runs state/loops state/outcomes state/learn-promotions state/knowledge-reviews skills config context context/knowledge context/knowledge/decisions context/drafts context/drafts/promoted context/drafts/discarded state/context-runs; do
+for dir in specs state state/eval-runs state/eval-sink state/loops state/outcomes state/learn-promotions state/knowledge-reviews skills config context context/knowledge context/knowledge/decisions context/drafts context/drafts/promoted context/drafts/discarded state/context-runs; do
   mkdir -p "lattice/$dir"
   [[ -f "lattice/$dir/.gitkeep" ]] || touch "lattice/$dir/.gitkeep"
 done
@@ -447,6 +447,10 @@ pipeline:
     - { name: integration-test, run: "\${commands.integration_test}",                        skip_when: no_integration }
     - { name: drift-check,      run: "lattice/kernel/delivery/gates/drift-check.sh \${SPEC_FILE} .",  skip_when: no_spec }
     - { name: compliance,       run: "lattice/kernel/delivery/gates/compliance.sh \${SPEC_FILE}",     skip_when: no_spec }
+
+eval:
+  sink:
+    dir: "lattice/state/eval-sink"
 
 deploy:
   docker:

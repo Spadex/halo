@@ -98,6 +98,10 @@ pipeline:
     - { name: drift-check,      run: "lattice/kernel/delivery/gates/drift-check.sh ${SPEC_FILE} .", skip_when: no_spec }
     - { name: compliance,       run: "lattice/kernel/delivery/gates/compliance.sh ${SPEC_FILE}",    skip_when: no_spec }
 
+eval:
+  sink:
+    dir: "lattice/state/eval-sink"
+
 deploy:
   docker:
     builder_image: "{BUILDER_IMAGE}"

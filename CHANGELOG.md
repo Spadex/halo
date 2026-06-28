@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - `--json-out[=<file>]` for AC coverage, drift check, and compliance gates, embedded into pipeline eval runs.
 - `eval-summary.sh` to render eval run JSON into Markdown for local review and CI Step Summary.
 - `eval-history.sh` to aggregate eval run JSON files into a Markdown trend report.
+- `eval-sink.sh` to publish eval runs, outcome links, and Markdown reports to a local central eval sink with per-project manifests and an index.
 - `outcome-link.sh` to link post-run review findings, rework, escaped defects, incidents, or success signals back to eval runs under `lattice/state/outcomes/`.
 - `outcome-report.sh` to render outcome attribution signals, context references, severity distribution, and runs needing review.
 - Loop state JSON under `lattice/state/loops/`, embedded into eval runs and summarized in eval reports.
@@ -33,7 +34,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- README and wiki now describe pipeline/gate eval JSON, loop state, outcome links/reports, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, knowledge governance lint, review/TDD process evidence, Markdown summaries/history, GitHub Actions artifacts, Step Summary, and PR comments as implemented.
+- README and wiki now describe pipeline/gate eval JSON, central eval sink, loop state, outcome links/reports, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, knowledge governance lint, review/TDD process evidence, Markdown summaries/history, GitHub Actions artifacts, Step Summary, and PR comments as implemented.
 - Pipeline eval runs, eval summaries, and eval history now include Context Evidence when a spec has `context.md`.
 - Default architecture and glossary knowledge templates now include `Source` columns for promotion governance.
 - Default project knowledge templates now include `owner`, `verified_at`, and `applies_to` front matter.
