@@ -82,6 +82,7 @@ check_executable "lattice/kernel/delivery/outcome-link.sh" "outcome linkage reco
 check_executable "lattice/kernel/delivery/outcome-report.sh" "outcome attribution report"
 check_executable "lattice/kernel/orchestrator/sdd/plan-lint.sh" "plan contract lint"
 check_executable "lattice/kernel/orchestrator/sdd/spec-state-lint.sh" "spec state lint"
+check_executable "lattice/kernel/orchestrator/sdd/spec-status.sh" "spec status transition helper"
 check_executable "lattice/kernel/context/context-lint.sh" "context basis lint"
 check_executable "lattice/kernel/context/context-run.sh" "context run recorder"
 check_executable "lattice/kernel/context/learn-draft.sh" "learn draft workflow"

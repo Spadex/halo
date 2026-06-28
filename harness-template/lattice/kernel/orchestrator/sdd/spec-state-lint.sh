@@ -165,6 +165,16 @@ case "$STATUS" in
     ;;
 esac
 
+if [[ "$STATUS" == "implemented" || "$STATUS" == "verified" || "$STATUS" == "finished" ]]; then
+  if [[ -f "$PLAN_FILE" ]]; then
+    if grep -qE '^- \[ \] (T[0-9]+|RED-[0-9]+):' "$PLAN_FILE"; then
+      fail_msg "plan.md has incomplete tasks for status=$STATUS"
+    else
+      pass_msg "plan tasks complete for status=$STATUS"
+    fi
+  fi
+fi
+
 if [[ "$STATUS" == "drafted" && -f "$PLAN_FILE" ]]; then
   warn_msg "plan.md exists but status is still drafted"
 fi

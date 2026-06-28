@@ -34,6 +34,7 @@ bash lattice/kernel/delivery/pipeline.sh
 4. Record exact commands, exit codes, and output summaries in `verify.md`.
 5. Fix retryable failures within the task scope, then rerun affected commands.
 6. Escalate non-retryable failures with concrete next steps.
+7. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> verified --from=implemented` only after verification passes.
 
 ## Outputs
 
@@ -67,3 +68,4 @@ bash lattice/kernel/delivery/pipeline.sh
 - [ ] Commands and outcomes are recorded.
 - [ ] Failures are fixed or escalated.
 - [ ] Evidence matches the selected execution mode.
+- [ ] Lattice spec-status advances to `verified` only after passing evidence exists.

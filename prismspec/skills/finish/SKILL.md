@@ -30,6 +30,7 @@ Close the loop. Preserve the useful delivery evidence and avoid turning transien
 7. If a post-run review finding, rework, escaped defect, incident, or success signal is already known in Lattice-hosted mode, record it with `outcome-link.sh` and refresh `outcome-report.sh` when useful.
 8. Publish evidence with `eval-sink.sh publish` when the team uses a central eval sink, refresh `eval-dashboard.sh` when the team uses the static dashboard, and use `eval-query.sh` when a machine-readable central summary is needed.
 9. Capture reusable lessons through `prismspec-learn` only when durable.
+10. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> finished --from=verified` after `summary.md` is written.
 
 ## Outputs
 
@@ -69,3 +70,4 @@ Close the loop. Preserve the useful delivery evidence and avoid turning transien
 - [ ] Residual risks and deferred work are concrete.
 - [ ] Known post-run outcome signals are linked to the eval run when applicable.
 - [ ] Reusable lessons are captured or intentionally skipped.
+- [ ] Lattice spec-status advances to `finished` when running in Lattice-hosted mode.

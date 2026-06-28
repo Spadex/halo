@@ -122,6 +122,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
@@ -617,6 +618,37 @@ else
   echo "$PLAN_LINT_OUTPUT" | tail -20
 fi
 
+SPEC_STATUS_PLANNED_EXIT=0
+SPEC_STATUS_PLANNED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature planned --from=drafted 2>&1) || SPEC_STATUS_PLANNED_EXIT=$?
+GUIDE_STATUS_JSON=$(cd "$SANDBOX" && bash prismspec/bin/guide.sh --spec=modern-feature --json)
+if [[ $SPEC_STATUS_PLANNED_EXIT -eq 0 ]] \
+  && grep -q '^status: planned$' "$SANDBOX/lattice/specs/modern-feature/spec.md" \
+  && echo "$GUIDE_STATUS_JSON" | yq -e '.status == "planned"' >/dev/null 2>&1; then
+  pass "spec-status advances drafted spec to planned"
+else
+  fail "spec-status failed to advance drafted spec to planned"
+  echo "$SPEC_STATUS_PLANNED_OUTPUT" | tail -20
+fi
+
+SPEC_STATUS_INCOMPLETE_EXIT=0
+bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned >/tmp/lattice-spec-status-incomplete.log 2>&1 || SPEC_STATUS_INCOMPLETE_EXIT=$?
+if [[ $SPEC_STATUS_INCOMPLETE_EXIT -ne 0 ]] && grep -q "incomplete tasks" /tmp/lattice-spec-status-incomplete.log; then
+  pass "spec-status blocks implemented state with incomplete tasks"
+else
+  fail "spec-status accepted incomplete implemented state"
+  tail -20 /tmp/lattice-spec-status-incomplete.log
+fi
+
+perl -0pi -e 's/- \[ \] T1:/- [x] T1:/g; s/- \[ \] RED-1:/- [x] RED-1:/g' "$SANDBOX/lattice/specs/modern-feature/plan.md"
+SPEC_STATUS_IMPLEMENTED_EXIT=0
+SPEC_STATUS_IMPLEMENTED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned 2>&1) || SPEC_STATUS_IMPLEMENTED_EXIT=$?
+if [[ $SPEC_STATUS_IMPLEMENTED_EXIT -eq 0 ]] && grep -q '^status: implemented$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then
+  pass "spec-status advances completed plan to implemented"
+else
+  fail "spec-status failed to advance completed plan to implemented"
+  echo "$SPEC_STATUS_IMPLEMENTED_OUTPUT" | tail -20
+fi
+
 mkdir -p "$SANDBOX/lattice/specs/bad-plan"
 cat > "$SANDBOX/lattice/specs/bad-plan/spec.md" << 'BAD_SPEC'
 ---
@@ -664,6 +696,31 @@ if [[ $PRISMSPEC_ALL_LINT_EXIT -eq 0 ]]; then
 else
   fail "PrismSpec lint failed full artifact contract"
   echo "$PRISMSPEC_ALL_LINT_OUTPUT" | tail -10
+fi
+
+SPEC_STATUS_VERIFIED_EXIT=0
+SPEC_STATUS_VERIFIED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature verified --from=implemented 2>&1) || SPEC_STATUS_VERIFIED_EXIT=$?
+if [[ $SPEC_STATUS_VERIFIED_EXIT -eq 0 ]] && grep -q '^status: verified$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then
+  pass "spec-status advances implemented spec to verified"
+else
+  fail "spec-status failed to advance implemented spec to verified"
+  echo "$SPEC_STATUS_VERIFIED_OUTPUT" | tail -20
+fi
+
+cat > "$SANDBOX/lattice/specs/modern-feature/summary.md" << 'SUMMARY'
+# Summary: Modern Feature
+
+- Result: delivered
+- Verification: `go test ./...` passed
+- Residual risk: none for smoke
+SUMMARY
+SPEC_STATUS_FINISHED_EXIT=0
+SPEC_STATUS_FINISHED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature finished --from=verified 2>&1) || SPEC_STATUS_FINISHED_EXIT=$?
+if [[ $SPEC_STATUS_FINISHED_EXIT -eq 0 ]] && grep -q '^status: finished$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then
+  pass "spec-status advances verified spec to finished"
+else
+  fail "spec-status failed to advance verified spec to finished"
+  echo "$SPEC_STATUS_FINISHED_OUTPUT" | tail -20
 fi
 
 BRIEF_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" modern-feature T1 2>&1)

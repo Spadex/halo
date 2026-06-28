@@ -123,6 +123,20 @@ extract_mode() {
   ' "$file"
 }
 
+extract_status() {
+  local file="$1"
+  [[ -f "$file" ]] || { echo ""; return 0; }
+  awk '
+    /^status:/ {
+      value = substr($0, index($0, ":") + 1);
+      gsub(/^[ \t]+|[ \t]+$/, "", value);
+      gsub(/["'\''`]/, "", value);
+      print value;
+      exit;
+    }
+  ' "$file"
+}
+
 has_incomplete_tasks() {
   local file="$1"
   [[ -f "$file" ]] || return 1
@@ -156,6 +170,8 @@ stage_from_artifacts() {
 MODE="${MODE_OVERRIDE:-}"
 [[ -n "$MODE" ]] || MODE="$(extract_mode "${SPEC_FILE:-}")"
 [[ -n "$MODE" ]] || MODE="auto"
+STATUS="$(extract_status "${SPEC_FILE:-}")"
+[[ -n "$STATUS" ]] || STATUS="none"
 STAGE="$(stage_from_artifacts)"
 
 template_hint() {
@@ -195,6 +211,7 @@ if [[ "$JSON" == "true" ]]; then
   printf '{\n'
   printf '  "host": "%s",\n' "$HOST"
   printf '  "spec_id": "%s",\n' "$SPEC_ID"
+  printf '  "status": "%s",\n' "$STATUS"
   printf '  "stage": "%s",\n' "$STAGE"
   printf '  "mode": "%s",\n' "$MODE"
   printf '  "skill": "%s",\n' "$(skill_for_stage "$STAGE")"
@@ -212,6 +229,7 @@ echo "PrismSpec Guide"
 echo ""
 echo "Host:        $HOST"
 echo "Spec id:     ${SPEC_ID:-<new>}"
+echo "Status:      $STATUS"
 echo "Stage:       $STAGE"
 echo "Mode:        $MODE"
 echo "Skill:       $(skill_for_stage "$STAGE")"

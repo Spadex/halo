@@ -70,7 +70,7 @@ bash prismspec/bin/guide.sh --json
 | Component | Role | Key Paths |
 |-----------|------|-----------|
 | PrismSpec | Standalone spec-coding skill pack | `prismspec/skillpack.yaml`, `prismspec/skills/*/SKILL.md`, `prismspec/bin/`, `prismspec/templates/` |
-| Orchestrator | Agent rules and phase definitions | `lattice/kernel/orchestrator/` |
+| Orchestrator | Agent rules, phase definitions, and spec status transitions | `lattice/kernel/orchestrator/` |
 | Context | Agent-readable context map, project knowledge assets, external context entry, and optional retrieval backend | `lattice/context/`, `lattice/kernel/context/` |
 | Delivery | Independent verification pipeline and gates | `lattice/kernel/delivery/` |
 | Evidence | Gate output, structured Eval runs, Markdown summaries, and history reports | `lattice/state/eval-runs/*.json`, `*.md`, AC coverage, drift diagnostics |
@@ -97,6 +97,7 @@ cat .github/workflows/lattice-eval.yml
 bash prismspec/bin/guide.sh --json
 bash prismspec/bin/lint.sh lattice/specs/<spec-id>
 bash lattice/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>
+bash lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted
 bash lattice/kernel/orchestrator/sdd/plan-lint.sh <spec-id>
 cat lattice/context/README.md
 bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
@@ -114,7 +115,7 @@ Implemented:
 
 - install/init/upgrade and smoke tests;
 - standalone PrismSpec skill pack manifest and Lattice-hosted mode;
-- doctor, `pipeline --json-out` structured eval runs, central eval sink/static dashboard/query, loop state JSON, outcome link events and attribution reports, spec-state-lint, plan-lint, context-lint, context-run evidence, learn promotion audit events, knowledge review evidence, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
+- doctor, `pipeline --json-out` structured eval runs, central eval sink/static dashboard/query, loop state JSON, outcome link events and attribution reports, spec-state-lint, spec-status, plan-lint, context-lint, context-run evidence, learn promotion audit events, knowledge review evidence, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
 - spec lint, AC coverage, drift check, compliance, spec lock;
 - context map, knowledge backend, context-lint, context-run evidence, knowledge metadata lint, knowledge governance lint, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
