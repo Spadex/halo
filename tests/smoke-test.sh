@@ -225,6 +225,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -f "$SANDBOX/prismspec/skills/verify/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/finish/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/learn/SKILL.md" ]] \
+    && [[ -x "$SANDBOX/prismspec/bin/new.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/guide.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/lint.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/doctor.sh" ]] \
@@ -242,6 +243,19 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   else
     fail "PrismSpec standalone module missing"
   fi
+
+  PRISMSPEC_NEW_JSON=$(bash "$SANDBOX/prismspec/bin/new.sh" smoke-new-spec --title="Smoke New Spec" --template=lite --mode=plan --json)
+  if echo "$PRISMSPEC_NEW_JSON" | yq -e '.host == "lattice" and .spec_id == "smoke-new-spec" and .template == "lite" and .mode == "plan"' >/dev/null 2>&1 \
+    && [[ -f "$SANDBOX/lattice/specs/smoke-new-spec/context.md" ]] \
+    && [[ -f "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" ]] \
+    && grep -q "id: smoke-new-spec" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" \
+    && grep -q "execution_mode: plan" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md"; then
+    pass "PrismSpec new creates routed spec artifacts"
+  else
+    fail "PrismSpec new did not create routed spec artifacts"
+    echo "$PRISMSPEC_NEW_JSON"
+  fi
+  rm -rf "$SANDBOX/lattice/specs/smoke-new-spec"
 
   PRISMSPEC_DOCTOR_EXIT=0
   PRISMSPEC_DOCTOR_OUTPUT=$(bash "$SANDBOX/prismspec/bin/doctor.sh" 2>&1) || PRISMSPEC_DOCTOR_EXIT=$?

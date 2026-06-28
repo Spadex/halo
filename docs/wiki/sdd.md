@@ -254,6 +254,7 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 
 已实现：
 
+- `new.sh` 初始 `context.md` / `spec.md` 目录化产物创建。
 - `guide.sh` artifact-based routing。
 - `doctor.sh` standalone / Lattice-hosted skill pack 健康检查。
 - `lint.sh` skillpack / spec / plan / evidence contract 校验。

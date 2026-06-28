@@ -18,6 +18,7 @@ compatibility:
     - lattice-hosted
 entrypoints:
   command: prismspec/commands/sdd.md
+  new: prismspec/bin/new.sh
   router: prismspec/bin/guide.sh
   lint: prismspec/bin/lint.sh
   doctor: prismspec/bin/doctor.sh
@@ -119,6 +120,7 @@ contracts:
     - tdd
 quality_gates:
   - bash prismspec/bin/doctor.sh
+  - bash prismspec/bin/new.sh --help
   - bash prismspec/bin/guide.sh --json
   - bash prismspec/bin/lint.sh prismspec skillpack
   - bash prismspec/bin/lint.sh <spec-dir>

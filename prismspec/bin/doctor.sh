@@ -79,6 +79,7 @@ echo ""
 echo "── Skill pack contract ──"
 check_file "$PRISMSPEC_ROOT/skillpack.yaml" "skillpack manifest"
 check_file "$PRISMSPEC_ROOT/commands/sdd.md" "SDD command"
+check_executable "$PRISMSPEC_ROOT/bin/new.sh" "new"
 check_executable "$PRISMSPEC_ROOT/bin/guide.sh" "guide"
 check_executable "$PRISMSPEC_ROOT/bin/lint.sh" "lint"
 check_command "skillpack contract lint" bash "$PRISMSPEC_ROOT/bin/lint.sh" "$PRISMSPEC_ROOT" skillpack

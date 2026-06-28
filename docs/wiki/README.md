@@ -57,6 +57,7 @@ flowchart LR
 
 - `install.sh` / `init.sh` 安装初始化。
 - `prismspec/skills/*/SKILL.md` canonical skills。
+- `prismspec/bin/new.sh` 初始 spec 产物创建。
 - `prismspec/bin/doctor.sh` standalone / Lattice-hosted skill pack 健康检查。
 - `prismspec/bin/guide.sh` 阶段路由。
 - `prismspec/bin/lint.sh` skillpack / artifact contract 校验。

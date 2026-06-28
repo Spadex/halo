@@ -38,7 +38,7 @@ prismspec/
 ├── references/                 # loaded on demand
 ├── agents/                     # lightweight reviewer personas
 ├── commands/                   # slash-command entry points
-└── bin/                        # deterministic guide/lint/doctor helpers
+└── bin/                        # deterministic new/guide/lint/doctor helpers
 ```
 
 `skills/*/SKILL.md` is the only canonical skill source. Do not maintain parallel flat `skills/*.md` entries.
@@ -85,6 +85,12 @@ First check the skill pack health:
 bash prismspec/bin/doctor.sh
 ```
 
+Create an initial spec directory:
+
+```bash
+bash prismspec/bin/new.sh checkout-flow --title="Checkout Flow" --template=service --mode=plan
+```
+
 Run the guide first. Route from current files, not conversation memory:
 
 ```bash
@@ -107,6 +113,8 @@ bash prismspec/bin/guide.sh --spec=checkout-flow --from=verify --json
 | `verify_command` | Recommended verification command |
 
 ## Workflow
+
+`new.sh` is an initialization helper, not a workflow stage. It only creates `context.md` and `spec.md`; `guide.sh` still routes from artifact state.
 
 | Stage | Goal | Artifacts | Stop When |
 |-------|------|-----------|-----------|

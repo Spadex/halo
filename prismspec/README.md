@@ -38,7 +38,7 @@ prismspec/
 ├── references/                 # loaded on demand
 ├── agents/                     # lightweight reviewer personas
 ├── commands/                   # slash-command entry points
-└── bin/                        # deterministic guide/lint/doctor helpers
+└── bin/                        # deterministic new/guide/lint/doctor helpers
 ```
 
 `skills/*/SKILL.md` 是唯一 canonical skill source。不要再维护 flat `skills/*.md` 入口，避免同一流程出现多个事实源。
@@ -85,6 +85,12 @@ lattice/specs/<spec-id>/
 bash prismspec/bin/doctor.sh
 ```
 
+创建一个初始 spec 目录：
+
+```bash
+bash prismspec/bin/new.sh checkout-flow --title="Checkout Flow" --template=service --mode=plan
+```
+
 先运行 guide，永远从当前文件状态路由，不从对话记忆猜阶段：
 
 ```bash
@@ -107,6 +113,8 @@ bash prismspec/bin/guide.sh --spec=checkout-flow --from=verify --json
 | `verify_command` | 推荐验证命令 |
 
 ## Workflow
+
+`new.sh` 只是初始化 helper，不是 workflow 阶段。它只创建 `context.md` 和 `spec.md`，后续仍由 `guide.sh` 根据文件状态路由。
 
 | Stage | 目标 | 产物 | 何时停止 |
 |-------|------|------|----------|

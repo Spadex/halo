@@ -137,6 +137,7 @@ Projects can set the default mode in `lattice/manifest.yaml`. Users can override
 |----------|---------|
 | Check installation health | `bash lattice/kernel/doctor.sh` |
 | Check PrismSpec standalone health | `bash prismspec/bin/doctor.sh` |
+| Create an initial spec directory | `bash prismspec/bin/new.sh checkout-flow --template=service --mode=plan` |
 | Route the next SDD step | `bash prismspec/bin/guide.sh --json` |
 | Lint the PrismSpec skill pack | `bash prismspec/bin/lint.sh prismspec skillpack` |
 | Lint spec / plan / evidence | `bash prismspec/bin/lint.sh lattice/specs/<spec-id>` |
@@ -165,7 +166,7 @@ Lattice currently provides a minimum trusted loop for repo-local AI Coding:
 | Area | Available Capabilities |
 |------|------------------------|
 | Install and init | `install.sh`, `init.sh`, `doctor.sh` manifest/skillpack contract checks, smoke tests, GitHub Actions eval artifact template. |
-| PrismSpec | Canonical skills, `doctor.sh`, `guide.sh`, skillpack/artifact `lint.sh`, multiple templates, Plan/TDD policy, standalone and Lattice-hosted modes. |
+| PrismSpec | Canonical skills, `new.sh`, `doctor.sh`, `guide.sh`, skillpack/artifact `lint.sh`, multiple templates, Plan/TDD policy, standalone and Lattice-hosted modes. |
 | Spec lifecycle | `context.md`, `spec.md`, `plan.md`, `verify.md`, `summary.md`, status transitions, transition events/history. |
 | Implementation evidence | `task-next.sh`, `task-complete.sh`, task brief, review package, review summary, TDD evidence, task evidence lint. |
 | Verification / Evidence | Pipeline, spec lint, AC coverage, drift check, compliance, spec lock, structured eval JSON, Markdown summary/history. |
