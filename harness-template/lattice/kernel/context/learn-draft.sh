@@ -4,7 +4,7 @@ source "$(dirname "$0")/../_lib.sh"
 
 for arg in "$@"; do
   [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "learn draft" "Promote or discard context learn drafts" \
-    "learn-draft.sh promote <draft.md> [--to=lattice/context/knowledge/pitfalls.md]" \
+    "learn-draft.sh promote <draft.md> [--to=lattice/context/knowledge/pitfalls.md] [--require-review]" \
     "learn-draft.sh discard <draft.md> --reason=<reason>"
 done
 
@@ -12,12 +12,14 @@ ACTION="${1:-}"
 DRAFT="${2:-}"
 TARGET="lattice/context/knowledge/pitfalls.md"
 REASON=""
+REQUIRE_REVIEW=false
 
 shift $(( $# >= 2 ? 2 : $# ))
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --to=*) TARGET="${1#--to=}" ;;
     --reason=*) REASON="${1#--reason=}" ;;
+    --require-review) REQUIRE_REVIEW=true ;;
     --to)
       shift
       TARGET="${1:-}"
@@ -118,6 +120,17 @@ write_event_json() {
   } > "$event_file"
 }
 
+has_approved_review() {
+  local draft_rel="$1" event
+  for event in "$PROJECT_ROOT"/lattice/state/knowledge-reviews/*.json; do
+    [[ -f "$event" ]] || continue
+    if yq -e ".kind == \"knowledge-review\" and .action == \"approve\" and .target == \"${draft_rel}\" and .conflicts_checked == true" "$event" >/dev/null 2>&1; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 DRAFT_ABS="$(safe_draft_path "$DRAFT")"
 DRAFT_REL="$(rel_path "$DRAFT_ABS")"
 BASENAME="$(basename "$DRAFT_ABS")"
@@ -140,6 +153,11 @@ archive_path() {
 
 case "$ACTION" in
   promote)
+    if [[ "$REQUIRE_REVIEW" == "true" ]] && ! has_approved_review "$DRAFT_REL"; then
+      echo "Promotion requires an approved knowledge review with conflicts_checked=true: $DRAFT_REL"
+      echo "Run: lattice/kernel/context/knowledge-review.sh approve $DRAFT_REL --reviewer=<name> --reason=<reason> --conflicts-checked"
+      exit 1
+    fi
     TARGET_ABS="$(safe_target_path "$TARGET")"
     TARGET_REL="$(rel_path "$TARGET_ABS")"
     ARCHIVE_ABS="$(archive_path "promoted" "$BASENAME")"

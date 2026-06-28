@@ -110,6 +110,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-review.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" ]] \
     && [[ -f "$SANDBOX/lattice/config/failure-categories.yaml" ]]; then
     pass "kernel files installed"
@@ -635,8 +636,27 @@ else
 fi
 
 PROMOTE_TARGET="$SANDBOX/lattice/context/knowledge/pitfalls.md"
+REQUIRE_REVIEW_EXIT=0
+bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/lattice-learn-require-review.log 2>&1 || REQUIRE_REVIEW_EXIT=$?
+if [[ $REQUIRE_REVIEW_EXIT -ne 0 ]] && grep -q "requires an approved knowledge review" /tmp/lattice-learn-require-review.log; then
+  pass "learn-draft require-review blocks unreviewed promotion"
+else
+  fail "learn-draft require-review should block unreviewed promotion"
+  cat /tmp/lattice-learn-require-review.log | tail -20
+fi
+
+KNOWLEDGE_REVIEW_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/knowledge-review.sh" approve "$ESCALATION_LEARN_DRAFT" --reviewer="smoke-reviewer" --reason="durable lesson candidate checked" --risk=medium --conflicts-checked 2>&1)
+KNOWLEDGE_REVIEW_EVENT=$(find "$SANDBOX/lattice/state/knowledge-reviews" -type f -name '*.json' -print | head -1)
+if [[ -n "$KNOWLEDGE_REVIEW_EVENT" ]] \
+  && yq -e '.kind == "knowledge-review" and .action == "approve" and .reviewer == "smoke-reviewer" and .target == "lattice/context/drafts/'"$(basename "$ESCALATION_LEARN_DRAFT")"'" and .conflicts_checked == true' "$KNOWLEDGE_REVIEW_EVENT" >/dev/null 2>&1; then
+  pass "knowledge-review records approval evidence"
+else
+  fail "knowledge-review approval evidence invalid"
+  echo "$KNOWLEDGE_REVIEW_OUTPUT" | tail -20
+fi
+
 PROMOTE_EXIT=0
-bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --to="$PROMOTE_TARGET" >/tmp/lattice-learn-promote.log 2>&1 || PROMOTE_EXIT=$?
+bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/lattice-learn-promote.log 2>&1 || PROMOTE_EXIT=$?
 PROMOTED_DRAFT="$SANDBOX/lattice/context/drafts/promoted/$(basename "$ESCALATION_LEARN_DRAFT")"
 PROMOTE_EVENT=$(find "$SANDBOX/lattice/state/learn-promotions" -type f -name '*.json' -print | head -1)
 if [[ $PROMOTE_EXIT -eq 0 ]] \

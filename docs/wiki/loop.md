@@ -38,12 +38,13 @@ Loop 的目标不是让 Agent 无限自修复，而是让失败可控：
 - retry 耗尽时在 `lattice/context/drafts/escalation-<run-id>.md` 生成 learn draft；
 - 用 `lattice/kernel/context/learn-draft.sh` promote 或 discard 待确认 draft；
 - 在 `lattice/state/learn-promotions/*.json` 记录 promotion/discard 审计事件；
+- 用 `lattice/kernel/context/knowledge-review.sh` 记录 approve/reject reviewer evidence；
 - promotion 后运行 advisory `knowledge-lint.sh`，提示 source、placeholder、conflict marker、expiry 和 duplicate heading 风险；
 - 在 eval run 中嵌入 `loop_state`，并把 retry/escalation 指标汇总到 summary 和 history。
 
 当前缺失：
 
-- promotion 前的语义重复、跨文件冲突和 owner/verified_at 治理仍需要人工判断。
+- promotion 前的语义重复和跨文件冲突仍需要 reviewer 判断。
 
 ## 状态模型
 
@@ -136,14 +137,15 @@ draft 内容：
 **Evidence**: lattice/state/eval-runs/<run-id>.json
 ```
 
-进入正式 knowledge 前必须人工或 reviewer 确认，避免把一次性实现细节污染知识库。确认后使用命令完成归档和审计：
+进入正式 knowledge 前必须人工或 reviewer 确认，避免把一次性实现细节污染知识库。确认后使用命令完成 review、归档和审计：
 
 ```bash
-bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --to=lattice/context/knowledge/pitfalls.md
+bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
 bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
 ```
 
-promotion 会把 `## Lesson Candidate` 追加到目标 knowledge 文件，把原 draft 移到 `lattice/context/drafts/promoted/`，写出 `lattice/state/learn-promotions/*.json`，并运行 advisory `knowledge-lint.sh`。discard 会把原 draft 移到 `lattice/context/drafts/discarded/`，并要求记录废弃原因。
+review 会写出 `lattice/state/knowledge-reviews/*.json`。promotion 会把 `## Lesson Candidate` 追加到目标 knowledge 文件，把原 draft 移到 `lattice/context/drafts/promoted/`，写出 `lattice/state/learn-promotions/*.json`，并运行 advisory `knowledge-lint.sh`。discard 会把原 draft 移到 `lattice/context/drafts/discarded/`，并要求记录废弃原因。
 
 ## 与 PrismSpec 的关系
 
@@ -158,10 +160,10 @@ Loop 不新增 SDD 阶段，它嵌入 Verification：
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| promotion 前缺少语义级治理 | 轻量 lint 只能发现结构化风险，不能判断跨文件语义冲突 | metadata + context-runs |
+| promotion 前语义级治理仍偏人工 | 轻量 lint 和 review evidence 只能记录结构风险与决策，不能自动判断跨文件语义冲突 | metadata + review events + context-runs |
 
 ## 演进顺序
 
 1. Finishing 引用 loop state 和 learn draft。
-2. 增强 promotion 前的 owner、verified_at、跨文件冲突提示。
+2. 增强 promotion 前的跨文件语义冲突提示。
 3. 将 loop history 接入 central eval sink 或 dashboard。

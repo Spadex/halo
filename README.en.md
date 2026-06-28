@@ -94,7 +94,8 @@ cat lattice/context/README.md
 bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
 bash lattice/kernel/context/knowledge-lint.sh --strict
 bash lattice/kernel/context/context-run.sh <spec-id> --strict
-bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --to=lattice/context/knowledge/pitfalls.md
+bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
 bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
 ```
 
@@ -104,14 +105,14 @@ Implemented:
 
 - install/init/upgrade and smoke tests;
 - standalone PrismSpec skill pack manifest and Lattice-hosted mode;
-- doctor, `pipeline --json-out` structured eval runs, loop state JSON, context-run evidence, learn promotion audit events, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
+- doctor, `pipeline --json-out` structured eval runs, loop state JSON, context-run evidence, learn promotion audit events, knowledge review evidence, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
 - spec lint, AC coverage, drift check, compliance, spec lock;
 - context map, knowledge backend, context-run evidence, knowledge metadata lint, knowledge governance lint, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
-- reviewer policy, outcome linkage, and stronger semantic conflict governance;
+- outcome linkage and stronger semantic conflict governance;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;
 - multi-agent state and lease model.

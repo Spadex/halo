@@ -73,7 +73,8 @@ your-project/
 │   │   ├── eval-runs/
 │   │   ├── loops/
 │   │   ├── context-runs/
-│   │   └── learn-promotions/
+│   │   ├── learn-promotions/
+│   │   └── knowledge-reviews/
 │   └── specs/
 │       └── <spec-id>/
 │           ├── context.md
@@ -182,8 +183,9 @@ bash lattice/kernel/context/knowledge-lint.sh --strict
 # 记录本次 spec 实际采用的 context 依据
 bash lattice/kernel/context/context-run.sh <spec-id> --strict
 
-# Promote or discard a confirmed learn draft
-bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --to=lattice/context/knowledge/pitfalls.md
+# Review and promote or discard a confirmed learn draft
+bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
 bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
 ```
 
@@ -195,14 +197,14 @@ bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escala
 - PrismSpec 独立 skill pack manifest 与 Lattice-hosted 模式；
 - 目录化 spec、per-spec context、模板和 artifact lint；
 - doctor、spec lint、AC coverage、drift check、compliance、spec lock；
-- `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/state/context-runs/*.json`、`lattice/state/learn-promotions/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、AC/drift/compliance gate JSON、可配置 failure category、context-run、learn draft promotion/discard 和 review/TDD process evidence；
+- `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/state/context-runs/*.json`、`lattice/state/learn-promotions/*.json`、`lattice/state/knowledge-reviews/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、AC/drift/compliance gate JSON、可配置 failure category、context-run、learn draft promotion/discard、knowledge review evidence 和 review/TDD process evidence；
 - GitHub Actions eval artifact、Step Summary 与 best-effort PR comment workflow 模板；
 - Context map、knowledge backend、context-run evidence、knowledge metadata lint、knowledge governance lint、中心知识 sync 和基础 `/learn` 约定；
 - Go/Gin/GORM 可运行示例与多 Agent adapter 文档。
 
 仍在演进：
 
-- reviewer policy、outcome linkage 和更强语义冲突治理；
+- outcome linkage 和更强语义冲突治理；
 - Node/Python 等更多 drift parser；
 - 插件 manifest/schema/versioning 与多 Agent lease 模型。
 

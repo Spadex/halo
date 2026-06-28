@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - `failure-category-lint.sh` and doctor integration for failure category config validation.
 - Escalation learn drafts under `lattice/context/drafts/` when retry budget is exhausted.
 - `learn-draft.sh` to promote or discard confirmed learn drafts with archived source drafts and audit events under `lattice/state/learn-promotions/`.
+- `knowledge-review.sh` to record approve/reject reviewer decisions under `lattice/state/knowledge-reviews/`; `learn-draft.sh promote --require-review` can require approved review evidence with conflict checks.
 - `knowledge-lint.sh` to flag missing metadata, missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
 - `context-run.sh` to record per-spec selected facts, constraints, exclusions, conflicts, and context gaps under `lattice/state/context-runs/`.
 - `pr-comment.sh` to create or update a stable GitHub PR comment from the eval Markdown summary.

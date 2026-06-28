@@ -21,8 +21,9 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 2. Decide whether the lesson is durable, reusable, and non-secret.
 3. Write one concise knowledge entry per rule or pitfall.
 4. Include trigger context, rule, source, and practical guidance.
-5. Update the relevant knowledge file or context map.
-6. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
+5. If running inside Lattice and promoting a draft, record reviewer evidence when governance is required.
+6. Update the relevant knowledge file or context map.
+7. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
 
 ## Knowledge Entry Shape
 
@@ -47,6 +48,7 @@ expires_at: "YYYY-MM-DD" # optional
 
 - Knowledge draft in `lattice/context/drafts/`, promoted project knowledge in `lattice/context/knowledge/`, or standalone `prismspec/knowledge/`.
 - Updated `index.md`.
+- Lattice reviewer event from `bash lattice/kernel/context/knowledge-review.sh approve <draft.md> --reviewer=<name> --reason=<reason> --conflicts-checked` when promotion review is required.
 - Lattice advisory output from `bash lattice/kernel/context/knowledge-lint.sh --target=<knowledge-file>` when available.
 
 ## Stop Conditions
@@ -77,6 +79,7 @@ expires_at: "YYYY-MM-DD" # optional
 - [ ] Existing knowledge was checked.
 - [ ] New entry is concise and sourced.
 - [ ] Knowledge metadata has owner, verified_at, and applies_to.
+- [ ] Lattice promotion has reviewer evidence when `--require-review` is used.
 - [ ] Relevant context entry is discoverable from `lattice/context/README.md` or the appropriate knowledge file.
 - [ ] `knowledge-lint.sh` has no unresolved warnings, or warnings are explicitly accepted by a reviewer.
 - [ ] No secrets or raw sensitive data are included.

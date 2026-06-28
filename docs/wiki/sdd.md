@@ -232,17 +232,18 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - knowledge governance lint。
 - knowledge metadata lint。
 - context-run evidence。
+- knowledge review evidence。
 
 尚未完成：
 
 - spec state machine 强校验。
 - plan schema。
-- outcome linkage 和 reviewer policy。
+- outcome linkage。
 
 ## 演进优先级
 
 1. 强化 `spec-lint` 对 front matter、mode、status 的校验。
 2. 增加 plan schema 或 plan-lint。
-3. 增加 outcome linkage 和 reviewer policy。
+3. 增加 outcome linkage。
 4. 增加 dashboard 或 central eval sink。
 5. 用真实项目迭代模板和 mode 选择策略。

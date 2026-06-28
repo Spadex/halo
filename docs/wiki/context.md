@@ -43,7 +43,9 @@ lattice/
 │       ├── plan.md
 │       └── summary.md
 └── state/
-    └── context-runs/          # 结构化记录每次 spec 采用的 context 依据
+    ├── context-runs/          # 结构化记录每次 spec 采用的 context 依据
+    ├── learn-promotions/      # knowledge draft 晋升或废弃事件
+    └── knowledge-reviews/     # knowledge reviewer 决策证据
 ```
 
 最重要的是 `lattice/context/README.md`。它不是普通说明文档，而是 Agent 的上下文地图。
@@ -269,6 +271,31 @@ bash lattice/kernel/context/knowledge-lint.sh --target=lattice/context/knowledge
 
 默认模式只给 warning，适合 doctor 和本地日常检查；`--strict` 适合 CI、promotion 前检查或团队治理。
 
+## `knowledge-review.sh` 的定位
+
+`knowledge-review.sh` 记录知识晋升前的 reviewer 决策证据。它不判断内容是否正确，也不替代 reviewer 的专业判断；它只把“谁在什么原因下 approve / reject 了哪条 draft，是否检查过冲突”写成可追溯事件。
+
+推荐用法：
+
+```bash
+bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
+bash lattice/kernel/context/knowledge-review.sh reject lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="not reusable"
+```
+
+输出位置：
+
+```text
+lattice/state/knowledge-reviews/<event-id>.json
+```
+
+团队可以在关键项目中使用强制晋升策略：
+
+```bash
+bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
+```
+
+`--require-review` 要求同一个 draft 已有 `approve` 事件且 `conflicts_checked=true`。这让轻量个人使用仍然顺滑，同时让团队知识库可以逐步收紧治理。
+
 ## `context-run.sh` 的定位
 
 `context-run.sh` 把单次 `context.md` 的采用情况记录成结构化 JSON，解决“Agent 这次到底用了哪些上下文”的可追踪问题。它不判断上下文是否正确，只记录：
@@ -312,12 +339,12 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 | 默认 context map 仍需项目化 | 初始化后需要补充真实模块、链路和风险 | P0 |
 | 项目知识文件仍需真实沉淀 | Agent 只能看到结构，缺少真实领域知识 | P0 |
 | `sources.yaml` 尚未被自动化消费 | 当前更多是未来扩展点 | P1 |
-| context metadata 仍偏基础 | 已有 owner、verified_at、applies_to lint，但还缺少 reviewer policy 和语义冲突处理 | P1 |
+| 语义冲突处理仍依赖 reviewer | 已有 metadata lint 和 review evidence，但不能自动判断跨文件语义冲突 | P1 |
 | context-run 仍偏计数型 | 已能记录采用事实，但还不能判断语义质量和真实收益 | P1 |
 
 ## 推荐演进
 
 1. 在真实示例中填充 `lattice/context/README.md`、`external.md` 和项目知识文件。
-2. 增加 reviewer policy 和跨文件 conflict resolution。
+2. 增加跨文件 semantic conflict resolution。
 3. 将 `sources.yaml` 保留为可选自动化配置，后续脚本真正消费后再提升权重。
 4. 将 context-run 与真实 review finding / escaped defect 关联，分析哪些上下文真的有用。
