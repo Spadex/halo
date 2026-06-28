@@ -8,7 +8,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 2. Agent 的工作过程是否可靠？
 3. 团队的 AI Coding 质量是否在变好？
 
-当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、context-run、review summary、TDD red/green evidence、loop state、可配置 failure category、failure category lint、escalation learn draft、knowledge review event、learn promotion event、knowledge governance lint 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON、当前 spec 对应的 context-run、process evidence 以及 loop state；失败时，loop state 会包含 `failure_category` 和 `default_action`，分类规则来自 `lattice/config/failure-categories.yaml`；`failure-category-lint.sh` 和 doctor 会前置检查分类配置；当 retry budget 耗尽时，它会在 `lattice/context/drafts/` 生成待确认 learn draft；确认后，`knowledge-review.sh` 会记录 approve/reject 证据，`learn-draft.sh` 会记录 promotion/discard 事件，并运行 advisory knowledge lint。`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 聚合为趋势报告。
+当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、context-run、review summary、TDD red/green evidence、loop state、outcome link、可配置 failure category、failure category lint、escalation learn draft、knowledge review event、learn promotion event、knowledge governance lint 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON、当前 spec 对应的 context-run、process evidence 以及 loop state；失败时，loop state 会包含 `failure_category` 和 `default_action`，分类规则来自 `lattice/config/failure-categories.yaml`；`failure-category-lint.sh` 和 doctor 会前置检查分类配置；当 retry budget 耗尽时，它会在 `lattice/context/drafts/` 生成待确认 learn draft；确认后，`knowledge-review.sh` 会记录 approve/reject 证据，`learn-draft.sh` 会记录 promotion/discard 事件，并运行 advisory knowledge lint；交付后的 review finding、返工、逃逸缺陷、事故或成功反馈可以用 `outcome-link.sh` 关联回 eval run。`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 和 outcome link 聚合为趋势报告。
 
 ## 当前形态
 
@@ -25,8 +25,9 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 | `lattice/context/drafts/escalation-*.md` | learn draft | retry 耗尽后的待确认经验候选 |
 | `lattice/state/knowledge-reviews/*.json` | knowledge review event | 经验候选 approve/reject、reviewer、reason 和 conflict check |
 | `lattice/state/learn-promotions/*.json` | learn promotion event | 经验候选被晋升或废弃的审计记录 |
+| `lattice/state/outcomes/*.json` | outcome link event | 交付后真实结果与 eval run 的关联 |
 | `knowledge-lint.sh` | governance diagnostics | source、placeholder、conflict marker、expiry、duplicate heading 检查 |
-| `eval-history.sh` | history Markdown | 多次运行的 pass rate、AC coverage、review/TDD 趋势 |
+| `eval-history.sh` | history Markdown | 多次运行的 pass rate、AC coverage、review/TDD/outcome 趋势 |
 | build/lint/test | terminal output | 工程基础质量 |
 | smoke test | pass/fail summary | 框架自身是否可运行 |
 
@@ -56,6 +57,8 @@ Pipeline 可写出：
 lattice/state/eval-runs/
 ├── <run-id>.json
 └── <run-id>.md
+lattice/state/outcomes/
+└── <outcome-id>.json
 ```
 
 示例：
@@ -142,6 +145,45 @@ lattice/state/eval-runs/
 }
 ```
 
+交付后的真实结果可以通过 outcome link 记录：
+
+```bash
+bash lattice/kernel/delivery/outcome-link.sh record \
+  --eval=<run-id|eval.json> \
+  --type=review_finding \
+  --severity=medium \
+  --source=code-review \
+  --summary="missing regression test" \
+  --context-ref=rules.md#ac-trace
+```
+
+输出事件包含：
+
+```json
+{
+  "schema_version": "lattice.outcome-link.v1",
+  "kind": "outcome-link",
+  "eval_run": {
+    "run_id": "20260628T195355Z-5665",
+    "spec_file": "lattice/specs/create-item-api/spec.md",
+    "git_sha": "abc1234",
+    "pipeline_status": "pass"
+  },
+  "outcome": {
+    "type": "review_finding",
+    "severity": "medium",
+    "source": "code-review",
+    "summary": "missing regression test"
+  },
+  "context_refs": ["rules.md#ac-trace"],
+  "eval_metrics": {
+    "context_run_total": 1,
+    "context_selected_facts": 5,
+    "context_blocking_gaps": 0
+  }
+}
+```
+
 ## 指标
 
 短期指标：
@@ -156,6 +198,7 @@ lattice/state/eval-runs/
 | escalation count | 超出重试预算次数 |
 | review verdict | pass / fail / cannot_verify 分布 |
 | TDD completeness | TDD red/green evidence 完整度 |
+| outcome links | review finding、rework、escaped defect、incident、success 数量 |
 
 中期指标：
 
@@ -192,11 +235,11 @@ Lattice 在 `harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub 
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| context evidence 仍偏计数型 | 已有 context-run、metadata lint 和 review evidence，但还不能衡量 context 对缺陷率和返工率的影响 | outcome linkage |
+| outcome attribution 仍偏人工 | 已有 outcome link，但还不能自动判断哪些 context 真正降低缺陷率和返工率 | dashboard / analysis |
 | dashboard 未实现 | history report 仍是 repo-local 文件，不能跨项目横向比较 | dashboard / central eval sink |
 
 ## 演进顺序
 
-1. 增加 outcome linkage。
-2. 增加 dashboard 或 central eval sink。
+1. 增加 dashboard 或 central eval sink。
+2. 增加 outcome attribution 分析。
 3. 扩展更多语言的 drift parser。

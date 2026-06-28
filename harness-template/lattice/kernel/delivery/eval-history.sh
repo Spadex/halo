@@ -6,16 +6,18 @@ for arg in "$@"; do
   [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "eval history" "Aggregate eval run JSON files into a Markdown report" \
     "eval-history.sh                                      Print history report from lattice/state/eval-runs" \
     "eval-history.sh --out=<file>                         Write Markdown report to file" \
-    "eval-history.sh --dir=<dir> --limit=20                Use a custom eval-runs directory"
+    "eval-history.sh --dir=<dir> --outcomes-dir=<dir> --limit=20    Use custom evidence directories"
 done
 
 EVAL_DIR="$PROJECT_ROOT/lattice/state/eval-runs"
+OUTCOME_DIR="$PROJECT_ROOT/lattice/state/outcomes"
 OUT=""
 LIMIT=20
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dir=*) EVAL_DIR="${1#--dir=}" ;;
+    --outcomes-dir=*) OUTCOME_DIR="${1#--outcomes-dir=}" ;;
     --out=*) OUT="${1#--out=}" ;;
     --out)
       shift
@@ -34,6 +36,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ "$EVAL_DIR" == /* ]] || EVAL_DIR="$PROJECT_ROOT/$EVAL_DIR"
+[[ "$OUTCOME_DIR" == /* ]] || OUTCOME_DIR="$PROJECT_ROOT/$OUTCOME_DIR"
 [[ -d "$EVAL_DIR" ]] || { echo "Eval runs directory not found: $EVAL_DIR"; exit 1; }
 if [[ -n "$OUT" && "$OUT" != /* ]]; then
   OUT="$PROJECT_ROOT/$OUT"
@@ -75,6 +78,15 @@ while IFS= read -r file; do
   fi
 done < <(find "$EVAL_DIR" -maxdepth 1 -type f -name '*.json' -print 2>/dev/null | sort)
 
+declare -a OUTCOME_FILES=()
+if [[ -d "$OUTCOME_DIR" ]]; then
+  while IFS= read -r file; do
+    if yq -e '.kind == "outcome-link" and .eval_run.run_id and .outcome.type' "$file" >/dev/null 2>&1; then
+      OUTCOME_FILES+=("$file")
+    fi
+  done < <(find "$OUTCOME_DIR" -maxdepth 1 -type f -name '*.json' -print 2>/dev/null | sort)
+fi
+
 RUN_TOTAL="${#EVAL_FILES[@]}"
 PASS_TOTAL=0
 FAIL_TOTAL=0
@@ -99,6 +111,13 @@ RETRY_RUNS=0
 LOOP_RETRY_ACTIONS=0
 LOOP_ESCALATE_ACTIONS=0
 LEARN_DRAFT_TOTAL=0
+OUTCOME_TOTAL="${#OUTCOME_FILES[@]}"
+OUTCOME_REVIEW_FINDING=0
+OUTCOME_REWORK=0
+OUTCOME_ESCAPED_DEFECT=0
+OUTCOME_INCIDENT=0
+OUTCOME_SUCCESS=0
+OUTCOME_HIGH_OR_CRITICAL=0
 
 if [[ "$RUN_TOTAL" -gt 0 ]]; then
   for file in "${EVAL_FILES[@]}"; do
@@ -134,6 +153,23 @@ if [[ "$RUN_TOTAL" -gt 0 ]]; then
   done
 fi
 
+if [[ "$OUTCOME_TOTAL" -gt 0 ]]; then
+  for file in "${OUTCOME_FILES[@]}"; do
+    outcome_type="$(json_get "$file" '.outcome.type')"
+    outcome_severity="$(json_get "$file" '.outcome.severity')"
+    case "$outcome_type" in
+      review_finding) ((OUTCOME_REVIEW_FINDING++)) || true ;;
+      rework) ((OUTCOME_REWORK++)) || true ;;
+      escaped_defect) ((OUTCOME_ESCAPED_DEFECT++)) || true ;;
+      incident) ((OUTCOME_INCIDENT++)) || true ;;
+      success) ((OUTCOME_SUCCESS++)) || true ;;
+    esac
+    case "$outcome_severity" in
+      high|critical) ((OUTCOME_HIGH_OR_CRITICAL++)) || true ;;
+    esac
+  done
+fi
+
 percent() {
   local numerator="$1" denominator="$2"
   if [[ "$denominator" -eq 0 ]]; then
@@ -141,6 +177,24 @@ percent() {
   else
     printf '%s%%' $((numerator * 100 / denominator))
   fi
+}
+
+outcome_summary_for_run() {
+  local run_id="$1" total=0 high_or_critical=0 file severity
+  if [[ "$OUTCOME_TOTAL" -eq 0 ]]; then
+    printf '0 links, high/critical=0'
+    return 0
+  fi
+  for file in "${OUTCOME_FILES[@]}"; do
+    if yq -e ".eval_run.run_id == \"${run_id}\"" "$file" >/dev/null 2>&1; then
+      total=$((total + 1))
+      severity="$(json_get "$file" '.outcome.severity')"
+      case "$severity" in
+        high|critical) high_or_critical=$((high_or_critical + 1)) ;;
+      esac
+    fi
+  done
+  printf '%s links, high/critical=%s' "$total" "$high_or_critical"
 }
 
 render_history() {
@@ -157,6 +211,7 @@ render_history() {
   echo "| TDD Evidence | $TDD_COMPLETE complete / $TDD_INVALID invalid / $TDD_TOTAL total |"
   echo "| Context Evidence | $CONTEXT_RUN_TOTAL run(s), $CONTEXT_SELECTED_FACTS selected fact(s), $CONTEXT_BLOCKING_GAPS blocking gap(s) |"
   echo "| Loop | $RETRY_TOTAL total retries / $RETRY_RUNS retry runs / $LOOP_RETRY_ACTIONS next retry / $LOOP_ESCALATE_ACTIONS next escalate / $LEARN_DRAFT_TOTAL learn drafts |"
+  echo "| Outcome Links | $OUTCOME_TOTAL total, $OUTCOME_ESCAPED_DEFECT escaped defect, $OUTCOME_REWORK rework, $OUTCOME_INCIDENT incident, $OUTCOME_REVIEW_FINDING review finding, $OUTCOME_SUCCESS success, $OUTCOME_HIGH_OR_CRITICAL high/critical |"
   echo ""
   echo "## Recent Runs"
   echo ""
@@ -166,15 +221,15 @@ render_history() {
     return 0
   fi
 
-  echo "| Run | Status | Spec | Git | AC | Drift | Review | TDD | Context | Loop |"
-  echo "|---|---|---|---|---|---|---|---|---|---|"
+  echo "| Run | Status | Spec | Git | AC | Drift | Review | TDD | Context | Loop | Outcomes |"
+  echo "|---|---|---|---|---|---|---|---|---|---|---|"
 
   local start_index=0
   if [[ "$RUN_TOTAL" -gt "$LIMIT" ]]; then
     start_index=$((RUN_TOTAL - LIMIT))
   fi
 
-  local i file run_id status spec git ac_total ac_covered drift review_total review_failed review_cannot_verify tdd_total tdd_invalid context_runs context_facts context_blocking_gaps retry_count next_action failure_category learn_draft learn_flag
+  local i file run_id status spec git ac_total ac_covered drift review_total review_failed review_cannot_verify tdd_total tdd_invalid context_runs context_facts context_blocking_gaps retry_count next_action failure_category learn_draft learn_flag outcome_summary
   for ((i = RUN_TOTAL - 1; i >= start_index; i--)); do
     file="${EVAL_FILES[$i]}"
     run_id="$(json_get "$file" '.run_id')"
@@ -198,7 +253,8 @@ render_history() {
     learn_draft="$(json_get "$file" '.loop_state.learn_draft')"
     learn_flag="no"
     [[ -n "$learn_draft" ]] && learn_flag="yes"
-    echo "| $(md_escape "${run_id:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "${spec:-none}") | $(md_escape "${git:-unknown}") | $ac_covered/$ac_total | $drift | $review_failed fail / $review_cannot_verify cannot_verify / $review_total | $tdd_invalid invalid / $tdd_total | runs=$context_runs, facts=$context_facts, blocking=$context_blocking_gaps | retry=$retry_count, next=$(md_escape "${next_action:-unknown}"), category=$(md_escape "${failure_category:-none}"), learn=$learn_flag |"
+    outcome_summary="$(outcome_summary_for_run "$run_id")"
+    echo "| $(md_escape "${run_id:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "${spec:-none}") | $(md_escape "${git:-unknown}") | $ac_covered/$ac_total | $drift | $review_failed fail / $review_cannot_verify cannot_verify / $review_total | $tdd_invalid invalid / $tdd_total | runs=$context_runs, facts=$context_facts, blocking=$context_blocking_gaps | retry=$retry_count, next=$(md_escape "${next_action:-unknown}"), category=$(md_escape "${failure_category:-none}"), learn=$learn_flag | $(md_escape "$outcome_summary") |"
   done
 }
 

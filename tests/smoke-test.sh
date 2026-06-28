@@ -106,6 +106,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   if [[ -f "$SANDBOX/lattice/kernel/_lib.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
@@ -787,9 +788,19 @@ else
   cat /tmp/lattice-pipeline-custom-category.log | tail -20
 fi
 
+OUTCOME_LINK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" record --eval="$PIPELINE_GATE_JSON" --type=review_finding --severity=medium --source=smoke-review --summary="missing regression test evidence" --context-ref="rules.md#ac-trace" 2>&1)
+OUTCOME_EVENT=$(find "$SANDBOX/lattice/state/outcomes" -type f -name '*.json' -print | head -1)
+if [[ -n "$OUTCOME_EVENT" ]] \
+  && yq -e '.kind == "outcome-link" and .outcome.type == "review_finding" and .outcome.severity == "medium" and .eval_run.run_id != "" and .eval_metrics.context_run_total == 1 and (.context_refs | length == 1)' "$OUTCOME_EVENT" >/dev/null 2>&1; then
+  pass "outcome-link records post-run outcome evidence"
+else
+  fail "outcome-link event invalid"
+  echo "$OUTCOME_LINK_OUTPUT" | tail -20
+fi
+
 PIPELINE_SUMMARY_MD="$SANDBOX/lattice/state/eval-summary-smoke.md"
 SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" "$PIPELINE_GATE_JSON" --out="$PIPELINE_SUMMARY_MD" 2>&1)
-if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Context Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
+if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Context Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Outcome Links" "$PIPELINE_SUMMARY_MD" && grep -q "missing regression test evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
   pass "eval-summary renders pipeline JSON as Markdown"
 else
   fail "eval-summary output invalid"
@@ -809,7 +820,7 @@ mkdir -p "$SANDBOX/lattice/state/eval-runs"
 cp "$PIPELINE_GATE_JSON" "$SANDBOX/lattice/state/eval-runs/pipeline-ac-smoke.json"
 EVAL_HISTORY_MD="$SANDBOX/lattice/state/eval-history-smoke.md"
 HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-history.sh" --out="$EVAL_HISTORY_MD" --limit=5 2>&1)
-if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Context Evidence" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
+if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Context Evidence" "$EVAL_HISTORY_MD" && grep -q "Outcome Links" "$EVAL_HISTORY_MD" && grep -q "Outcomes" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
   pass "eval-history aggregates eval run JSON"
 else
   fail "eval-history output invalid"

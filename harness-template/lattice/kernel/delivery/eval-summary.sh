@@ -54,6 +54,13 @@ json_get() {
   printf '%s' "$value"
 }
 
+json_get_file() {
+  local file="$1" expr="$2" value
+  value=$(yq -r "$expr // \"\"" "$file" 2>/dev/null || true)
+  [[ "$value" == "null" ]] && value=""
+  printf '%s' "$value"
+}
+
 md_escape() {
   local value="${1:-}"
   value="${value//$'\r'/}"
@@ -245,6 +252,37 @@ render_summary() {
       blocking_gaps="$(json_get ".process_evidence.context_runs[$i].metrics.blocking_gaps")"
       echo "| $(md_escape "${spec_id:-unknown}") | $(md_escape "${context_file:-none}") | $(md_escape "${selected_facts:-0}") | $(md_escape "${constraints:-0}") | $(md_escape "${conflicts:-0}") | $(md_escape "${exclusions:-0}") | $(md_escape "${gaps:-0}") | $(md_escape "${blocking_gaps:-0}") |"
     done
+  fi
+
+  echo ""
+  echo "## Outcome Links"
+  echo ""
+
+  local run_id outcome_dir outcome_count outcome_file
+  run_id="$(json_get ".run_id")"
+  outcome_dir="$PROJECT_ROOT/lattice/state/outcomes"
+  outcome_count=0
+  if [[ -d "$outcome_dir" ]]; then
+    while IFS= read -r outcome_file; do
+      if yq -e ".kind == \"outcome-link\" and .eval_run.run_id == \"${run_id}\"" "$outcome_file" >/dev/null 2>&1; then
+        if [[ "$outcome_count" -eq 0 ]]; then
+          echo "| Type | Severity | Source | Summary | Context Refs |"
+          echo "|---|---|---|---|---|"
+        fi
+        local outcome_type outcome_severity outcome_source outcome_summary context_refs
+        outcome_type="$(json_get_file "$outcome_file" '.outcome.type')"
+        outcome_severity="$(json_get_file "$outcome_file" '.outcome.severity')"
+        outcome_source="$(json_get_file "$outcome_file" '.outcome.source')"
+        outcome_summary="$(json_get_file "$outcome_file" '.outcome.summary')"
+        context_refs="$(yq -r '(.context_refs // []) | join(", ")' "$outcome_file" 2>/dev/null || true)"
+        echo "| $(md_escape "${outcome_type:-unknown}") | $(md_escape "${outcome_severity:-unknown}") | $(md_escape "${outcome_source:-unknown}") | $(md_escape "$outcome_summary") | $(md_escape "$context_refs") |"
+        outcome_count=$((outcome_count + 1))
+      fi
+    done < <(find "$outcome_dir" -maxdepth 1 -type f -name '*.json' -print 2>/dev/null | sort)
+  fi
+
+  if [[ "$outcome_count" -eq 0 ]]; then
+    echo "_No outcome links recorded for this eval run._"
   fi
 
   echo ""
