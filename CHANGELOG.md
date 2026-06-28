@@ -29,7 +29,7 @@ All notable changes to this project will be documented in this file.
 - `context-run.sh` to record per-spec selected facts, constraints, exclusions, conflicts, and context gaps under `lattice/state/context-runs/`.
 - `pr-comment.sh` to create or update a stable GitHub PR comment from the eval Markdown summary.
 - `spec-state-lint.sh` to validate spec front matter and status-to-artifact readiness.
-- `spec-status.sh` to advance spec lifecycle status with guarded transitions and stale-state protection.
+- `spec-status.sh` to advance spec lifecycle status with guarded transitions, stale-state protection, and JSON transition events.
 - `plan-lint.sh` to validate AC-traced implementation plans before task execution starts.
 - `task-evidence-lint.sh` to require brief, review package, and TDD evidence for completed implementation tasks.
 - `review-summary.sh` and `tdd-evidence.sh` to capture process evidence as structured JSON.

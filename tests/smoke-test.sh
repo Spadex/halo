@@ -631,6 +631,21 @@ else
   fail "spec-status failed to advance drafted spec to planned"
   echo "$SPEC_STATUS_PLANNED_OUTPUT" | tail -20
 fi
+PLANNED_TRANSITION_EVENT="$(
+  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+    | while IFS= read -r file; do
+        yq -e '.kind == "spec-transition" and .from_status == "drafted" and .to_status == "planned"' "$file" >/dev/null 2>&1 && echo "$file"
+      done \
+    | tail -1 || true
+)"
+if [[ -f "$PLANNED_TRANSITION_EVENT" ]] \
+  && yq -e '.kind == "spec-transition" and .spec_id == "modern-feature" and .from_status == "drafted" and .to_status == "planned" and .checks.plan_lint == true and .checks.spec_state_lint == true' "$PLANNED_TRANSITION_EVENT" >/dev/null 2>&1; then
+  pass "spec-status records planned transition event"
+else
+  fail "spec-status planned transition event invalid"
+  [[ -f "$PLANNED_TRANSITION_EVENT" ]] && cat "$PLANNED_TRANSITION_EVENT"
+fi
+TRANSITION_COUNT_AFTER_PLANNED=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
 
 SPEC_STATUS_INCOMPLETE_EXIT=0
 bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned >/tmp/lattice-spec-status-incomplete.log 2>&1 || SPEC_STATUS_INCOMPLETE_EXIT=$?
@@ -649,6 +664,12 @@ if [[ $SPEC_STATUS_NO_EVIDENCE_EXIT -ne 0 ]] && grep -q "missing brief.md" /tmp/
 else
   fail "spec-status accepted completed tasks without evidence"
   tail -20 /tmp/lattice-spec-status-no-evidence.log
+fi
+TRANSITION_COUNT_AFTER_FAILED=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$TRANSITION_COUNT_AFTER_FAILED" == "$TRANSITION_COUNT_AFTER_PLANNED" ]]; then
+  pass "spec-status does not record failed transition attempts"
+else
+  fail "spec-status recorded failed transition attempts"
 fi
 
 BRIEF_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" modern-feature T1 2>&1)
@@ -701,6 +722,20 @@ if [[ $SPEC_STATUS_IMPLEMENTED_EXIT -eq 0 ]] && grep -q '^status: implemented$' 
 else
   fail "spec-status failed to advance completed plan to implemented"
   echo "$SPEC_STATUS_IMPLEMENTED_OUTPUT" | tail -20
+fi
+IMPLEMENTED_TRANSITION_EVENT="$(
+  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+    | while IFS= read -r file; do
+        yq -e '.kind == "spec-transition" and .from_status == "planned" and .to_status == "implemented"' "$file" >/dev/null 2>&1 && echo "$file"
+      done \
+    | tail -1 || true
+)"
+if [[ -f "$IMPLEMENTED_TRANSITION_EVENT" ]] \
+  && yq -e '.kind == "spec-transition" and .from_status == "planned" and .to_status == "implemented" and .checks.task_evidence_lint == true' "$IMPLEMENTED_TRANSITION_EVENT" >/dev/null 2>&1; then
+  pass "spec-status records implemented transition event"
+else
+  fail "spec-status implemented transition event invalid"
+  [[ -f "$IMPLEMENTED_TRANSITION_EVENT" ]] && cat "$IMPLEMENTED_TRANSITION_EVENT"
 fi
 
 mkdir -p "$SANDBOX/lattice/specs/bad-plan"
@@ -775,6 +810,22 @@ if [[ $SPEC_STATUS_FINISHED_EXIT -eq 0 ]] && grep -q '^status: finished$' "$SAND
 else
   fail "spec-status failed to advance verified spec to finished"
   echo "$SPEC_STATUS_FINISHED_OUTPUT" | tail -20
+fi
+TRANSITION_COUNT_FINAL=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
+FINISHED_TRANSITION_EVENT="$(
+  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+    | while IFS= read -r file; do
+        yq -e '.kind == "spec-transition" and .from_status == "verified" and .to_status == "finished"' "$file" >/dev/null 2>&1 && echo "$file"
+      done \
+    | tail -1 || true
+)"
+if [[ "$TRANSITION_COUNT_FINAL" == "4" ]] \
+  && [[ -f "$FINISHED_TRANSITION_EVENT" ]] \
+  && yq -e '.kind == "spec-transition" and .from_status == "verified" and .to_status == "finished"' "$FINISHED_TRANSITION_EVENT" >/dev/null 2>&1; then
+  pass "spec-status records complete transition audit trail"
+else
+  fail "spec-status transition audit trail invalid"
+  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null
 fi
 
 REVIEW_SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/review-summary.sh" modern-feature T1 \

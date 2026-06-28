@@ -118,13 +118,73 @@ update_frontmatter() {
   mv "$tmp" "$file"
 }
 
+json_escape() {
+  local value="${1:-}"
+  value="${value//\\/\\\\}"
+  value="${value//\"/\\\"}"
+  value="${value//$'\r'/}"
+  value="${value//$'\n'/\\n}"
+  printf '%s' "$value"
+}
+
+write_transition_event() {
+  local changed_at="$1" event_ts event_dir event_file actor mode force_json expected_json transition_type
+  event_ts="$(date -u +"%Y%m%dT%H%M%SZ")"
+  event_dir="$PROJECT_ROOT/lattice/state/spec-transitions"
+  mkdir -p "$event_dir"
+  event_file="$event_dir/${event_ts}-${SPEC_ID}-${TARGET_STATUS}-$$.json"
+  actor="${LATTICE_ACTOR:-${USER:-unknown}}"
+  mode="$(frontmatter_value "execution_mode" "$SPEC_FILE")"
+  [[ -n "$mode" ]] || mode="unknown"
+  [[ "$FORCE" == "true" ]] && force_json="true" || force_json="false"
+  if [[ -n "$EXPECTED_FROM" ]]; then
+    expected_json="\"$(json_escape "$EXPECTED_FROM")\""
+  else
+    expected_json="null"
+  fi
+  if [[ "$CURRENT_STATUS" == "$TARGET_STATUS" ]]; then
+    transition_type="noop"
+  else
+    transition_type="advance"
+  fi
+
+  {
+    printf '{\n'
+    printf '  "schema_version": "lattice.spec-transition.v1",\n'
+    printf '  "kind": "spec-transition",\n'
+    printf '  "spec_id": "%s",\n' "$(json_escape "$SPEC_ID")"
+    printf '  "spec_file": "%s",\n' "$(json_escape "$SPEC_REL")"
+    printf '  "from_status": "%s",\n' "$(json_escape "$CURRENT_STATUS")"
+    printf '  "to_status": "%s",\n' "$(json_escape "$TARGET_STATUS")"
+    printf '  "transition_type": "%s",\n' "$transition_type"
+    printf '  "execution_mode": "%s",\n' "$(json_escape "$mode")"
+    printf '  "changed_at": "%s",\n' "$(json_escape "$changed_at")"
+    printf '  "actor": "%s",\n' "$(json_escape "$actor")"
+    printf '  "force": %s,\n' "$force_json"
+    printf '  "expected_from": %s,\n' "$expected_json"
+    printf '  "checks": {\n'
+    printf '    "transition_allowed": true,\n'
+    printf '    "required_artifacts": true,\n'
+    printf '    "plan_lint": %s,\n' "$PLAN_LINT_CHECKED"
+    printf '    "task_evidence_lint": %s,\n' "$TASK_EVIDENCE_CHECKED"
+    printf '    "spec_state_lint": %s\n' "$SPEC_STATE_CHECKED"
+    printf '  }\n'
+    printf '}\n'
+  } > "$event_file"
+  printf '%s' "$event_file"
+}
+
 [[ -n "$TARGET_STATUS" ]] || { echo "Usage: $usage_line"; exit 1; }
 valid_status "$TARGET_STATUS" || { echo "Invalid target status: $TARGET_STATUS"; exit 1; }
 
 SPEC_FILE="$(resolve_spec_file "$INPUT")"
 SPEC_DIR="$(dirname "$SPEC_FILE")"
 SPEC_REL="$(rel_path "$SPEC_FILE")"
+SPEC_ID="$(basename "$SPEC_DIR")"
 CURRENT_STATUS="$(frontmatter_value "status" "$SPEC_FILE")"
+PLAN_LINT_CHECKED=false
+TASK_EVIDENCE_CHECKED=false
+SPEC_STATE_CHECKED=false
 
 echo "🔁 Spec Status: $SPEC_REL"
 echo ""
@@ -172,12 +232,14 @@ esac
 if [[ "$TARGET_STATUS" == "planned" || "$TARGET_STATUS" == "implemented" || "$TARGET_STATUS" == "verified" || "$TARGET_STATUS" == "finished" ]]; then
   if [[ -x "$KERNEL_DIR/orchestrator/sdd/plan-lint.sh" ]]; then
     bash "$KERNEL_DIR/orchestrator/sdd/plan-lint.sh" "$SPEC_DIR/plan.md" >/dev/null
+    PLAN_LINT_CHECKED=true
   fi
 fi
 
 if [[ "$TARGET_STATUS" == "implemented" || "$TARGET_STATUS" == "verified" || "$TARGET_STATUS" == "finished" ]]; then
   if [[ -x "$KERNEL_DIR/orchestrator/sdd/task-evidence-lint.sh" ]]; then
     bash "$KERNEL_DIR/orchestrator/sdd/task-evidence-lint.sh" "$SPEC_DIR/plan.md"
+    TASK_EVIDENCE_CHECKED=true
   fi
 fi
 
@@ -190,4 +252,9 @@ echo ""
 
 if [[ -x "$KERNEL_DIR/orchestrator/sdd/spec-state-lint.sh" ]]; then
   bash "$KERNEL_DIR/orchestrator/sdd/spec-state-lint.sh" "$SPEC_FILE"
+  SPEC_STATE_CHECKED=true
 fi
+
+EVENT_FILE="$(write_transition_event "$UPDATED_AT")"
+echo ""
+echo "Transition event: $(rel_path "$EVENT_FILE")"
