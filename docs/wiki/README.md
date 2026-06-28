@@ -7,7 +7,7 @@
 Lattice 的技术路线是可行的，但它不是中心化 AI 平台，也不是新的 IDE。它更适合定位为安装在业务仓库内的 **AI Coding harness**：
 
 - 在意图到代码之间，用 PrismSpec 和 Context 减少 Agent 猜测。
-- 在代码到交付之间，用 Delivery gates 和 evidence 抑制 Agent 自评。
+- 在代码到交付之间，用 Verification gates 和 Evidence 抑制 Agent 自评。
 - 在单次交付之后，用 Loop 和 Learn 把可复用经验沉淀回项目上下文资产。
 
 当前实现已经具备最小可信闭环：安装、初始化、PrismSpec 引导、目录化 spec、per-spec context、spec 状态推进与 transition history、plan/task contract lint、next task resolver、evidence-gated task completion、summary draft、summary-to-learn draft、context-lint、context-run evidence、基础 context 供给、验证 pipeline、基础 gates、结构化 eval run、central eval sink、static eval dashboard、eval query、loop state、outcome link/report、可配置 failure category、failure category lint、escalation learn draft、learn draft promotion/discard、knowledge review evidence、knowledge metadata lint、knowledge governance lint、review/TDD process evidence、Markdown summary/history 和 smoke test。尚未完成的是 dashboard 趋势增强、插件协议和多语言 drift parser。
@@ -21,8 +21,8 @@ flowchart LR
     K["Context"] -. context .-> PS
     SPEC --> A["AI Agent"]
     A --> CODE["Code / Tests"]
-    CODE --> H["Delivery Harness"]
-    H --> EV["Eval JSON / Process Evidence / Summary / History"]
+    CODE --> H["Verification Gates"]
+    H --> EV["Evidence / Eval"]
     EV --> F["summary.md"]
     F --> L["Learn Draft"]
     L --> P["Promote / Discard"]
@@ -33,10 +33,10 @@ flowchart LR
 
 | 文档 | 重点 |
 |------|------|
-| [整体设计](overall-design.md) | Lattice 的边界、分层、数据流和可插拔点 |
+| [整体设计](overall-design.md) | Lattice 的边界、组件模型、生命周期和可插拔点 |
 | [SDD 设计](sdd.md) | PrismSpec 五阶段链路、Plan/TDD mode、产物契约 |
 | [Context 设计](context.md) | Agent 上下文地图、项目知识、外部知识和 per-spec context |
-| [Eval 设计](eval.md) | 当前 evidence 与未来结构化指标 |
+| [Eval 设计](eval.md) | Evidence / Eval 的数据模型与未来结构化指标 |
 | [Loop 设计](loop.md) | verify-fix-rerun-escalate-learn 闭环 |
 | [Gap 与 Roadmap](gaps-and-roadmap.md) | 当前 gap、优先级和里程碑 |
 

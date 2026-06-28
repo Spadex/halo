@@ -6,6 +6,16 @@ This is the Lattice source repository. It builds a repo-local AI Coding harness 
 
 Do not treat this repository as a target project already using Lattice. The installable artifact is `harness-template/` plus `prismspec/`.
 
+## Product Direction
+
+Optimize for a Chinese-first, AI-friendly, commercially credible developer tool:
+
+- Chinese docs are the primary public entry; English docs are secondary but should not contradict Chinese docs.
+- PrismSpec is the standalone Spec Coding skill pack.
+- Lattice is the repo-local harness that adds context, verification, evidence, loop, and learn.
+- Claims must be grounded in current files, commands, examples, or test output.
+- Prefer fewer concepts with stronger contracts over broad platform language.
+
 ## Source Of Truth
 
 | Surface | Canonical Location |
@@ -21,6 +31,21 @@ Do not treat this repository as a target project already using Lattice. The inst
 | Context layer | `harness-template/lattice/context/`, `harness-template/lattice/kernel/context/` |
 | Target-project Claude import | `harness-template/CLAUDE.lattice.md` |
 
+## Architecture Vocabulary
+
+Use these component names consistently in product docs and agent-facing docs:
+
+| Term | Meaning |
+|------|---------|
+| PrismSpec | Spec Coding workflow and skill pack. |
+| Orchestrator | Agent control plane for stage routing, spec status, task selection, and evidence gating. |
+| Context | Project context supply: map, project knowledge, external references, and per-spec context basis. |
+| Verification | Deterministic command execution: pipeline and gates. |
+| Evidence / Eval | Structured records, summaries, history, outcomes, central sink, and dashboard. |
+| Loop / Learn | Retry, escalation, learn drafts, reviewer evidence, and knowledge promotion. |
+
+Do not use `Eval` as a synonym for running tests. Verification runs commands; Evidence / Eval records and analyzes the results.
+
 ## Design Rules
 
 - Keep the public product experience Chinese-first; keep English docs as secondary entry points.
@@ -30,6 +55,9 @@ Do not treat this repository as a target project already using Lattice. The inst
 - Do not overwrite project-owned files on upgrade unless the user explicitly asks.
 - Prefer small shell contracts for install, routing, and gates. Move only genuinely complex parsing into separate tools.
 - Keep docs current with implementation. Do not leave obsolete names, legacy paths, or one-off planning notes in public docs.
+- Context is not a bulk loader. Treat `lattice/context/README.md` as the agent-readable map; treat scripts as optional helpers.
+- Learn is governed. New durable knowledge should have source, review, and promotion evidence when the harness provides it.
+- Shell is appropriate for install, CI, gates, deterministic lint, sync, and evidence generation. Semantic context selection and architectural judgment belong to the Agent and the spec skills.
 
 ## Common Tasks
 
@@ -43,6 +71,16 @@ Do not treat this repository as a target project already using Lattice. The inst
 | Pipeline behavior | `harness-template/lattice/kernel/delivery/` |
 | Context behavior | `harness-template/lattice/context/`, `harness-template/lattice/kernel/context/` |
 | Runnable examples | `examples/` |
+
+## AI-Friendly Maintenance Checklist
+
+Before changing docs or skills, check:
+
+- Does the instruction point to an existing file or command?
+- Can a fresh Agent resume from artifacts instead of conversation memory?
+- Are generated artifacts separated from project-owned assets?
+- Are Plan Mode and TDD Mode described as implementation policies, not separate workflows?
+- Is each new concept backed by a path, command, or example?
 
 ## Verification
 
@@ -60,7 +98,7 @@ For docs-only changes, at least run:
 
 ```bash
 git diff --check
-rg -n "legacy|scaffold|create-item-api\\.md|test-feature\\.md|Eval Evidence" README.md docs prismspec harness-template examples tests -S
+rg -n "\\bscaffold\\b|scaffold-template|create-item-api\\.md|test-feature\\.md|Eval Evidence|lattice/skills/sdd|kernel/knowledge/loader\\.sh" README.md README.en.md docs prismspec harness-template examples SKILL.md -S
 ```
 
 ## Release Hygiene

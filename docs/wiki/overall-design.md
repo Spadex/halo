@@ -2,127 +2,180 @@
 
 ## 定位
 
-Lattice 是项目级 AI Coding harness。它安装到业务仓库中，通过文件、YAML 和 shell 命令给现有 Agent 增加工程约束。
+Lattice 是安装在业务仓库里的 repo-local AI Coding harness。它不替代 Claude Code、Cursor、Aider、Superpowers 或其他 Agent，而是给这些执行器补上团队交付需要的项目契约：
 
-它不拥有：
+- **Spec contract**：需求、上下文、AC、计划和收尾证据落到可版本化文件。
+- **Context contract**：Agent 先读项目上下文地图，再选择本次 spec 需要的最小可信依据。
+- **Verification contract**：完成声明必须由外部命令、gates 和结构化 evidence 支撑。
+- **Learning contract**：失败、复盘和可复用经验先进入 draft，再经 review 晋升为项目知识。
 
-- IDE 或编辑器；
-- 模型运行时；
-- 云端调度平台；
-- CI/CD 和生产发布系统。
-
-它负责：
-
-- 让需求进入持久化 Spec；
-- 让 Agent 在项目上下文约束下工作；
-- 让交付声明经过外部验证；
-- 让失败和经验能回到项目 context。
+一句话：Lattice 不做新的 Agent runtime，它把 AI Coding 从个人工作流提升为可审查、可验证、可沉淀的团队工程系统。
 
 ## 系统边界
 
 ```mermaid
 flowchart TB
-    subgraph Agent["AI Agent"]
+    subgraph Agents["Agent Runtime"]
         CC["Claude Code"]
         CU["Cursor"]
         AD["Aider"]
+        SP["Superpowers"]
         OT["Other agents"]
     end
 
     subgraph Lattice["Repo-local Lattice"]
-        PS["PrismSpec"]
-        OR["Orchestrator"]
-        CTX["Context"]
-        DH["Delivery Harness"]
-        EV["Evidence"]
-        MF["manifest.yaml"]
+        PS["PrismSpec\nworkflow skills"]
+        OR["Orchestrator\nstate and task control"]
+        CTX["Context\nmap and knowledge"]
+        VER["Verification\ngates and pipeline"]
+        EV["Evidence / Eval\nruns, history, outcomes"]
+        LOOP["Loop / Learn\nretry, escalation, promotion"]
     end
 
-    subgraph Project["Business Repo"]
-        CODE["code / tests / schema"]
-        SPEC["specs / plans / summaries"]
-        CKB["context knowledge"]
-        OUT["terminal output / artifacts"]
+    subgraph Repo["Business Repo"]
+        CODE["code / tests / schema / contracts"]
+        SPEC["lattice/specs/<spec-id>/"]
+        KNOW["lattice/context/"]
+        STATE["lattice/state/"]
+        MAN["lattice/manifest.yaml"]
     end
 
-    Agent --> PS
+    Agents --> PS
+    Agents --> OR
+    Agents --> CTX
+    Agents --> VER
+    MAN --> OR
+    MAN --> VER
+    CTX --> KNOW
     PS --> SPEC
-    Agent --> OR
-    Agent --> CTX
-    Agent --> DH
-    MF --> OR
-    MF --> CTX
-    MF --> DH
-    CTX --> CKB
-    DH --> CODE
-    DH --> OUT
-    OUT --> EV
+    OR --> SPEC
+    VER --> CODE
+    VER --> STATE
+    EV --> STATE
+    LOOP --> STATE
+    LOOP --> KNOW
 ```
 
-## 分层
+边界要保持清楚：
 
-| 层 | 职责 | 当前形态 |
-|----|------|----------|
-| PrismSpec | 独立 Spec Coding workflow | `prismspec/skills/*/SKILL.md`、`guide.sh`、`lint.sh` |
-| Orchestrator | Agent 规则、阶段定义、模板入口、spec 状态推进、transition event/history、plan contract lint 和任务证据校验 | `lattice/kernel/orchestrator/`、`spec-state-lint.sh`、`spec-status.sh`、`spec-history.sh`、`plan-lint.sh`、`task-evidence-lint.sh` |
-| Context | 给 Agent 提供项目上下文地图、项目知识、外部知识入口，并沉淀 per-spec context | `lattice/context/`、`lattice/kernel/context/`、`context-lint.sh`、`context-run.sh` |
-| Delivery | 运行可复现验证卡口 | `lattice/kernel/delivery/` |
-| Eval | 从 gate output、loop state、process evidence 与 outcome link/report 提炼质量证据 | `pipeline --json-out` 生成 eval run，收集 loop/review/TDD/outcome JSON，`eval-summary.sh` 生成 summary，`eval-history.sh` 生成趋势报告，`outcome-report.sh` 生成归因线索，`eval-sink.sh` 发布到 central sink，`eval-dashboard.sh` 生成静态 dashboard，`eval-query.sh` 查询 central sink |
+| 不做 | 原因 |
+|------|------|
+| 不做 IDE / 编辑器 | 现有 Agent 和 IDE 已经承担交互与执行体验。 |
+| 不做模型运行时 | Lattice 只定义项目契约，不绑定模型供应商。 |
+| 不做中心化任务平台 | 第一性资产在业务仓库：代码、spec、context、evidence。 |
+| 不做大而全 RAG | Context 的目标是更准，不是更多。 |
+| 不做主观智能打分 | 先沉淀可复现 evidence，再逐步做趋势和归因。 |
 
-## 数据流
+## 组件模型
+
+| 组件 | 专业定义 | 关键产物 | 当前实现 |
+|------|----------|----------|----------|
+| PrismSpec | Spec Coding skill pack，负责把 intent 推进到 durable artifacts | `context.md`、`spec.md`、`plan.md`、`verify.md`、`summary.md` | `prismspec/skills/`、`prismspec/bin/guide.sh`、`prismspec/bin/lint.sh`、`prismspec/templates/` |
+| Orchestrator | Agent 控制面，负责阶段路由、状态推进、任务选择和 evidence gating | spec status、transition events、task evidence | `lattice/kernel/orchestrator/`、`spec-status.sh`、`task-next.sh`、`task-complete.sh`、`plan-lint.sh` |
+| Context | 项目上下文供给层，负责让 Agent 精准找到并记录本次决策依据 | context map、project knowledge、external map、context-run | `lattice/context/`、`lattice/kernel/context/`、`context-lint.sh`、`context-run.sh` |
+| Verification | 可复现验证面，负责运行 build/lint/test/drift/compliance 等 gates | gate output、pipeline result | `lattice/kernel/delivery/pipeline.sh`、`gates/` |
+| Evidence / Eval | 证据与质量观测层，负责把验证和过程记录结构化，供本地、CI、dashboard 和复盘使用 | eval run、summary、history、outcome report、central sink | `eval-summary.sh`、`eval-history.sh`、`eval-sink.sh`、`eval-dashboard.sh`、`eval-query.sh`、`outcome-link.sh` |
+| Loop / Learn | 反馈闭环，负责失败分类、有限重试、升级、learn draft 和知识晋升 | loop state、escalation draft、knowledge review、promotion event | `failure-categories.yaml`、`learn-draft.sh`、`knowledge-review.sh`、`summary-learn-draft.sh` |
+
+### Verification 和 Eval 的关系
+
+两者不重复：
+
+- **Verification** 是动作：运行命令，判断本次交付是否通过。
+- **Evidence / Eval** 是记录与分析：保存验证结果、过程证据、历史趋势和交付后 outcome。
+
+因此 Lattice 不把 Eval 设计成“另一个测试系统”，而是把测试、drift、review、TDD、loop、outcome 等证据收敛成统一的质量观察面。
+
+## 生命周期
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Agent
     participant PS as PrismSpec
-    participant K as Context
-    participant H as Harness
-    participant Repo
+    participant C as Context
+    participant O as Orchestrator
+    participant V as Verification
+    participant E as Evidence
+    participant L as Learn
 
-    User->>Agent: Describe requirement
-    Agent->>PS: guide.sh routes stage
-    Agent->>K: Read context map and relevant knowledge
-    K-->>Agent: Selected project facts and constraints
-    Agent->>Repo: Write context.md
-    Agent->>Repo: Write spec.md
-    Agent->>Repo: Write plan.md
-    Agent->>Repo: Edit code/tests
-    Agent->>Repo: Write review/TDD process evidence
-    Agent->>H: pipeline.sh
-    H-->>Agent: Gate and process evidence
-    Agent->>Repo: Write verify.md and summary.md
+    User->>Agent: Intent / change request
+    Agent->>PS: guide.sh routes next stage
+    Agent->>C: read context map and select facts
+    Agent->>PS: write context.md + spec.md
+    Agent->>O: lint and advance drafted state
+    Agent->>PS: write AC-traced plan.md
+    Agent->>O: resolve next task
+    Agent->>Agent: implement plan or TDD slice
+    Agent->>O: complete task with evidence
+    Agent->>V: run pipeline / gates
+    V->>E: write eval run and summaries
+    E->>PS: provide verification evidence
+    Agent->>PS: write summary.md
+    Agent->>L: create or promote durable lessons when needed
+```
+
+默认工作流保持克制：
+
+```text
+Intent -> Brainstorming -> Planning -> Implementation(plan|tdd) -> Verification -> Finishing
+```
+
+`/sdd` 只是引导入口，不新增阶段；Loop / Learn 也不新增主流程，只在 Verification 和 Finishing 中触发。
+
+## 产物边界
+
+安装后的业务项目应形成三类文件：
+
+| 类型 | 路径 | 所有权 | 说明 |
+|------|------|--------|------|
+| Framework code | `lattice/kernel/`、`prismspec/` | Lattice 可升级 | 命令、gates、skills、模板和脚本。 |
+| Project assets | `lattice/manifest.yaml`、`lattice/context/`、`lattice/specs/` | 项目所有 | 团队要 review、版本化和长期维护。 |
+| Runtime state | `.lattice/sdd/`、`lattice/state/` | 运行生成 | evidence、eval runs、loop state、outcome、promotion events。 |
+
+最核心的 spec 目录是：
+
+```text
+lattice/specs/<spec-id>/
+├── context.md     # 本次 spec 的最小上下文依据
+├── spec.md        # intent、scope、AC、risk、mode、verification plan
+├── plan.md        # AC-traced implementation tasks
+├── verify.md      # 命令和验证结果
+└── summary.md     # 交付结论、残留风险、知识候选
 ```
 
 ## 可插拔点
 
-| 插件点 | 方式 | 示例 |
-|--------|------|------|
-| Agent adapter | 导入规则，执行 shell 命令 | Claude Code、Cursor、Aider、Superpowers |
-| Spec template | `manifest.yaml` 指定模板路径 | service、frontend、tdd templates |
-| Context source | Agent-readable context map，必要时辅以 sync 脚本 | repo-local、central context、external docs |
-| Delivery gate | `pipeline.steps[]` command | build、lint、test、drift、compliance |
-| Drift parser | `drift.plugins[]` command | route/schema/error-code parser |
-| Eval sink | `pipeline --json-out` + process evidence + `outcome-link.sh` / `outcome-report.sh` + `eval-sink.sh` / `eval-dashboard.sh` / `eval-query.sh` + `eval-summary.sh` / `eval-history.sh` + GitHub Actions artifact/comment | local JSON、Markdown summary/history/report、central sink、static dashboard、query JSON、CI Step Summary、PR comment |
+Lattice 的扩展面是文件、YAML 和命令 contract，而不是绑定某个 Agent SDK。
 
-## 为什么不是中心化平台
+| 插件点 | Contract | 示例 |
+|--------|----------|------|
+| Agent adapter | 导入 `AGENTS.md` / `CLAUDE.md` / skill instructions | Claude Code、Cursor、Aider、Superpowers |
+| Spec template | `prismspec/templates/*.md`，可由项目覆盖 | service、frontend、lite、tdd |
+| Context source | Agent-readable Markdown map，必要时补结构化 sources | project knowledge、central knowledge、external contracts |
+| Delivery gate | `pipeline.steps[]` command | build、lint、test、AC coverage、drift、compliance |
+| Drift parser | gate 或 parser command 输出 diagnostics | routes、schema、error codes |
+| Evidence sink | eval JSON + markdown report + optional central sink | local state、CI artifact、static dashboard、PR comment |
+| Learn governance | draft + review event + promotion/discard event | pitfalls、rules、architecture decisions |
 
-Lattice 当前选择 repo-local 形态，因为它的核心资产本来就在项目仓库里：
+## 设计取舍
 
-- Spec、plan、summary 需要跟代码一起 review。
-- Context 与业务规则强绑定，需要版本化。
-- Gate 应该复用项目自己的 build/test/lint 命令。
-- 团队可以逐步采用，不需要先迁移 IDE 或工作流平台。
+| 取舍 | 选择 | 理由 |
+|------|------|------|
+| repo-local vs central platform | 先 repo-local | adoption 成本低，能跟代码一起 review，适合渐进式落地。 |
+| Markdown vs database | 先 Markdown + JSON evidence | 人和 Agent 都能读，git diff 友好，必要时再汇总到 central sink。 |
+| Shell vs full SDK | Shell 用于可复现命令 contract | 安装、验证、CI、轻量 lint 适合 shell；语义判断交给 Agent。 |
+| Plan vs TDD | 同一流程，两种 implementation policy | 不为低风险任务增加 TDD 成本，但高风险任务必须有红绿灯证据。 |
+| Context retrieval | Agentic discovery 为主，工具检索为辅 | 模型负责理解和选择，项目负责给地图、规则和可审查记录。 |
 
-中心化平台可以作为后续 eval dashboard 或 central knowledge 的形态出现，但不应该成为第一性依赖。
+## 专业化方向
 
-## 当前判断
+当前路线成立，但产品化重点不是继续堆脚本，而是把每一层做成稳定 contract：
 
-这条路线成立，但要保持边界克制：
+1. **入口可信**：README、Wiki、AGENTS、SKILL 入口描述一致，不出现旧路径和过期概念。
+2. **流程可恢复**：`guide.sh`、status、task-next、task-complete 能让下一位 Agent 从文件恢复上下文。
+3. **验证可审计**：pipeline、gate JSON、eval summary/history 能证明“为什么算完成”。
+4. **知识可治理**：Context 不追求全量加载，Learn 不把一次性经验污染长期知识。
+5. **示例够真实**：用 Lumi 等真实业务案例验证复杂 spec、context、loop 和 learn 是否跑得通。
 
-- Lattice 不做 Agent runtime。
-- PrismSpec 不做重型项目管理。
-- Context 不做大而全 RAG 平台，也不追求把所有资料塞进 prompt。
-- Eval 不过早承诺智能评分，先把可复现证据结构化。
-
-真正的产品化重点是：稳定安装、清晰文档、真实示例、可靠 gates、可审计 evidence。
+这也是 Lattice 对标 Superpowers 和 agent-skills 时的清晰边界：Superpowers 更偏工作流技能和 TDD 方法，agent-skills 更偏高质量可复用 skill 包；Lattice 应该把 PrismSpec skills 与 repo-local harness 结合起来，形成团队级交付闭环。
