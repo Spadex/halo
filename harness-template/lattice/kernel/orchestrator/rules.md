@@ -1,7 +1,7 @@
 ## Lattice — Agent Behavior Rules
 
 > Lattice injects project-level constraints into your AI coding agent via `CLAUDE.md` `@import`.
-> Lattice hosts PrismSpec as its default spec-coding workflow and enhances it with knowledge injection and delivery verification.
+> Lattice hosts PrismSpec as its default spec-coding workflow and enhances it with project context loading and delivery verification.
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Trigger | Path | When to use |
 |---------|------|-------------|
-| Describe a requirement (default) | **Brainstorming** | Clarify intent, load knowledge, write persistent spec |
+| Describe a requirement (default) | **Brainstorming** | Clarify intent, load context, write persistent spec |
 | `/init` | **Init Skill** | Set up harness, generate `lattice/manifest.yaml`, inject `CLAUDE.md` |
 | `/sdd` | **PrismSpec Guided Skill** | Route or resume the full spec-coding workflow from artifacts |
 | `/brainstorm` | **Brainstorm Skill** | Produce `lattice/specs/<id>/spec.md` |
@@ -17,7 +17,7 @@
 | `/implement` | **Implement Skill** | Execute plan or tdd policy from the spec |
 | `/verify` | **Verify Skill** | Run manifest-driven verification pipeline |
 | `/finish` | **Finish Skill** | Close delivery, link evidence, extract durable knowledge |
-| `/learn` | **Learn Skill** | Capture knowledge into the knowledge base |
+| `/learn` | **Learn Skill** | Capture durable knowledge into project context |
 
 ---
 
@@ -26,9 +26,10 @@
 > The following rules apply to each phase of development. If your workflow engine provides
 > phases with different names, map them accordingly (see docs/adapters/ for engine-specific mappings).
 
-#### Phase: Brainstorming — Spec format and knowledge injection
+#### Phase: Brainstorming — Spec format and context basis
 
 - **Spec path**: `lattice/specs/{spec-id}/spec.md`
+- **Context basis path**: `lattice/specs/{spec-id}/context.md`
 - **Template**: read `specs.template` from `lattice/manifest.yaml`; default is `lattice/kernel/orchestrator/templates/spec-template.md`
 - **Dual-audience principle**: diagrams for humans, DDL/AC/API examples for AI execution
 - **AC numbering**: globally unique `AC-{nn}`, traced through spec -> test -> coverage
@@ -37,9 +38,11 @@
 
 Before drafting the spec:
 1. Read `lattice/manifest.yaml`
-2. Run `bash lattice/kernel/knowledge/loader.sh <requirement keywords>`
-3. Use matched knowledge entries as design input; if context is insufficient, ask the user first — do not guess
-4. Record whether the execution mode came from model selection, project default, or user override
+2. Run `bash lattice/kernel/context/loader.sh <requirement keywords>`
+3. Inspect relevant code, tests, schemas, and interface contracts.
+4. Write `lattice/specs/{spec-id}/context.md` with selected project knowledge, central knowledge, code facts, contract facts, conflicts, and open questions.
+5. Use `context.md` as the design basis; if context is insufficient, ask the user first.
+6. Record whether the execution mode came from model selection, project default, or user override.
 
 #### Phase: Planning — AC traceability
 
@@ -87,7 +90,7 @@ Rules:
 Before merge/PR, confirm:
 - `ac-coverage`: every AC has a corresponding test
 - `drift-check`: DDL / routes / error codes match spec
-- `compliance`: knowledge references and clarification traces are auditable
+- `compliance`: per-spec context, knowledge references, and clarification traces are auditable
 - For multi-agent concurrent spec edits, use `spec-lock.sh`
 - Write `lattice/specs/{spec-id}/summary.md`
 - Link task briefs, review packages, and review verdicts
@@ -99,14 +102,14 @@ Before merge/PR, confirm:
 
 | Skill | Trigger | Capability |
 |-------|---------|------------|
-| `init` | `/init`, initialize Lattice | Generate manifest, copy scaffold, inject CLAUDE.md |
+| `init` | `/init`, initialize Lattice | Generate manifest, copy harness-template, inject CLAUDE.md |
 | `sdd` | `/sdd`, PrismSpec guided workflow | Route/resume Brainstorming -> Planning -> Implementation -> Verification -> Finishing |
-| `brainstorm` | `/brainstorm`, draft spec | Clarify intent, load knowledge, write persistent spec |
+| `brainstorm` | `/brainstorm`, draft spec | Clarify intent, load context, write persistent spec |
 | `plan` | `/plan`, write plan | Decompose spec into AC-traced tasks |
 | `implement` | `/implement`, tdd | Execute plan or tdd policy |
 | `verify` | `/verify`, verify, run pipeline | Execute `lattice/kernel/delivery/pipeline.sh` |
 | `finish` | `/finish`, close out | Write summary and extract durable knowledge |
-| `learn` | `/learn`, capture, remember | Write to `lattice/knowledge/` and update index |
+| `learn` | `/learn`, capture, remember | Write to `lattice/context/knowledge/drafts` or `project` and update index |
 
 ### Artifact Layout
 
@@ -119,12 +122,20 @@ lattice/
 │   │   ├── rules.md
 │   │   ├── flow.yaml
 │   │   └── templates/
-│   ├── knowledge/
+│   ├── context/
 │   └── delivery/
-├── knowledge/
-├── requirements/
+├── context/
+│   ├── sources.yaml
+│   └── knowledge/
+│       ├── project/
+│       ├── central/
+│       └── drafts/
 ├── specs/
-├── plans/
+│   └── {spec-id}/
+│       ├── context.md
+│       ├── spec.md
+│       ├── plan.md
+│       └── summary.md
 ├── state/
 └── skills/
 

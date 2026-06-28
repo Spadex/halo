@@ -43,4 +43,4 @@ All notable changes to this project will be documented in this file.
 - All CLI output in English (previously Chinese).
 - Internal delivery variables standardized on the `SH_*` / `_SH_*` prefix.
 - Spec template sections use English headers by default.
-- Install paths standardized for the Lattice scaffold layout.
+- Install paths standardized for the Lattice harness-template layout.

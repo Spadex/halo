@@ -7,13 +7,13 @@ description: Turns vague or new requirements into a durable PrismSpec spec.md. U
 
 ## Overview
 
-Clarify just enough to write `spec.md`: intent, scope, acceptance criteria, context, risks, execution mode, and verification plan.
+Clarify just enough to write `context.md` and `spec.md`: intent, scope, acceptance criteria, context basis, risks, execution mode, and verification plan.
 
 ## Inputs
 
 - User requirement or continuation request.
 - `lattice/manifest.yaml` when present.
-- Relevant code, tests, schemas, contracts, docs, and matched knowledge only when they affect scope, AC, risk, or mode.
+- Relevant code, tests, schemas, contracts, docs, and matched context knowledge only when they affect scope, AC, risk, or mode.
 - Template from `prismspec/templates/`.
 
 Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec. Read `prismspec/references/mode-selection.md` when the mode is non-obvious.
@@ -28,6 +28,9 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
    - `spec-template-tdd.md` for bugs, regressions, and high-risk behavior.
    - `spec-template.md` when no specialized template clearly fits.
 3. Load only context that changes scope, AC, risk, or execution mode.
+   - In Lattice-hosted mode, run `bash lattice/kernel/context/loader.sh <keywords>` with targeted requirement keywords.
+   - Inspect relevant code, tests, schemas, and contracts.
+   - Write selected facts, conflicts, and open questions to `context.md`.
 4. Surface assumptions before writing irreversible decisions.
 5. Ask only material questions. Do not interview for details the model can safely infer from local code.
 6. Write `spec.md` in the target spec directory.
@@ -35,6 +38,7 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
 
 ## Outputs
 
+- `context.md` with selected knowledge, code facts, conflicts, and open questions.
 - `spec.md` with stable `AC-{n}` identifiers.
 - Open questions only when they block planning or safe implementation.
 
@@ -56,12 +60,13 @@ Read `prismspec/references/spec-quality-checklist.md` when drafting a full spec.
 ## Red Flags
 
 - ACs use vague words such as "fast", "nice", "good", or "works" without measurable meaning.
-- Spec copies large knowledge-base sections instead of referencing the relevant rule.
+- Spec copies large context-knowledge sections instead of referencing the relevant rule or `context.md`.
 - Scope includes implementation tasks that belong in `plan.md`.
 - TDD-worthy work is marked `plan` without rationale.
 
 ## Verification
 
+- [ ] `context.md` exists in the routed spec directory.
 - [ ] `spec.md` exists in the routed spec directory.
 - [ ] AC identifiers are stable and testable.
 - [ ] Execution policy is recorded.

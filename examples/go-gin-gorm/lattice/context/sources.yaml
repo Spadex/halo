@@ -1,0 +1,18 @@
+sources:
+  project:
+    knowledge_dir: "lattice/context/knowledge/project"
+  central:
+    repo: ""
+    knowledge_dir: "lattice/context/knowledge/central"
+    mode: read-only
+    conflict: project-wins
+
+policy:
+  precedence:
+    - user_instruction
+    - project_knowledge
+    - code_facts
+    - project_specs
+    - central_knowledge
+    - model_prior
+  conflict: project_wins

@@ -82,7 +82,21 @@ deploy:
       rollback: auto
       smoke_after_deploy: true
 
-knowledge:
-  local_dir: "lattice/knowledge"
-  remote_dir: "lattice/knowledge/remote"
-  sources: []
+kernel:
+  layers:
+    orchestrator: true
+    context: true
+    delivery: true
+
+context:
+  root: "lattice/context"
+  sources_file: "lattice/context/sources.yaml"
+  knowledge:
+    project_dir: "lattice/context/knowledge/project"
+    central_dir: "lattice/context/knowledge/central"
+    drafts_dir: "lattice/context/knowledge/drafts"
+  central:
+    repo: ""
+    mode: read-only
+    conflict: project-wins
+  runs_dir: "lattice/state/context-runs"

@@ -94,6 +94,7 @@ fi
 
 SPEC_DIR=""
 SPEC_FILE=""
+CONTEXT_FILE=""
 PLAN_FILE=""
 VERIFY_FILE=""
 SUMMARY_FILE=""
@@ -101,6 +102,7 @@ RUN_DIR=""
 
 if [[ -n "$SPEC_ID" ]]; then
   SPEC_DIR="$SPEC_ROOT/$SPEC_ID"
+  CONTEXT_FILE="$SPEC_DIR/context.md"
   SPEC_FILE="$SPEC_DIR/spec.md"
   PLAN_FILE="$SPEC_DIR/plan.md"
   VERIFY_FILE="$SPEC_DIR/verify.md"
@@ -136,7 +138,7 @@ has_verification_evidence() {
 stage_from_artifacts() {
   if [[ -n "$FROM_STAGE" ]]; then
     echo "$FROM_STAGE"
-  elif [[ -z "$SPEC_ID" || ! -f "$SPEC_FILE" ]]; then
+  elif [[ -z "$SPEC_ID" || ! -f "$SPEC_FILE" || ! -f "$CONTEXT_FILE" ]]; then
     echo "brainstorm"
   elif [[ ! -f "$PLAN_FILE" ]]; then
     echo "plan"
@@ -176,7 +178,7 @@ skill_for_stage() {
 
 next_action() {
   case "$STAGE" in
-    brainstorm) echo "Run brainstorming and write spec.md" ;;
+    brainstorm) echo "Run brainstorming and write context.md + spec.md" ;;
     plan) echo "Read spec.md and write AC-traced plan.md" ;;
     implement) echo "Execute plan.md using $MODE mode" ;;
     verify) echo "Run verification: $VERIFY_CMD" ;;
@@ -193,6 +195,7 @@ if [[ "$JSON" == "true" ]]; then
   printf '  "mode": "%s",\n' "$MODE"
   printf '  "skill": "%s",\n' "$(skill_for_stage "$STAGE")"
   printf '  "spec_dir": "%s",\n' "$SPEC_DIR"
+  printf '  "context_file": "%s",\n' "$CONTEXT_FILE"
   printf '  "run_dir": "%s",\n' "$RUN_DIR"
   printf '  "template_hint": "%s",\n' "$(template_hint)"
   printf '  "verify_command": "%s"\n' "$VERIFY_CMD"
@@ -208,6 +211,7 @@ echo "Stage:       $STAGE"
 echo "Mode:        $MODE"
 echo "Skill:       $(skill_for_stage "$STAGE")"
 echo "Spec dir:    ${SPEC_DIR:-$SPEC_ROOT/<spec-id>}"
+echo "Context:     ${CONTEXT_FILE:-$SPEC_ROOT/<spec-id>/context.md}"
 echo "Evidence:    ${RUN_DIR:-$RUN_ROOT/<spec-id>}"
 echo "Template:    $(template_hint)"
 echo ""

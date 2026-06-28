@@ -15,7 +15,7 @@ project:
 kernel:
   layers:
     orchestrator: true     # L1: Workflow orchestration (always enabled)
-    knowledge: true        # L2: Knowledge base engine (can be disabled)
+    context: true          # L2: Context loading and knowledge memory
     delivery: true         # L3: Verification & delivery (can be disabled)
 
 tools:
@@ -115,9 +115,25 @@ deploy:
     platform: {CI_PLATFORM}
     integration_timeout: "10m"
 
-knowledge:
-  local_dir: "lattice/knowledge"
+context:
+  root: "lattice/context"
+  sources_file: "lattice/context/sources.yaml"
+  knowledge:
+    project_dir: "lattice/context/knowledge/project"
+    central_dir: "lattice/context/knowledge/central"
+    drafts_dir: "lattice/context/knowledge/drafts"
   central:
-    repo: ""                   # Central knowledge repo URL (e.g. https://github.com/your-org/knowledge.git)
+    repo: ""                   # Central context repo URL
     mode: read-only            # read-only | read-write
-    conflict: prefer-local     # prefer-local | prefer-remote | fail
+    conflict: project-wins     # project-wins | central-wins | fail
+  policy:
+    precedence:
+      - user_instruction
+      - project_knowledge
+      - code_facts
+      - project_specs
+      - central_knowledge
+      - model_prior
+    conflict: project_wins
+    sensitivity: redact_secret
+  runs_dir: "lattice/state/context-runs"

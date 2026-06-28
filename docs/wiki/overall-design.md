@@ -14,9 +14,9 @@ Lattice 是项目级 AI Coding harness。它安装到业务仓库中，通过文
 它负责：
 
 - 让需求进入持久化 Spec；
-- 让 Agent 在项目知识约束下工作；
+- 让 Agent 在项目上下文约束下工作；
 - 让交付声明经过外部验证；
-- 让失败和经验能回到知识库。
+- 让失败和经验能回到项目 context。
 
 ## 系统边界
 
@@ -32,7 +32,7 @@ flowchart TB
     subgraph Lattice["Repo-local Lattice"]
         PS["PrismSpec"]
         OR["Orchestrator"]
-        KB["Knowledge"]
+        CTX["Context"]
         DH["Delivery Harness"]
         EV["Eval Evidence"]
         MF["manifest.yaml"]
@@ -41,19 +41,19 @@ flowchart TB
     subgraph Project["Business Repo"]
         CODE["code / tests / schema"]
         SPEC["specs / plans / summaries"]
-        KNOW["knowledge entries"]
+        CKB["context knowledge"]
         OUT["terminal output / artifacts"]
     end
 
     Agent --> PS
     PS --> SPEC
     Agent --> OR
-    Agent --> KB
+    Agent --> CTX
     Agent --> DH
     MF --> OR
-    MF --> KB
+    MF --> CTX
     MF --> DH
-    KB --> KNOW
+    CTX --> CKB
     DH --> CODE
     DH --> OUT
     OUT --> EV
@@ -65,7 +65,7 @@ flowchart TB
 |----|------|----------|
 | PrismSpec | 独立 Spec Coding workflow | `prismspec/skills/*/SKILL.md`、`guide.sh`、`lint.sh` |
 | Orchestrator | Agent 规则、阶段定义、模板入口 | `lattice/kernel/orchestrator/` |
-| Knowledge | 检索项目知识、同步知识库 | `lattice/kernel/knowledge/`、`lattice/knowledge/` |
+| Context | 检索项目知识、同步中心知识、沉淀 per-spec context | `lattice/kernel/context/`、`lattice/context/` |
 | Delivery | 运行可复现验证卡口 | `lattice/kernel/delivery/` |
 | Eval | 从 gate output 提炼质量证据 | 当前为 evidence，后续结构化为 JSON run |
 
@@ -76,7 +76,7 @@ sequenceDiagram
     participant User
     participant Agent
     participant PS as PrismSpec
-    participant K as Knowledge
+    participant K as Context
     participant H as Harness
     participant Repo
 
@@ -84,6 +84,7 @@ sequenceDiagram
     Agent->>PS: guide.sh routes stage
     Agent->>K: loader.sh keywords
     K-->>Agent: Matched rules and decisions
+    Agent->>Repo: Write context.md
     Agent->>Repo: Write spec.md
     Agent->>Repo: Write plan.md
     Agent->>Repo: Edit code/tests
@@ -98,7 +99,7 @@ sequenceDiagram
 |--------|------|------|
 | Agent adapter | 导入规则，执行 shell 命令 | Claude Code、Cursor、Aider、Superpowers |
 | Spec template | `manifest.yaml` 指定模板路径 | service、frontend、tdd templates |
-| Knowledge source | `knowledge.sources[]` 或 sync 脚本 | repo-local、central knowledge repo |
+| Context source | `context.sources_file` 与 sync 脚本 | repo-local、central context repo |
 | Delivery gate | `pipeline.steps[]` command | build、lint、test、drift、compliance |
 | Drift parser | `drift.plugins[]` command | route/schema/error-code parser |
 | Eval sink | 后续 `--json-out` | local JSON、CI artifact、dashboard |
@@ -108,7 +109,7 @@ sequenceDiagram
 Lattice 当前选择 repo-local 形态，因为它的核心资产本来就在项目仓库里：
 
 - Spec、plan、summary 需要跟代码一起 review。
-- Knowledge 与业务规则强绑定，需要版本化。
+- Context 与业务规则强绑定，需要版本化。
 - Gate 应该复用项目自己的 build/test/lint 命令。
 - 团队可以逐步采用，不需要先迁移 IDE 或工作流平台。
 
@@ -120,7 +121,7 @@ Lattice 当前选择 repo-local 形态，因为它的核心资产本来就在项
 
 - Lattice 不做 Agent runtime。
 - PrismSpec 不做重型项目管理。
-- Knowledge 不做大而全 RAG 平台。
+- Context 不做大而全 RAG 平台。
 - Eval 不过早承诺智能评分，先把可复现证据结构化。
 
 真正的产品化重点是：稳定安装、清晰文档、真实示例、可靠 gates、可审计 evidence。

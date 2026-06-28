@@ -25,8 +25,9 @@ cd "$SANDBOX"
 git init --quiet
 
 # Copy kernel into example's lattice/kernel/
-cp -r "$REPO_DIR/scaffold/lattice/kernel" "$SANDBOX/lattice/kernel"
-cp "$REPO_DIR/scaffold/lattice/knowledge/synonyms.txt" "$SANDBOX/lattice/knowledge/synonyms.txt"
+cp -r "$REPO_DIR/harness-template/lattice/kernel" "$SANDBOX/lattice/kernel"
+mkdir -p "$SANDBOX/lattice/context/knowledge/project"
+cp "$REPO_DIR/harness-template/lattice/context/knowledge/project/synonyms.txt" "$SANDBOX/lattice/context/knowledge/project/synonyms.txt"
 
 SPEC="lattice/specs/create-item-api.md"
 
@@ -42,8 +43,8 @@ echo "── 3. Drift Check ──"
 bash lattice/kernel/delivery/gates/drift-check.sh "$SPEC" .
 echo ""
 
-echo "── 4. Knowledge Loader ──"
-bash lattice/kernel/knowledge/loader.sh naming
+echo "── 4. Context Loader ──"
+bash lattice/kernel/context/loader.sh naming
 echo ""
 
 echo "══════════════════════════════════"

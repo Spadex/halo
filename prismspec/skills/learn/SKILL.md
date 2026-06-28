@@ -13,7 +13,7 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 
 - `summary.md`
 - Verification or review findings.
-- Existing `lattice/knowledge/` or `prismspec/knowledge/`.
+- Existing `lattice/context/knowledge/project/`, `lattice/context/knowledge/drafts/`, or `prismspec/knowledge/`.
 
 ## Workflow
 
@@ -37,7 +37,7 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 
 ## Outputs
 
-- Knowledge file in `lattice/knowledge/` or `prismspec/knowledge/`.
+- Knowledge file in `lattice/context/knowledge/drafts/`, promoted project knowledge in `lattice/context/knowledge/project/`, or standalone `prismspec/knowledge/`.
 - Updated `index.md`.
 
 ## Stop Conditions

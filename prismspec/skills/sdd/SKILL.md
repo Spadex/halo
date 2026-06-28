@@ -35,7 +35,7 @@ Use the JSON fields as the routing source of truth: `host`, `spec_id`, `stage`, 
 
 | Stage | Delegate To | Durable Output |
 |-------|-------------|----------------|
-| `brainstorm` | `prismspec-brainstorm` | `spec.md` |
+| `brainstorm` | `prismspec-brainstorm` | `context.md`, `spec.md` |
 | `plan` | `prismspec-plan` | `plan.md` |
 | `implement` | `prismspec-implement` | code, tests, task evidence |
 | `verify` | `prismspec-verify` | `verify.md` |

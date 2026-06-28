@@ -3,7 +3,7 @@ name: lattice
 version: 1.0.0
 description: >
   Lattice — team-native AI Coding framework for reusable, verifiable delivery.
-  Provides Context / Spec / Harness / Eval-oriented project scaffolding;
+  Provides Context / Spec / Harness / Eval-oriented project harness;
   guide or resume the SDD workflow, brainstorm persistent specs, plan execution, implement with plan/tdd policies,
   generate task briefs and review packages, verify with gates, finish with evidence,
   and capture knowledge with /learn.
@@ -31,18 +31,16 @@ my-project/
 │   ├── README.md
 │   ├── SKILL.md
 │   ├── init.sh
-│   └── scaffold/
+│   └── harness-template/
 ├── lattice/
 │   ├── manifest.yaml
 │   ├── kernel/
 │   │   ├── _lib.sh
 │   │   ├── orchestrator/
-│   │   ├── knowledge/
+│   │   ├── context/
 │   │   └── delivery/
-│   ├── knowledge/
-│   ├── requirements/
+│   ├── context/
 │   ├── specs/
-│   ├── plans/
 │   ├── state/
 │   └── skills/
 └── CLAUDE.md
@@ -54,7 +52,7 @@ my-project/
 |---------|--------|
 | `lattice init` / initialize framework | Run Init flow |
 | `sdd` / guided workflow | Execute `prismspec/skills/sdd/SKILL.md`; route or resume the full SDD workflow from artifacts |
-| `brainstorm` / draft spec | Run Brainstorming flow and write `lattice/specs/<id>/spec.md` |
+| `brainstorm` / draft spec | Run Brainstorming flow and write `lattice/specs/<id>/context.md` + `spec.md` |
 | `plan` / write plan | Run Planning flow and write `lattice/specs/<id>/plan.md` |
 | `implement` / tdd | Execute `plan` or `tdd` policy from the spec |
 | `verify` / run pipeline | Execute `lattice/kernel/delivery/pipeline.sh` |
@@ -63,16 +61,16 @@ my-project/
 
 ## Init Flow
 
-1. Locate scaffold (prefer `.lattice/framework/scaffold/`)
+1. Locate harness-template (prefer `.lattice/framework/harness-template/`)
 2. Detect language / framework / ORM / database / CI
-3. Copy scaffold to project
+3. Copy harness-template to project
 4. Generate `lattice/manifest.yaml`
 5. Inject `@import lattice/kernel/orchestrator/rules.md` into `CLAUDE.md`
 6. Run `bash lattice/kernel/delivery/bootstrap.sh check`
 
 ## Key Constraints
 
-- User assets never overwritten: `lattice/manifest.yaml`, `lattice/knowledge/`, `lattice/specs/`
+- User assets never overwritten: `lattice/manifest.yaml`, `lattice/context/knowledge/`, `lattice/specs/`
 - `manifest.yaml` is the single project configuration entry point
 - Spec template: `lattice/kernel/orchestrator/templates/spec-template.md`
 - Guided SDD entry point: `prismspec/skills/sdd/SKILL.md`

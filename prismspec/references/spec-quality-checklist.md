@@ -17,7 +17,7 @@ Use this reference while drafting or reviewing `spec.md`.
 
 - ACs are testable and observable.
 - Design detail is proportional to risk.
-- The spec does not copy large knowledge-base content; it references the relevant rule.
+- The spec does not copy large context-knowledge content; it references the relevant rule.
 - Open questions are limited to decisions that materially affect delivery.
 - The spec can survive context compaction: a fresh agent can resume from it.
 

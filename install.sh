@@ -10,7 +10,7 @@
 #     ./install.sh /path/to/project    # Install to specific project
 #
 #   Options:
-#     --init       Auto-run init.sh after install (detect + scaffold + manifest)
+#     --init       Auto-run init.sh after install (detect + harness-template + manifest)
 #     --upgrade    Refresh framework source and upgrade project kernel
 #
 set -euo pipefail
@@ -42,7 +42,7 @@ if [ -f "$TARGET/lattice/manifest.yaml" ]; then
 fi
 
 upgrade_project_kernel() {
-  local src_kernel="$DEST/scaffold/lattice/kernel"
+  local src_kernel="$DEST/harness-template/lattice/kernel"
   local target_root="$TARGET/lattice"
   local target_kernel="$target_root/kernel"
 
@@ -70,7 +70,7 @@ upgrade_project_kernel() {
 
   mkdir -p "$target_root"
   cp -R "$src_kernel" "$target_kernel"
-  chmod +x "$target_kernel"/_lib.sh "$target_kernel"/knowledge/*.sh "$target_kernel"/delivery/*.sh "$target_kernel"/delivery/gates/*.sh 2>/dev/null || true
+  chmod +x "$target_kernel"/_lib.sh "$target_kernel"/context/*.sh "$target_kernel"/delivery/*.sh "$target_kernel"/delivery/gates/*.sh 2>/dev/null || true
   echo "✅ Kernel upgraded"
 }
 
@@ -125,7 +125,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-if [ -d "$SCRIPT_DIR/scaffold" ]; then
+if [ -d "$SCRIPT_DIR/harness-template" ]; then
   echo "📦 Local install Lattice → $DEST"
   mkdir -p "$DEST"
   cp -r "$SCRIPT_DIR"/. "$DEST"/

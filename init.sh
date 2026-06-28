@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # init.sh — Lattice project initialization
-# Detects project language/framework, copies scaffold, generates manifest, appends CLAUDE.md
+# Detects project language/framework, copies harness-template, generates manifest, appends CLAUDE.md
 #
 # Usage:
 #   init.sh                — Interactive initialization
@@ -10,25 +10,25 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SCAFFOLD_DIR=""
+HARNESS_TEMPLATE_DIR=""
 
 for candidate in \
-  "$(pwd)/.lattice/framework/scaffold" \
-  "$SCRIPT_DIR/scaffold" \
-  "$HOME/.agents/skills/lattice/scaffold"; do
+  "$(pwd)/.lattice/framework/harness-template" \
+  "$SCRIPT_DIR/harness-template" \
+  "$HOME/.agents/skills/lattice/harness-template"; do
   if [[ -d "$candidate/lattice/kernel" ]]; then
-    SCAFFOLD_DIR="$candidate"
+    HARNESS_TEMPLATE_DIR="$candidate"
     break
   fi
 done
 
-if [[ -z "$SCAFFOLD_DIR" ]]; then
-  echo "Cannot find scaffold directory"
+if [[ -z "$HARNESS_TEMPLATE_DIR" ]]; then
+  echo "Cannot find harness-template directory"
   echo "   Make sure Lattice is installed to .lattice/framework/"
   exit 1
 fi
 
-FRAMEWORK_ROOT="$(cd "$SCAFFOLD_DIR/.." && pwd)"
+FRAMEWORK_ROOT="$(cd "$HARNESS_TEMPLATE_DIR/.." && pwd)"
 PRISMSPEC_SOURCE="$FRAMEWORK_ROOT/prismspec"
 
 PROJECT_ROOT="$(pwd)"
@@ -183,7 +183,7 @@ echo "  Project: $NAME ($LANG)"
 echo "  Framework: $FRAMEWORK | ORM: $ORM | DB: $DB | CI: $CI"
 echo ""
 
-echo "📁 Copying scaffold files..."
+echo "📁 Copying harness-template files..."
 
 copy_if_not_exists() {
   local src="$1" dest="$2"
@@ -207,28 +207,28 @@ copy_tree_files_if_not_exists() {
   done < <(find "$src_dir" -type f -print0)
 }
 
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/_lib.sh" "lattice/kernel/_lib.sh"
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/templates/spec-template.md" "lattice/kernel/orchestrator/templates/spec-template.md"
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/rules.md" "lattice/kernel/orchestrator/rules.md"
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/flow.yaml" "lattice/kernel/orchestrator/flow.yaml"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/_lib.sh" "lattice/kernel/_lib.sh"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/templates/spec-template.md" "lattice/kernel/orchestrator/templates/spec-template.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/rules.md" "lattice/kernel/orchestrator/rules.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/flow.yaml" "lattice/kernel/orchestrator/flow.yaml"
 for f in task-brief.sh review-package.sh; do
-  copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/orchestrator/sdd/$f" "lattice/kernel/orchestrator/sdd/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/sdd/$f" "lattice/kernel/orchestrator/sdd/$f"
 done
 
 for f in loader.sh sync.sh README.md; do
-  copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/knowledge/$f" "lattice/kernel/knowledge/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/context/$f" "lattice/kernel/context/$f"
 done
 
 for f in pipeline.sh bootstrap.sh deploy.sh; do
-  copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/delivery/$f" "lattice/kernel/delivery/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/delivery/$f" "lattice/kernel/delivery/$f"
 done
 for f in spec-lint.sh ac-coverage.sh drift-check.sh compliance.sh spec-lock.sh; do
-  copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/delivery/gates/$f" "lattice/kernel/delivery/gates/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/delivery/gates/$f" "lattice/kernel/delivery/gates/$f"
 done
 
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/kernel/VERSION" "lattice/kernel/VERSION"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/VERSION" "lattice/kernel/VERSION"
 
-for dir in requirements specs plans state skills; do
+for dir in specs state skills context context/knowledge context/knowledge/project context/knowledge/central context/knowledge/drafts state/context-runs; do
   mkdir -p "lattice/$dir"
   [[ -f "lattice/$dir/.gitkeep" ]] || touch "lattice/$dir/.gitkeep"
 done
@@ -244,7 +244,7 @@ if [[ -d "$PRISMSPEC_SOURCE" ]]; then
   copy_if_not_exists "$PRISMSPEC_SOURCE/README.en.md" "prismspec/README.en.md"
 fi
 
-chmod +x lattice/kernel/_lib.sh lattice/kernel/knowledge/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh lattice/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
+chmod +x lattice/kernel/_lib.sh lattice/kernel/context/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh lattice/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
 chmod +x prismspec/bin/*.sh 2>/dev/null || true
 
 if [[ -d ".git" ]]; then
@@ -267,13 +267,15 @@ if [[ -d ".git" ]]; then
   fi
 fi
 
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/index.md" "lattice/knowledge/index.md"
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/knowledge/synonyms.txt" "lattice/knowledge/synonyms.txt"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/context/sources.yaml" "lattice/context/sources.yaml"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/context/knowledge/project/index.md" "lattice/context/knowledge/project/index.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/context/knowledge/project/synonyms.txt" "lattice/context/knowledge/project/synonyms.txt"
 
-copy_if_not_exists "$SCAFFOLD_DIR/lattice/skills/init.md" "lattice/skills/init.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/skills/init.md" "lattice/skills/init.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/skills/README.md" "lattice/skills/README.md"
 
 for f in init.md sdd.md brainstorm.md plan.md implement.md verify.md finish.md learn.md; do
-  copy_if_not_exists "$SCAFFOLD_DIR/.claude/commands/$f" ".claude/commands/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/.claude/commands/$f" ".claude/commands/$f"
 done
 
 echo ""
@@ -454,10 +456,34 @@ deploy:
       rollback: auto
       smoke_after_deploy: true
 
-knowledge:
-  local_dir: "lattice/knowledge"
-  remote_dir: "lattice/knowledge/remote"
-  sources: []
+kernel:
+  layers:
+    orchestrator: true
+    context: true
+    delivery: true
+
+context:
+  root: "lattice/context"
+  sources_file: "lattice/context/sources.yaml"
+  knowledge:
+    project_dir: "lattice/context/knowledge/project"
+    central_dir: "lattice/context/knowledge/central"
+    drafts_dir: "lattice/context/knowledge/drafts"
+  central:
+    repo: ""
+    mode: read-only
+    conflict: project-wins
+  policy:
+    precedence:
+      - user_instruction
+      - project_knowledge
+      - code_facts
+      - project_specs
+      - central_knowledge
+      - model_prior
+    conflict: project_wins
+    sensitivity: redact_secret
+  runs_dir: "lattice/state/context-runs"
 YAML
   echo "  ✅ $MANIFEST_FILE"
 fi
@@ -465,7 +491,7 @@ fi
 echo ""
 echo "📝 Configuring CLAUDE.md..."
 
-LATTICE_RULES="$SCAFFOLD_DIR/CLAUDE.lattice.md"
+LATTICE_RULES="$HARNESS_TEMPLATE_DIR/CLAUDE.lattice.md"
 if [[ -f "CLAUDE.md" ]]; then
   if grep -q "Lattice\|lattice" "CLAUDE.md" 2>/dev/null; then
     echo "  ⏭️  CLAUDE.md already contains Lattice rules"
@@ -498,9 +524,8 @@ echo "Project: $NAME ($LANG)"
 echo "Artifacts:"
 echo "  lattice/manifest.yaml        — Project declaration (review config)"
 echo "  lattice/kernel/              — Harness kernel (3 layers)"
-echo "  lattice/requirements/        — Requirements input"
-echo "  lattice/specs/  plans/       — Design / plan"
-echo "  lattice/knowledge/           — Knowledge base"
+echo "  lattice/specs/               — Persistent specs and per-spec context"
+echo "  lattice/context/             — Project context and durable knowledge"
 echo "  prismspec/                   — Standalone PrismSpec skills module"
 echo "  .claude/commands/                — Slash commands"
 echo ""
@@ -511,6 +536,6 @@ echo "  /plan             — Create AC-traced plan"
 echo "  /implement        — Execute plan/tdd policy"
 echo "  /verify           — Run verification pipeline"
 echo "  /finish           — Close delivery and extract knowledge"
-echo "  /learn \"lesson\"   — Capture knowledge to knowledge base"
+echo "  /learn \"lesson\"   — Capture durable project knowledge"
 echo "  Describe a requirement — Full spec-driven workflow"
 echo "══════════════════════════════════"

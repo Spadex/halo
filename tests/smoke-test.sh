@@ -42,7 +42,7 @@ echo ""
 # ── 1. bash -n syntax check ──
 echo "── 1. Syntax check (bash -n) ──"
 SYNTAX_OK=true
-for f in "$REPO_DIR"/init.sh "$REPO_DIR"/install.sh $(find "$REPO_DIR/scaffold" "$REPO_DIR/prismspec/bin" -name '*.sh'); do
+for f in "$REPO_DIR"/init.sh "$REPO_DIR"/install.sh $(find "$REPO_DIR/harness-template" "$REPO_DIR/prismspec/bin" -name '*.sh'); do
   if ! bash -n "$f" 2>/dev/null; then
     fail "Syntax error: $(basename "$f")"
     SYNTAX_OK=false
@@ -59,10 +59,10 @@ cd "$SANDBOX"
 git init --quiet
 
 if bash "$REPO_DIR/install.sh" "$SANDBOX" 2>&1 | tail -3; then
-  if [[ -d "$SANDBOX/.lattice/framework/scaffold" ]]; then
-    pass "install.sh completed, scaffold exists"
+  if [[ -d "$SANDBOX/.lattice/framework/harness-template" ]]; then
+    pass "install.sh completed, harness-template exists"
   else
-    fail "install.sh ran but scaffold not found"
+    fail "install.sh ran but harness-template not found"
   fi
 else
   fail "install.sh exited non-zero"
@@ -100,6 +100,14 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     pass "kernel files installed"
   else
     fail "kernel files not installed"
+  fi
+
+  if [[ -f "$SANDBOX/lattice/kernel/context/loader.sh" ]] \
+    && [[ -f "$SANDBOX/lattice/context/sources.yaml" ]] \
+    && [[ -f "$SANDBOX/lattice/context/knowledge/project/index.md" ]]; then
+    pass "context layer installed"
+  else
+    fail "context layer files missing"
   fi
 
   if [[ -f "$SANDBOX/CLAUDE.md" ]]; then
@@ -358,6 +366,24 @@ echo ""
 # ── 6b. Spec-lint on modern persistent spec layout ──
 echo "── 6b. Spec-lint modern layout ──"
 mkdir -p "$SANDBOX/lattice/specs/modern-feature"
+cat > "$SANDBOX/lattice/specs/modern-feature/context.md" << 'CONTEXT'
+# Context: modern-feature
+
+## User Intent
+- Smoke-test PrismSpec modern artifact layout.
+
+## Selected Knowledge
+| Source | Entry | Why it matters |
+|--------|-------|----------------|
+| project | none | No durable project rule required |
+
+## Code Facts
+- No production code is required for this fixture.
+
+## Open Questions
+- None.
+CONTEXT
+
 cat > "$SANDBOX/lattice/specs/modern-feature/spec.md" << 'SPEC'
 ---
 id: modern-feature
@@ -541,10 +567,10 @@ else
 fi
 echo ""
 
-# ── 8. Knowledge loader ──
-echo "── 8. Knowledge loader ──"
-LIST_OUTPUT=$(bash "$SANDBOX/lattice/kernel/knowledge/loader.sh" --list 2>&1)
-if echo "$LIST_OUTPUT" | grep -q "Knowledge Index"; then
+# ── 8. Context loader ──
+echo "── 8. Context loader ──"
+LIST_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/loader.sh" --list 2>&1)
+if echo "$LIST_OUTPUT" | grep -q "Context Index"; then
   pass "loader.sh --list works"
 else
   fail "loader.sh --list failed"

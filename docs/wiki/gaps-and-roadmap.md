@@ -13,7 +13,7 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 
 主要风险：
 
-- README/wiki 如果承诺过满，会让用户误以为 Eval、Loop、Knowledge governance 已完整产品化。
+- README/wiki 如果承诺过满，会让用户误以为 Eval、Loop、Context governance 已完整产品化。
 - 示例项目还不够真实，难证明框架能覆盖复杂业务。
 - 多语言 drift 和插件协议还在雏形阶段。
 
@@ -23,7 +23,7 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 |------|----------|------|
 | PrismSpec | canonical skills、guide.sh、lint.sh、多模板、Plan/TDD policy | 主链路成立 |
 | Harness | pipeline、spec-lint、AC coverage、drift、compliance、spec-lock | 最小验证闭环成立 |
-| Knowledge | loader、sync、index、synonyms、learn 约定 | 最小可用 |
+| Context | loader、sync、index、synonyms、learn 约定 | 最小可用 |
 | AI 友好 | AGENTS.md、SKILL.md、commands、JSON guide | 入口比早期清晰 |
 | 安装验证 | install/init/smoke test/CI | 可持续迭代 |
 
@@ -46,14 +46,14 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 | Spec 状态机较弱 | drafted/planned/verified 不可强校验 | front matter schema + spec-lint |
 | Plan lint 轻量 | 任务质量依赖 Agent 自觉 | plan schema 或 plan-lint |
 
-### P1：Knowledge Governance
+### P1：Context Governance
 
 | Gap | 影响 | 建议 |
 |-----|------|------|
-| 无 metadata | 来源、owner、过期不可治理 | knowledge front matter |
-| 无 stale/conflict | 旧规则误导 Agent | `knowledge-lint.sh` |
+| 无 metadata | 来源、owner、过期不可治理 | context/knowledge front matter |
+| 无 stale/conflict | 旧规则误导 Agent | `context-lint.sh` |
 | learn 仍靠人工 | 失败经验沉淀不稳定 | escalation learn draft |
-| 无命中记录 | 不知道知识是否有效 | loader output 写 eval run |
+| 无命中记录 | 不知道 context 是否有效 | loader output 写 eval run |
 
 ### P1：Eval 与 Loop
 
@@ -108,14 +108,14 @@ Lattice 当前处于“可交付的最小工程框架”阶段，而不是完整
 - CI 能上传 eval artifact。
 - `summary.md` 能引用 eval run。
 
-### Milestone 3：Knowledge 治理
+### Milestone 3：Context 治理
 
-目标：让知识库成为可审计资产。
+目标：让每次 spec 的上下文依据和长期知识都成为可审计资产。
 
 任务：
 
-- knowledge front matter schema。
-- `knowledge-lint.sh`。
+- context/knowledge front matter schema。
+- `context-lint.sh`。
 - stale/conflict detection。
 - learn draft workflow。
 - loader 命中记录进入 eval run。

@@ -19,7 +19,7 @@
 Lattice is a repo-local AI Coding framework. It does not replace Claude Code, Cursor, Aider, or other agents. Instead, it gives them versioned project contracts:
 
 - **PrismSpec** turns requirements into `spec.md`, `plan.md`, `verify.md`, and `summary.md`.
-- **Knowledge** loads project rules, decisions, and pitfalls before coding.
+- **Context** loads project rules, decisions, code facts, and pitfalls before spec drafting.
 - **Delivery Harness** runs build, lint, test, AC coverage, drift checks, and other gates before delivery claims.
 - **Eval Evidence** turns "the agent says it is done" into command-backed proof.
 
@@ -59,7 +59,7 @@ bash prismspec/bin/guide.sh --json
 
 | Stage | Purpose | Artifact |
 |-------|---------|----------|
-| Brainstorming | Intent, scope, ACs, risks, execution mode | `spec.md` |
+| Brainstorming | Intent, scope, context basis, ACs, risks, execution mode | `context.md`, `spec.md` |
 | Planning | AC-traced implementation tasks | `plan.md` |
 | Implementation | Plan Mode or TDD Mode execution | code, tests, task evidence |
 | Verification | Independent command-backed proof | `verify.md` |
@@ -71,7 +71,7 @@ bash prismspec/bin/guide.sh --json
 |-----------|------|-----------|
 | PrismSpec | Standalone spec-coding skill pack | `prismspec/skills/*/SKILL.md`, `prismspec/bin/`, `prismspec/templates/` |
 | Orchestrator | Agent rules and phase definitions | `lattice/kernel/orchestrator/` |
-| Knowledge | Project knowledge retrieval and sync | `lattice/knowledge/`, `lattice/kernel/knowledge/` |
+| Context | Project context retrieval, knowledge memory, and central sync | `lattice/context/`, `lattice/kernel/context/` |
 | Delivery | Independent verification pipeline and gates | `lattice/kernel/delivery/` |
 | Eval | Evidence today; structured run records later | pipeline output, AC coverage, drift diagnostics |
 
@@ -82,7 +82,7 @@ bash lattice/kernel/delivery/pipeline.sh
 bash lattice/kernel/delivery/pipeline.sh --only=spec-lint
 bash prismspec/bin/guide.sh --json
 bash prismspec/bin/lint.sh lattice/specs/<spec-id>
-bash lattice/kernel/knowledge/loader.sh "payment idempotency"
+bash lattice/kernel/context/loader.sh "payment idempotency"
 ```
 
 ## Current Status
@@ -92,13 +92,13 @@ Implemented:
 - install/init/upgrade and smoke tests;
 - standalone PrismSpec skill pack and Lattice-hosted mode;
 - spec lint, AC coverage, drift check, compliance, spec lock;
-- knowledge loader/sync and basic learn convention;
+- context loader/sync and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
 - structured eval JSON and trend metrics;
-- stronger knowledge metadata and stale/conflict checks;
+- stronger context/knowledge metadata and stale/conflict checks;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;
 - multi-agent state and lease model.
@@ -107,7 +107,7 @@ Planned:
 
 | Document | Purpose |
 |----------|---------|
-| [Design Wiki](docs/wiki/) | System design, SDD, knowledge, eval, loop, roadmap |
+| [Design Wiki](docs/wiki/) | System design, SDD, context, eval, loop, roadmap |
 | [PrismSpec README](prismspec/README.md) | Standalone spec-coding skill pack |
 | [Agent adapters](docs/adapters/) | Claude Code, Cursor, Aider, Superpowers, and generic agents |
 | [Example](examples/go-gin-gorm/) | Runnable sample project |

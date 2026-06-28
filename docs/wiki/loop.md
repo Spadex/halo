@@ -2,7 +2,7 @@
 
 ## 定位
 
-Loop 是 Lattice 从失败到修复、重跑、升级和知识沉淀的闭环。
+Loop 是 Lattice 从失败到修复、重跑、升级和 context 沉淀的闭环。
 
 ```mermaid
 flowchart LR
@@ -13,14 +13,14 @@ flowchart LR
     FIX --> V
     R -->|"no"| E["Escalate"]
     E --> LD["Learn draft"]
-    LD --> K["Knowledge"]
+    LD --> K["Context knowledge"]
 ```
 
 Loop 的目标不是让 Agent 无限自修复，而是让失败可控：
 
 - 能自动修复的，限制在 spec scope 内重跑；
 - 超出预算或需要决策的，及时升级；
-- 可复用教训进入 knowledge draft；
+- 可复用教训进入 context knowledge draft；
 - 下一次同类问题更早在 spec 或 gate 阶段被拦住。
 
 ## 当前实现

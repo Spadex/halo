@@ -1,4 +1,4 @@
-# Knowledge Index
+# Project Context Knowledge Index
 
 > Read this file before starting. Use requirement keywords to load matching knowledge entries.
 

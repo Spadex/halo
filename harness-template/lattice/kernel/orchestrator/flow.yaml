@@ -8,11 +8,11 @@ controller:
 
 stages:
   - name: brainstorming
-    output: "lattice/specs/{spec-id}/spec.md"
+    output: ["lattice/specs/{spec-id}/spec.md", "lattice/specs/{spec-id}/context.md"]
     template: "lattice/kernel/orchestrator/templates/spec-template.md"
     gate: spec-lint
-    layers: [orchestrator, knowledge]
-    description: "Explore code and knowledge base, clarify intent, author persistent spec"
+    layers: [orchestrator, context]
+    description: "Explore code and context knowledge, clarify intent, author persistent spec"
 
   - name: planning
     output: "lattice/specs/{spec-id}/plan.md"

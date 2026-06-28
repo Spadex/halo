@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # lint.sh — PrismSpec artifact lint.
-# Validates the minimum contract for spec.md, plan.md, and evidence files.
+# Validates the minimum contract for context.md, spec.md, plan.md, and evidence files.
 set -euo pipefail
 
 TARGET="${1:-}"
@@ -14,7 +14,7 @@ Usage:
   bash prismspec/bin/lint.sh <spec-dir|spec.md> [all|spec|plan|evidence]
 
 Checks:
-  spec      spec.md has ACs, execution mode, risk, and verification plan
+  spec      context.md exists; spec.md has ACs, execution mode, risk, and verification plan
   plan      plan.md references AC ids and includes verification
   evidence  verify.md or summary.md records commands/results
   all       run all available checks
@@ -43,6 +43,7 @@ else
 fi
 
 PLAN_FILE="$SPEC_DIR/plan.md"
+CONTEXT_FILE="$SPEC_DIR/context.md"
 VERIFY_FILE="$SPEC_DIR/verify.md"
 SUMMARY_FILE="$SPEC_DIR/summary.md"
 FAIL=0
@@ -56,6 +57,7 @@ contains_heading() {
 }
 
 check_spec() {
+  [[ -f "$CONTEXT_FILE" ]] || bad "context.md missing: $CONTEXT_FILE"
   [[ -f "$SPEC_FILE" ]] || { bad "spec.md missing: $SPEC_FILE"; return; }
 
   grep -qE 'AC-[0-9]+' "$SPEC_FILE" || bad "spec.md has no AC-{n} acceptance criteria"
