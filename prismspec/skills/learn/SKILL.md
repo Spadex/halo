@@ -18,12 +18,13 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 ## Workflow
 
 1. Check existing knowledge before writing a new entry.
-2. Decide whether the lesson is durable, reusable, and non-secret.
-3. Write one concise knowledge entry per rule or pitfall.
-4. Include trigger context, rule, source, and practical guidance.
-5. If running inside Lattice and promoting a draft, record reviewer evidence when governance is required.
-6. Update the relevant knowledge file or context map.
-7. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
+2. In Lattice-hosted mode, convert `summary.md` candidates with `lattice/kernel/context/summary-learn-draft.sh <spec-id>` when the summary has Knowledge Candidates.
+3. Decide whether the lesson is durable, reusable, and non-secret.
+4. Write one concise knowledge entry per rule or pitfall.
+5. Include trigger context, rule, source, and practical guidance.
+6. If running inside Lattice and promoting a draft, record reviewer evidence when governance is required.
+7. Update the relevant knowledge file or context map.
+8. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
 
 ## Knowledge Entry Shape
 

@@ -90,6 +90,7 @@ check_executable "lattice/kernel/orchestrator/sdd/spec-history.sh" "spec transit
 check_executable "lattice/kernel/orchestrator/sdd/summary-draft.sh" "summary draft helper"
 check_executable "lattice/kernel/context/context-lint.sh" "context basis lint"
 check_executable "lattice/kernel/context/context-run.sh" "context run recorder"
+check_executable "lattice/kernel/context/summary-learn-draft.sh" "summary learn draft"
 check_executable "lattice/kernel/context/learn-draft.sh" "learn draft workflow"
 check_executable "lattice/kernel/context/knowledge-review.sh" "knowledge review evidence"
 check_executable "lattice/kernel/context/knowledge-lint.sh" "knowledge governance lint"

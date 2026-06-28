@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - Escalation learn drafts under `lattice/context/drafts/` when retry budget is exhausted.
 - `learn-draft.sh` to promote or discard confirmed learn drafts with archived source drafts and audit events under `lattice/state/learn-promotions/`.
 - `knowledge-review.sh` to record approve/reject reviewer decisions under `lattice/state/knowledge-reviews/`; `learn-draft.sh promote --require-review` can require approved review evidence with conflict checks.
+- `summary-learn-draft.sh` to convert `summary.md` Knowledge Candidates into reviewable learn drafts.
 - `knowledge-lint.sh` to flag missing metadata, missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
 - `context-lint.sh` to reject empty or unfinished per-spec context basis files before context-run evidence is recorded.
 - `context-run.sh` to record per-spec selected facts, constraints, exclusions, conflicts, and context gaps under `lattice/state/context-runs/`.

@@ -225,7 +225,13 @@ bash lattice/kernel/orchestrator/sdd/summary-draft.sh <spec-id> --eval-json=<eva
 
 草稿来自 `spec.md`、`plan.md`、`verify.md`、task evidence 和可选 eval JSON。Agent 可以补充业务上下文，但不应删除失败、跳过、`cannot_verify` 或 residual risk 证据。
 
-只有 durable、可复用、非敏感的经验才进入 knowledge。一次性的实现细节留在 `summary.md`。
+如果 `summary.md` 中存在 Knowledge Candidates，先生成可审查 draft：
+
+```bash
+bash lattice/kernel/context/summary-learn-draft.sh <spec-id>
+```
+
+只有 durable、可复用、非敏感的经验才进入 knowledge。一次性的实现细节留在 `summary.md`；候选经验必须先经过 review / promote，而不是直接写入项目知识库。
 
 ## Skills 设计
 
@@ -255,6 +261,7 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - Lattice-hosted 与 standalone 路径分流。
 - task brief / review package / review summary / TDD evidence helper。
 - learn draft promotion/discard workflow。
+- summary knowledge candidate to learn draft helper。
 - knowledge governance lint。
 - knowledge metadata lint。
 - context-run evidence。

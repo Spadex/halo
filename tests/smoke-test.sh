@@ -130,6 +130,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/summary-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-lint.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-review.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" ]] \
@@ -969,6 +970,32 @@ else
   echo "$SUMMARY_DRAFT_OUTPUT" | tail -20
   [[ -f "$SANDBOX/lattice/specs/modern-feature/summary.md" ]] && tail -40 "$SANDBOX/lattice/specs/modern-feature/summary.md"
 fi
+
+SUMMARY_LEARN_EMPTY_EXIT=0
+bash "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" modern-feature >/tmp/lattice-summary-learn-empty.log 2>&1 || SUMMARY_LEARN_EMPTY_EXIT=$?
+if [[ $SUMMARY_LEARN_EMPTY_EXIT -ne 0 ]] && grep -q "No durable knowledge candidates" /tmp/lattice-summary-learn-empty.log; then
+  pass "summary-learn-draft rejects empty knowledge candidates"
+else
+  fail "summary-learn-draft accepted empty knowledge candidates"
+  tail -20 /tmp/lattice-summary-learn-empty.log
+fi
+
+cat >> "$SANDBOX/lattice/specs/modern-feature/summary.md" << 'SUMMARY_LEARN_CANDIDATE'
+- Keep task completion gated by task evidence before advancing spec status.
+SUMMARY_LEARN_CANDIDATE
+SUMMARY_LEARN_DRAFT="$SANDBOX/lattice/context/drafts/summary-modern-feature-smoke.md"
+SUMMARY_LEARN_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" modern-feature --out="$SUMMARY_LEARN_DRAFT" 2>&1)
+if [[ -f "$SUMMARY_LEARN_DRAFT" ]] \
+  && grep -q "Learn Draft: Summary Knowledge Candidates" "$SUMMARY_LEARN_DRAFT" \
+  && grep -q "Keep task completion gated by task evidence" "$SUMMARY_LEARN_DRAFT" \
+  && grep -q "Review Checklist" "$SUMMARY_LEARN_DRAFT"; then
+  pass "summary-learn-draft creates reviewable learn draft"
+else
+  fail "summary-learn-draft did not create expected draft"
+  echo "$SUMMARY_LEARN_OUTPUT" | tail -20
+  [[ -f "$SUMMARY_LEARN_DRAFT" ]] && cat "$SUMMARY_LEARN_DRAFT"
+fi
+
 SPEC_STATUS_FINISHED_EXIT=0
 SPEC_STATUS_FINISHED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature finished --from=verified 2>&1) || SPEC_STATUS_FINISHED_EXIT=$?
 if [[ $SPEC_STATUS_FINISHED_EXIT -eq 0 ]] && grep -q '^status: finished$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then

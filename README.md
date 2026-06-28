@@ -203,6 +203,9 @@ bash lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>
 # 从 spec/plan/verify/task evidence 生成 summary.md 草稿
 bash lattice/kernel/orchestrator/sdd/summary-draft.sh <spec-id>
 
+# 从 summary.md 的 Knowledge Candidates 生成可审查 learn draft
+bash lattice/kernel/context/summary-learn-draft.sh <spec-id>
+
 # 检查 spec.md front matter 和状态对应产物
 bash lattice/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>
 

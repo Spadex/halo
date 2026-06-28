@@ -109,6 +109,7 @@ bash lattice/kernel/context/backends/knowledge.sh "payment idempotency"
 bash lattice/kernel/context/context-lint.sh <spec-id> --strict
 bash lattice/kernel/context/knowledge-lint.sh --strict
 bash lattice/kernel/context/context-run.sh <spec-id> --strict
+bash lattice/kernel/context/summary-learn-draft.sh <spec-id>
 bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
 bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
 bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
