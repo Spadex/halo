@@ -37,6 +37,29 @@ check_executable() {
   fi
 }
 
+check_manifest_eq() {
+  local expr="$1" expected="$2" label="$3"
+  local actual
+  actual="$(manifest_get "$expr")"
+  if [[ "$actual" == "$expected" ]]; then
+    pass "$label"
+  else
+    fail "$label must be $expected (got ${actual:-<empty>})"
+  fi
+}
+
+check_command() {
+  local label="$1"
+  shift
+  local output
+  if output="$("$@" 2>&1)"; then
+    pass "$label"
+  else
+    fail "$label failed"
+    echo "$output" | tail -10 | sed 's/^/    /'
+  fi
+}
+
 echo "── Required tools ──"
 for tool in yq git; do
   if command -v "$tool" >/dev/null 2>&1; then
@@ -49,6 +72,11 @@ echo ""
 
 echo "── Lattice contract ──"
 check_file "lattice/manifest.yaml" "manifest"
+check_manifest_eq ".schema_version" "lattice.manifest.v1" "manifest schema_version"
+check_manifest_eq ".kind" "LatticeManifest" "manifest kind"
+check_manifest_eq ".kernel.layers.orchestrator" "true" "orchestrator capability"
+check_manifest_eq ".kernel.layers.context" "true" "context capability"
+check_manifest_eq ".kernel.layers.delivery" "true" "verification capability"
 check_file "lattice/config/failure-categories.yaml" "failure category config"
 check_file "lattice/kernel/VERSION" "kernel version"
 check_file "lattice/kernel/_lib.sh" "kernel library"
@@ -70,6 +98,7 @@ check_file "prismspec/templates/context-template.md" "PrismSpec context template
 check_file "prismspec/templates/spec-template.md" "PrismSpec default template"
 check_executable "prismspec/bin/guide.sh" "PrismSpec guide"
 check_executable "prismspec/bin/lint.sh" "PrismSpec lint"
+check_command "PrismSpec skillpack contract lint" bash "$PROJECT_ROOT/prismspec/bin/lint.sh" "$PROJECT_ROOT/prismspec" skillpack
 echo ""
 
 echo "── Delivery contract ──"
@@ -97,16 +126,8 @@ check_executable "lattice/kernel/context/knowledge-lint.sh" "knowledge governanc
 check_executable "lattice/kernel/delivery/gates/spec-lint.sh" "spec lint gate"
 check_executable "lattice/kernel/delivery/gates/ac-coverage.sh" "AC coverage gate"
 check_executable "lattice/kernel/delivery/gates/drift-check.sh" "drift check gate"
-if bash "$PROJECT_ROOT/lattice/kernel/delivery/failure-category-lint.sh" >/dev/null 2>&1; then
-  pass "failure category config lint"
-else
-  fail "failure category config lint failed"
-fi
-if bash "$PROJECT_ROOT/lattice/kernel/context/knowledge-lint.sh" >/dev/null 2>&1; then
-  pass "knowledge governance lint"
-else
-  fail "knowledge governance lint failed"
-fi
+check_command "failure category config lint" bash "$PROJECT_ROOT/lattice/kernel/delivery/failure-category-lint.sh"
+check_command "knowledge governance lint" bash "$PROJECT_ROOT/lattice/kernel/context/knowledge-lint.sh"
 check_dir "lattice/state" "state root"
 mkdir -p "$PROJECT_ROOT/lattice/state/eval-runs"
 check_dir "lattice/state/eval-runs" "eval run output root"

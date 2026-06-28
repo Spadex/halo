@@ -301,7 +301,10 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
 
   DOCTOR_EXIT=0
   DOCTOR_OUTPUT=$(bash "$SANDBOX/lattice/kernel/doctor.sh" 2>&1) || DOCTOR_EXIT=$?
-  if [[ $DOCTOR_EXIT -eq 0 ]] && echo "$DOCTOR_OUTPUT" | grep -q "PASS"; then
+  if [[ $DOCTOR_EXIT -eq 0 ]] \
+    && echo "$DOCTOR_OUTPUT" | grep -q "PASS" \
+    && echo "$DOCTOR_OUTPUT" | grep -q "manifest schema_version" \
+    && echo "$DOCTOR_OUTPUT" | grep -q "PrismSpec skillpack contract lint"; then
     pass "lattice doctor passes installed project"
   else
     fail "lattice doctor failed"
