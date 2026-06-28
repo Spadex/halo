@@ -27,6 +27,13 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 ## Knowledge Entry Shape
 
 ```markdown
+---
+owner: "project"
+verified_at: "YYYY-MM-DD"
+applies_to: ["rule-or-domain"]
+expires_at: "YYYY-MM-DD" # optional
+---
+
 # <Rule or pitfall title>
 
 **Keywords**: <comma-separated keywords>
@@ -60,6 +67,7 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 ## Red Flags
 
 - Knowledge entry has no source.
+- Knowledge file has no owner, verified_at, or applies_to metadata.
 - Entry describes what changed rather than what should guide future work.
 - Relevant knowledge file or context map is not updated.
 - One file mixes unrelated rules.
@@ -68,6 +76,7 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 
 - [ ] Existing knowledge was checked.
 - [ ] New entry is concise and sourced.
+- [ ] Knowledge metadata has owner, verified_at, and applies_to.
 - [ ] Relevant context entry is discoverable from `lattice/context/README.md` or the appropriate knowledge file.
 - [ ] `knowledge-lint.sh` has no unresolved warnings, or warnings are explicitly accepted by a reviewer.
 - [ ] No secrets or raw sensitive data are included.

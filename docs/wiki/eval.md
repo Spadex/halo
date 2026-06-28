@@ -191,11 +191,11 @@ Lattice 在 `harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub 
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| context evidence 仍偏计数型 | 已有 context-run，但还不能衡量 context 对缺陷率和返工率的影响 | outcome linkage |
+| context evidence 仍偏计数型 | 已有 context-run 和 metadata lint，但还不能衡量 context 对缺陷率和返工率的影响 | outcome linkage |
 | dashboard 未实现 | history report 仍是 repo-local 文件，不能跨项目横向比较 | dashboard / central eval sink |
 
 ## 演进顺序
 
-1. 增加 context metadata 和 outcome linkage。
+1. 增加 outcome linkage 和 reviewer policy。
 2. 增加 dashboard 或 central eval sink。
 3. 扩展更多语言的 drift parser。

@@ -197,12 +197,12 @@ bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escala
 - doctor、spec lint、AC coverage、drift check、compliance、spec lock；
 - `pipeline --json-out`、`lattice/state/eval-runs/*.json`、`lattice/state/loops/*.json`、`lattice/state/context-runs/*.json`、`lattice/state/learn-promotions/*.json`、`lattice/config/failure-categories.yaml`、failure category lint、`lattice/context/drafts/escalation-*.md`、eval markdown summary/history、AC/drift/compliance gate JSON、可配置 failure category、context-run、learn draft promotion/discard 和 review/TDD process evidence；
 - GitHub Actions eval artifact、Step Summary 与 best-effort PR comment workflow 模板；
-- Context map、knowledge backend、context-run evidence、knowledge governance lint、中心知识 sync 和基础 `/learn` 约定；
+- Context map、knowledge backend、context-run evidence、knowledge metadata lint、knowledge governance lint、中心知识 sync 和基础 `/learn` 约定；
 - Go/Gin/GORM 可运行示例与多 Agent adapter 文档。
 
 仍在演进：
 
-- context/knowledge metadata、owner 和更强冲突治理；
+- reviewer policy、outcome linkage 和更强语义冲突治理；
 - Node/Python 等更多 drift parser；
 - 插件 manifest/schema/versioning 与多 Agent lease 模型。
 

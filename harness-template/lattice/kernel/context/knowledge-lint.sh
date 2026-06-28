@@ -72,6 +72,51 @@ check_source() {
   warn_issue "$file" "missing-source" "knowledge entries should carry a Source field or Source column"
 }
 
+frontmatter_value() {
+  local key="$1" file="$2"
+  awk -F': *' -v key="$key" '
+    NR == 1 && $0 == "---" { in_fm = 1; next }
+    in_fm && $0 == "---" { exit }
+    in_fm && $1 == key {
+      value = $0
+      sub("^[^:]+:[ ]*", "", value)
+      gsub(/^"|"$/, "", value)
+      print value
+      exit
+    }
+  ' "$file"
+}
+
+has_frontmatter() {
+  local file="$1"
+  [[ "$(sed -n '1p' "$file")" == "---" ]] && awk 'NR > 1 && $0 == "---" { found = 1; exit } END { exit(found ? 0 : 1) }' "$file"
+}
+
+check_metadata() {
+  local file="$1" owner verified_at applies_to today
+  today="$(date -u +%Y-%m-%d)"
+
+  if ! has_frontmatter "$file"; then
+    warn_issue "$file" "missing-metadata" "knowledge files should include front matter metadata"
+    return 0
+  fi
+
+  owner="$(frontmatter_value "owner" "$file")"
+  verified_at="$(frontmatter_value "verified_at" "$file")"
+  applies_to="$(frontmatter_value "applies_to" "$file")"
+
+  [[ -n "$owner" ]] || warn_issue "$file" "missing-owner" "front matter should include owner"
+  [[ -n "$applies_to" ]] || warn_issue "$file" "missing-applies-to" "front matter should include applies_to"
+
+  if [[ -z "$verified_at" ]]; then
+    warn_issue "$file" "missing-verified-at" "front matter should include verified_at"
+  elif ! [[ "$verified_at" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    warn_issue "$file" "invalid-verified-at" "verified_at should use YYYY-MM-DD"
+  elif [[ "$verified_at" > "$today" ]]; then
+    warn_issue "$file" "future-verified-at" "verified_at $verified_at is after $today"
+  fi
+}
+
 check_placeholders() {
   local file="$1"
   if grep -Eiq '\b(TODO|TBD|FIXME)\b' "$file"; then
@@ -134,6 +179,7 @@ FILES=0
 while IFS= read -r file; do
   [[ -n "$file" ]] || continue
   ((FILES++)) || true
+  check_metadata "$file"
   check_source "$file"
   check_placeholders "$file"
   check_conflicts "$file"

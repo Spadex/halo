@@ -106,12 +106,12 @@ Implemented:
 - standalone PrismSpec skill pack manifest and Lattice-hosted mode;
 - doctor, `pipeline --json-out` structured eval runs, loop state JSON, context-run evidence, learn promotion audit events, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
 - spec lint, AC coverage, drift check, compliance, spec lock;
-- context map, knowledge backend, context-run evidence, knowledge governance lint, sync, and basic learn convention;
+- context map, knowledge backend, context-run evidence, knowledge metadata lint, knowledge governance lint, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
-- stronger context/knowledge metadata, ownership, and conflict governance;
+- reviewer policy, outcome linkage, and stronger semantic conflict governance;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;
 - multi-agent state and lease model.

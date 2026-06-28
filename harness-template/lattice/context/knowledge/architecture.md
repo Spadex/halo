@@ -1,3 +1,9 @@
+---
+owner: "project"
+verified_at: "2026-06-28"
+applies_to: ["architecture", "module-boundaries"]
+---
+
 # Architecture
 
 Record durable architecture context that helps agents understand module boundaries and system flows. Include a source for every durable fact.

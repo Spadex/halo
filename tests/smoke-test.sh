@@ -714,9 +714,9 @@ Same heading repeated.
 MD
 
 if bash "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" --strict --target="$BAD_KNOWLEDGE" >/tmp/lattice-knowledge-lint-bad.log 2>&1; then
-  fail "knowledge-lint should reject stale/conflicting knowledge"
+  fail "knowledge-lint should reject stale/conflicting knowledge metadata"
 else
-  pass "knowledge-lint rejects stale/conflicting knowledge"
+  pass "knowledge-lint rejects stale/conflicting knowledge metadata"
 fi
 rm -f "$BAD_KNOWLEDGE"
 

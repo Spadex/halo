@@ -240,11 +240,24 @@ lattice/kernel/context/backends/knowledge.sh
 
 `knowledge-lint.sh` 是项目知识进入长期记忆前的轻量治理检查。它不是内容评审，也不替代 Agent / reviewer 判断知识是否正确，只负责发现最容易污染长期 context 的结构化风险：
 
+- 缺少 front matter metadata；
+- 缺少 `owner`、`verified_at` 或 `applies_to`；
 - 缺少 `Source` 字段或 `Source` 表格列；
 - 残留 `TODO` / `TBD` / `FIXME`；
 - 显式 `CONFLICT` / `冲突` 标记；
 - 已过期的 `expires_at: YYYY-MM-DD`；
 - 单个文件内重复的二级标题。
+
+推荐 metadata：
+
+```yaml
+---
+owner: "project"
+verified_at: "2026-06-28"
+applies_to: ["rules", "contracts"]
+expires_at: "2026-12-31" # optional
+---
+```
 
 推荐用法：
 
@@ -299,12 +312,12 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 | 默认 context map 仍需项目化 | 初始化后需要补充真实模块、链路和风险 | P0 |
 | 项目知识文件仍需真实沉淀 | Agent 只能看到结构，缺少真实领域知识 | P0 |
 | `sources.yaml` 尚未被自动化消费 | 当前更多是未来扩展点 | P1 |
-| context metadata 不足 | 已有轻量 lint，但 owner、verified_at、适用范围仍难治理 | P1 |
+| context metadata 仍偏基础 | 已有 owner、verified_at、applies_to lint，但还缺少 reviewer policy 和语义冲突处理 | P1 |
 | context-run 仍偏计数型 | 已能记录采用事实，但还不能判断语义质量和真实收益 | P1 |
 
 ## 推荐演进
 
 1. 在真实示例中填充 `lattice/context/README.md`、`external.md` 和项目知识文件。
-2. 为项目知识增加 owner、verified_at、applies_to 等 front matter metadata。
+2. 增加 reviewer policy 和跨文件 conflict resolution。
 3. 将 `sources.yaml` 保留为可选自动化配置，后续脚本真正消费后再提升权重。
 4. 将 context-run 与真实 review finding / escaped defect 关联，分析哪些上下文真的有用。

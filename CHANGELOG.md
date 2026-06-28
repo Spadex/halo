@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 - `failure-category-lint.sh` and doctor integration for failure category config validation.
 - Escalation learn drafts under `lattice/context/drafts/` when retry budget is exhausted.
 - `learn-draft.sh` to promote or discard confirmed learn drafts with archived source drafts and audit events under `lattice/state/learn-promotions/`.
-- `knowledge-lint.sh` to flag missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
+- `knowledge-lint.sh` to flag missing metadata, missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
 - `context-run.sh` to record per-spec selected facts, constraints, exclusions, conflicts, and context gaps under `lattice/state/context-runs/`.
 - `pr-comment.sh` to create or update a stable GitHub PR comment from the eval Markdown summary.
 - `review-summary.sh` and `tdd-evidence.sh` to capture process evidence as structured JSON.
@@ -33,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - README and wiki now describe pipeline/gate eval JSON, loop state, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, knowledge governance lint, review/TDD process evidence, Markdown summaries/history, GitHub Actions artifacts, Step Summary, and PR comments as implemented.
 - Pipeline eval runs, eval summaries, and eval history now include Context Evidence when a spec has `context.md`.
 - Default architecture and glossary knowledge templates now include `Source` columns for promotion governance.
+- Default project knowledge templates now include `owner`, `verified_at`, and `applies_to` front matter.
 - PrismSpec README now documents `context.md` in both standalone and Lattice-hosted artifact layouts.
 
 ### Fixed
