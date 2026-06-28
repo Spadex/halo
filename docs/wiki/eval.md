@@ -8,7 +8,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 2. Agent 的工作过程是否可靠？
 3. 团队的 AI Coding 质量是否在变好？
 
-当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、review summary、TDD red/green evidence 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON 以及当前 spec 对应的 process evidence；`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用。
+当前实现已经有 eval 原材料：spec-lint、AC coverage、drift check、compliance、build/lint/test output、review summary、TDD red/green evidence 和 smoke test。`pipeline.sh --json-out` 会把一次运行写成结构化 eval run，并嵌入 AC coverage、drift check、compliance 的 gate JSON 以及当前 spec 对应的 process evidence；`eval-summary.sh` 会把 eval JSON 渲染成 Markdown summary，供本地阅读和 CI Step Summary 使用；`eval-history.sh` 会把多次 eval run 聚合为趋势报告。
 
 ## 当前形态
 
@@ -20,6 +20,7 @@ Eval 在 Lattice 中不是“多跑几个测试”，而是回答三个问题：
 | `compliance.sh` | warnings | 是否引用知识、是否有澄清痕迹 |
 | `review-summary.sh` | review verdict JSON | spec compliance、code quality、test coverage、risk 是否被审查 |
 | `tdd-evidence.sh` | TDD red/green JSON | TDD task 是否有红灯、绿灯和 AC trace |
+| `eval-history.sh` | history Markdown | 多次运行的 pass rate、AC coverage、review/TDD 趋势 |
 | build/lint/test | terminal output | 工程基础质量 |
 | smoke test | pass/fail summary | 框架自身是否可运行 |
 
@@ -162,7 +163,8 @@ CI 是 eval 的天然执行环境：
 3. `eval-summary.sh` 产生 `lattice/state/eval-runs/<run-id>.md`。
 4. CI 写入 GitHub Step Summary，并上传 `lattice-eval-<run-id>` artifact。
 5. PR 事件中，`pr-comment.sh` best-effort 创建或更新一条带 marker 的 Lattice comment。
-6. 后续 dashboard 可复用同一份 Markdown/JSON 展示 pass/fail、AC coverage、drift findings。
+6. 本地或后续任务可用 `eval-history.sh` 聚合 `lattice/state/eval-runs/*.json`。
+7. 后续 dashboard 可复用同一份 Markdown/JSON 展示 pass/fail、AC coverage、drift findings。
 
 Lattice 在 `harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub Actions 模板。`init.sh --ci=github` 会安装到目标项目的 `.github/workflows/lattice-eval.yml`。该 workflow 的约定是：先运行 `pipeline.sh --json-out`，再生成 Markdown summary，写入 Step Summary、上传 eval artifact，并在 PR 上 best-effort 发布 comment；最后再按 pipeline exit code 决定 CI 是否失败。PR comment 使用 `continue-on-error`，避免 fork PR 或 token 权限限制影响验证结论。
 
@@ -170,11 +172,11 @@ Lattice 在 `harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub 
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| review/TDD 趋势指标未沉淀 | 已能进入 eval run，但还没有跨 run 趋势 | eval history aggregation |
-| dashboard 未实现 | 只能看单次 CI 或 artifact，无法横向比较 | eval history aggregation / dashboard |
+| loop retry state 未进入 eval run | 修复轮次仍难以审计 | loop state JSON |
+| dashboard 未实现 | history report 仍是 repo-local 文件，不能跨项目横向比较 | dashboard / central eval sink |
 
 ## 演进顺序
 
-1. 增加 review/TDD 趋势报告。
-2. 将 loop retry state 写入 eval run。
-3. 增加 dashboard 或可导出的 history report。
+1. 将 loop retry state 写入 eval run。
+2. 增加 dashboard 或 central eval sink。
+3. 扩展更多语言的 drift parser。

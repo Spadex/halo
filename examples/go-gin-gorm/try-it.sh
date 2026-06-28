@@ -71,5 +71,10 @@ bash lattice/kernel/delivery/eval-summary.sh lattice/state/eval-runs/example.jso
 sed -n '1,48p' lattice/state/eval-runs/example.md
 echo ""
 
+echo "── 9. Eval History ──"
+bash lattice/kernel/delivery/eval-history.sh --out=lattice/state/eval-runs/history.md
+sed -n '1,32p' lattice/state/eval-runs/history.md
+echo ""
+
 echo "══════════════════════════════════"
 echo "✅ All gates demonstrated"

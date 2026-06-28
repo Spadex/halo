@@ -73,7 +73,7 @@ bash prismspec/bin/guide.sh --json
 | Orchestrator | Agent rules and phase definitions | `lattice/kernel/orchestrator/` |
 | Context | Agent-readable context map, project knowledge assets, external context entry, and optional retrieval backend | `lattice/context/`, `lattice/kernel/context/` |
 | Delivery | Independent verification pipeline and gates | `lattice/kernel/delivery/` |
-| Evidence | Gate output, structured Eval runs, and Markdown summaries | `lattice/state/eval-runs/*.json`, `*.md`, AC coverage, drift diagnostics |
+| Evidence | Gate output, structured Eval runs, Markdown summaries, and history reports | `lattice/state/eval-runs/*.json`, `*.md`, AC coverage, drift diagnostics |
 
 ## Common Commands
 
@@ -83,6 +83,7 @@ bash lattice/kernel/delivery/pipeline.sh --json-out
 bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> <task-id> --spec-compliance=pass --code-quality=pass --test-coverage=pass --risk=pass
 bash lattice/kernel/orchestrator/sdd/tdd-evidence.sh <spec-id> <task-id> --ac=AC-1 --test=TestAC1 --red-command="..." --red-exit=1 --green-command="..." --green-exit=0
 bash lattice/kernel/delivery/eval-summary.sh lattice/state/eval-runs/<run-id>.json
+bash lattice/kernel/delivery/eval-history.sh --out=lattice/state/eval-runs/history.md
 bash lattice/kernel/delivery/pr-comment.sh lattice/state/eval-runs/<run-id>.md --dry-run
 bash lattice/kernel/delivery/pipeline.sh --only=spec-lint
 bash lattice/kernel/doctor.sh
@@ -99,14 +100,14 @@ Implemented:
 
 - install/init/upgrade and smoke tests;
 - standalone PrismSpec skill pack manifest and Lattice-hosted mode;
-- doctor, `pipeline --json-out` structured eval runs, Markdown summaries, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
+- doctor, `pipeline --json-out` structured eval runs, Markdown summaries/history reports, AC/drift/compliance gate JSON, review/TDD process evidence, and GitHub Actions eval artifacts/Step Summary/best-effort PR comments;
 - spec lint, AC coverage, drift check, compliance, spec lock;
 - context map, knowledge backend, sync, and basic learn convention;
 - Go/Gin/GORM example and adapter docs.
 
 Planned:
 
-- review/TDD evidence trend metrics;
+- loop retry state integration with eval runs;
 - stronger context/knowledge metadata and stale/conflict checks;
 - more drift parsers for Node/Python and other stacks;
 - plugin manifest/schema/versioning;

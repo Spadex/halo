@@ -233,12 +233,12 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 
 - spec state machine 强校验。
 - plan schema。
-- review/TDD evidence 的跨 run 趋势。
+- loop retry state 与 eval run 联动。
 
 ## 演进优先级
 
 1. 强化 `spec-lint` 对 front matter、mode、status 的校验。
 2. 增加 plan schema 或 plan-lint。
-3. 做 review/TDD evidence 的跨 run 趋势。
-4. 将 loop retry state 写入 eval run。
+3. 将 loop retry state 写入 eval run。
+4. 增加 dashboard 或 central eval sink。
 5. 用真实项目迭代模板和 mode 选择策略。

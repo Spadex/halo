@@ -105,6 +105,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
 
   if [[ -f "$SANDBOX/lattice/kernel/_lib.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" ]] \
+    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]]; then
     pass "kernel files installed"
   else
@@ -603,6 +604,17 @@ if [[ -f "$PR_COMMENT_MD" ]] && grep -q "lattice-eval-comment" "$PR_COMMENT_MD" 
 else
   fail "pr-comment dry-run output invalid"
   echo "$PR_COMMENT_OUTPUT" | tail -10
+fi
+
+mkdir -p "$SANDBOX/lattice/state/eval-runs"
+cp "$PIPELINE_GATE_JSON" "$SANDBOX/lattice/state/eval-runs/pipeline-ac-smoke.json"
+EVAL_HISTORY_MD="$SANDBOX/lattice/state/eval-history-smoke.md"
+HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-history.sh" --out="$EVAL_HISTORY_MD" --limit=5 2>&1)
+if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
+  pass "eval-history aggregates eval run JSON"
+else
+  fail "eval-history output invalid"
+  echo "$HISTORY_OUTPUT" | tail -10
 fi
 rm -f /tmp/lattice-ac-json.log /tmp/lattice-drift-json.log /tmp/lattice-compliance-json.log /tmp/lattice-pipeline-gate-json.log
 echo ""
