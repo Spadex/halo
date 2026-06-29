@@ -26,7 +26,7 @@
 - 先读用户本次需求，再查当前代码、测试、schema 和接口契约。
 - 项目知识用于理解长期规则、历史决策和踩坑，不替代当前代码事实。
 - 外部知识和中心知识只作补充，不覆盖项目内事实。
-- 不把大段文档复制进 `spec.md`；只把影响 scope、AC、risk、interface、compatibility 或 verification 的事实写入 `lattice/specs/<spec-id>/context.md`。
+- 不把大段文档复制进 `spec.md`；只把影响 scope、AC、risk、interface、compatibility 或 verification 的事实写入 `lattice/specs/<spec-id>/spec.md` 的 Context Basis。
 
 ## 冲突优先级
 
@@ -37,4 +37,4 @@
 5. `external.md` 和中心知识。
 6. 模型先验。
 
-有实质影响的冲突必须记录到 `lattice/specs/<spec-id>/context.md`。
+有实质影响的冲突必须记录到 `lattice/specs/<spec-id>/spec.md` 的 Context Basis。

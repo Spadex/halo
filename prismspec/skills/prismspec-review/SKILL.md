@@ -9,7 +9,7 @@ description: Reviews PrismSpec implementation evidence before verification. Use 
 
 Review is the independent quality gate between implementation and verification. Treat implementer reports as claims, inspect the diff and evidence, and record a verdict before the run claims verified completion.
 
-This skill aligns with Superpowers 6.x task review discipline: use one skeptical read-only reviewer per task or run, return spec-compliance and code-quality verdicts, and do not tell the reviewer what to ignore. PrismSpec adds AC traceability, Lattice evidence paths, and `review-summary.json`.
+This skill aligns with Superpowers 6.x task review discipline: use one skeptical read-only reviewer per task or run, return spec-compliance and code-quality verdicts, and do not tell the reviewer what to ignore. PrismSpec adds AC traceability, Lattice evidence paths, a human-readable `review.md`, and an optional machine sidecar `review-summary.json`.
 
 ## Inputs
 
@@ -25,10 +25,11 @@ This skill aligns with Superpowers 6.x task review discipline: use one skeptical
 1. Confirm implementation tasks are complete or identify the incomplete task that blocks review.
 2. Read the relevant `spec.md`, `plan.md`, task evidence, and review packages.
 3. Use `prismspec/agents/task-reviewer.md` as the reviewer contract when task-scoped review is needed.
-4. Review as read-only. Do not mutate the working tree, index, HEAD, branch, or evidence files except for the final review summary.
+4. Review as read-only. Do not mutate the working tree, index, HEAD, branch, or evidence files except for the final review artifact.
 5. Return verdicts for spec compliance, code quality, test coverage, and risk: `pass`, `fail`, or `cannot_verify`.
 6. Treat missing evidence as `cannot_verify`, not pass.
-7. In Lattice-hosted mode, write structured evidence with:
+7. Write `review.md` as the canonical review artifact. It must include front matter or a short verdict table for spec compliance, code quality, test coverage, and risk.
+8. In Lattice-hosted mode, the helper can generate `review.md` plus `review-summary.json`:
 
 ```bash
 bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
@@ -38,9 +39,9 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
   --risk=pass|fail|cannot_verify
 ```
 
-8. For task-scoped review, replace `branch` with the task id, for example `T1`.
-9. Critical or important findings block verification. Minor findings may be recorded as residual risk or follow-up.
-10. When receiving external review feedback, evaluate it technically before implementing it:
+9. For task-scoped review, replace `branch` with the task id, for example `T1`.
+10. Critical or important findings block verification. Minor findings may be recorded as residual risk or follow-up.
+11. When receiving external review feedback, evaluate it technically before implementing it:
     - read the full feedback;
     - restate unclear items or ask before changing code;
     - verify the claim against code, spec, plan, tests, and evidence;
@@ -49,8 +50,9 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 
 ## Outputs
 
-- Branch review summary: `.lattice/sdd/<spec-id>/branch/review-summary.json` or `.prismspec/runs/<spec-id>/branch/review-summary.json`.
-- Optional task review summaries: `.lattice/sdd/<spec-id>/<task-id>/review-summary.json`.
+- Branch review artifact: `lattice/specs/<spec-id>/review.md` or `prismspec/specs/<spec-id>/review.md`.
+- Optional task review artifact: `.lattice/sdd/<spec-id>/<task-id>/review.md`.
+- Optional machine sidecar: `review-summary.json`.
 - Findings with file/line references where possible.
 - Disposition for received review feedback: accepted, rejected with reason, cannot_verify, or needs user decision.
 
@@ -74,7 +76,7 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 ## Red Flags
 
 - Review prompt tells the reviewer what not to flag.
-- Review summary has only prose and no verdict.
+- review artifact has only prose and no verdict.
 - `cannot_verify` is treated as pass.
 - Review starts without `spec.md`, `plan.md`, or task evidence.
 - Feedback is implemented before it is understood.

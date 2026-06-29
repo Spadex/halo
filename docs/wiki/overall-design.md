@@ -70,9 +70,9 @@ flowchart TB
 
 | 组件 | 专业定义 | 关键产物 | 当前实现 |
 |------|----------|----------|----------|
-| PrismSpec | Spec Coding skill pack，负责把 intent 推进到 durable artifacts | `context.md`、`spec.md`、`plan.md`、debugging/review evidence、`verify.md` | `prismspec/skills/`、`prismspec/bin/new.sh`、`prismspec/bin/doctor.sh`、`prismspec/bin/guide.sh`、`prismspec/bin/lint.sh`、`prismspec/templates/` |
+| PrismSpec | Spec Coding skill pack，负责把 intent 推进到 durable artifacts | `spec.md`、`plan.md`、debugging/review evidence、`verify.md` | `prismspec/skills/`、`prismspec/bin/new.sh`、`prismspec/bin/doctor.sh`、`prismspec/bin/guide.sh`、`prismspec/bin/lint.sh`、`prismspec/templates/` |
 | Orchestrator | Agent 控制面，负责阶段路由、状态推进、任务选择和 evidence gating | spec status、transition events、task evidence | `lattice/kernel/orchestrator/`、`spec-status.sh`、`task-next.sh`、`task-complete.sh`、`plan-lint.sh` |
-| Context | 项目上下文供给层，负责让 Agent 精准找到并记录本次决策依据 | context map、project knowledge、external map、context-run | `lattice/context/`、`lattice/kernel/context/`、`context-lint.sh`、`context-run.sh` |
+| Context | 项目上下文供给层，负责让 Agent 精准找到本次决策依据，并写入 `spec.md` Context Basis | context map、project knowledge、external map、selected facts | `lattice/context/`、`lattice/kernel/context/` |
 | Verification | 可复现验证面，负责运行 build/lint/test/drift/compliance 等 gates | gate output、pipeline result | `lattice/kernel/delivery/pipeline.sh`、`gates/` |
 | Evidence / Eval | 证据与质量观测层，负责把验证和过程记录结构化，供本地、CI、dashboard 和复盘使用 | eval run、summary、history、outcome report、central sink | `eval-summary.sh`、`eval-history.sh`、`eval-sink.sh`、`eval-dashboard.sh`、`eval-query.sh`、`outcome-link.sh` |
 | Loop / Learn | 反馈闭环，负责失败分类、有限重试、升级、learn draft 和知识晋升 | loop state、escalation draft、knowledge review、promotion event | `failure-categories.yaml`、`learn-draft.sh`、`knowledge-review.sh`、`summary-learn-draft.sh` |
@@ -102,7 +102,7 @@ sequenceDiagram
     User->>Agent: Intent / change request
     Agent->>PS: guide.sh routes next stage
     Agent->>C: read context map and select facts
-    Agent->>PS: write context.md + spec.md
+    Agent->>PS: write spec.md with Context Basis
     Agent->>O: lint and advance drafted state
     Agent->>PS: write AC-traced plan.md
     Agent->>O: resolve next task
@@ -144,9 +144,9 @@ Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Ver
 
 ```text
 lattice/specs/<spec-id>/
-├── context.md     # 本次 spec 的最小上下文依据
-├── spec.md        # intent、scope、AC、risk、mode、verification plan
+├── spec.md        # intent、scope、Context Basis、AC、risk、mode、verification plan
 ├── plan.md        # AC-traced implementation tasks
+├── review.md      # read-only review verdicts, findings, and dispositions
 └── verify.md      # 命令、验证结果、残留风险、知识候选
 ```
 

@@ -20,7 +20,7 @@ bash prismspec/bin/guide.sh $ARGUMENTS --json
 ## Rules
 
 - Follow Superpowers discipline where it exists: brainstorming/spec approval, writing plans, task review, strict TDD, and verification before completion.
-- Use PrismSpec artifact paths: `context.md`, `spec.md`, `plan.md`, task evidence, `review-summary.json`, and `verify.md`.
+- Use PrismSpec artifact paths: `spec.md`, `plan.md`, task evidence, `review.md`, and `verify.md`; Context Basis belongs inside `spec.md`.
 - Do not skip `review` or `verify`.
 - Do not silently downgrade `tdd` to `plan`.
 - Do not claim completion without `verify.md` and command-backed evidence.

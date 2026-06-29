@@ -184,9 +184,6 @@ mkdir -p "$(dirname "$OUT")"
   write_context_refs
   printf '  ],\n'
   printf '  "eval_metrics": {\n'
-  printf '    "context_run_total": %s,\n' "$(json_num "$EVAL_JSON" '.metrics.context_run_total')"
-  printf '    "context_selected_facts": %s,\n' "$(json_num "$EVAL_JSON" '.metrics.context_selected_facts')"
-  printf '    "context_blocking_gaps": %s,\n' "$(json_num "$EVAL_JSON" '.metrics.context_blocking_gaps')"
   printf '    "review_total": %s,\n' "$(json_num "$EVAL_JSON" '.metrics.review_total')"
   printf '    "review_failed": %s,\n' "$(json_num "$EVAL_JSON" '.metrics.review_failed')"
   printf '    "review_cannot_verify": %s\n' "$(json_num "$EVAL_JSON" '.metrics.review_cannot_verify')"

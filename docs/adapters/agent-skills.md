@@ -20,10 +20,10 @@ Lattice presents the workflow as five product blocks while keeping Agent Skills-
 
 | Product Block | Primary Skill Folder | Durable Contract |
 |---|---|---|
-| Clarify | `prismspec-specification/` | `context.md` selected facts, assumptions, conflicts, open questions |
+| Clarify | `prismspec-specification/` | `spec.md` Context Basis: selected facts, assumptions, conflicts, open questions |
 | Spec | `prismspec-specification/` | approved `spec.md` with ACs, risks, mode, verification plan |
 | Build | `prismspec-planning/`, `prismspec-implementation/`, `prismspec-debugging/` | `plan.md`, task evidence, TDD/debug evidence |
-| Review | `prismspec-review/` | read-only `review-summary.json` |
+| Review | `prismspec-review/` | read-only `review.md` |
 | Verify | `prismspec-verification/` | `verify.md`, eval run JSON |
 
 The mapping is declared in `prismspec/skillpack.yaml` under `product_blocks`. Hosts should read that machine-readable block list instead of inferring UI sections from directory names.

@@ -23,11 +23,16 @@ updated_at: {timestamp}
 
 - {明确不做的管理后台、风控、迁移、运营工具等}
 
-### Existing Context
+### Context Basis
+
+> 只记录会影响 API、schema、状态机、幂等、权限、回滚或验证策略的已采用事实。没有外部依据时写 N/A。
 
 | Source | Constraint | Impact |
 |--------|------------|--------|
+| user request | | |
 | code / API / schema / knowledge | | |
+| tests / incidents / external | | |
+| open questions / conflicts | | |
 
 ## Part II — System Design
 

@@ -84,7 +84,7 @@ Prefer file-backed handoffs over pasted context:
 - `brief.md`: task requirements, AC refs, global constraints, and exact interfaces.
 - `report.md`: implementer status, commits, files, test commands/results, TDD evidence summary, and concerns.
 - `review-package.md`: read-only diff package for the reviewer.
-- `review-summary.json` or `review-summary.md`: reviewer verdicts and findings.
+- `review.md`: reviewer verdicts and findings.
 
 Do not paste full diffs into prompts or summaries when a review package exists.
 

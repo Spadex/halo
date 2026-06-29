@@ -114,19 +114,17 @@ fi
 
 SPEC_DIR=""
 SPEC_FILE=""
-CONTEXT_FILE=""
 PLAN_FILE=""
 VERIFY_FILE=""
-SUMMARY_FILE=""
+REVIEW_FILE=""
 RUN_DIR=""
 
 if [[ -n "$SPEC_ID" ]]; then
   SPEC_DIR="$SPEC_ROOT/$SPEC_ID"
-  CONTEXT_FILE="$SPEC_DIR/context.md"
   SPEC_FILE="$SPEC_DIR/spec.md"
   PLAN_FILE="$SPEC_DIR/plan.md"
+  REVIEW_FILE="$SPEC_DIR/review.md"
   VERIFY_FILE="$SPEC_DIR/verify.md"
-  SUMMARY_FILE="$SPEC_DIR/summary.md"
   RUN_DIR="$RUN_ROOT/$SPEC_ID"
 fi
 
@@ -183,15 +181,16 @@ has_verification_evidence() {
 }
 
 has_review_evidence() {
-  [[ -n "$RUN_DIR" && -f "$RUN_DIR/branch/review-summary.json" ]] && return 0
-  [[ -n "$RUN_DIR" && -f "$RUN_DIR/review-summary.json" ]] && return 0
-  [[ -n "$RUN_DIR" && -d "$RUN_DIR" ]] && find "$RUN_DIR" -type f \( -name 'review-summary.json' -o -name 'review-summary.md' \) | grep -q .
+  [[ -n "$REVIEW_FILE" && -f "$REVIEW_FILE" ]] && return 0
+  [[ -n "$RUN_DIR" && -f "$RUN_DIR/branch/review.md" ]] && return 0
+  [[ -n "$RUN_DIR" && -f "$RUN_DIR/review.md" ]] && return 0
+  [[ -n "$RUN_DIR" && -d "$RUN_DIR" ]] && find "$RUN_DIR" -type f -name 'review.md' | grep -q .
 }
 
 stage_from_artifacts() {
   if [[ -n "$FROM_STAGE" ]]; then
     echo "$FROM_STAGE"
-  elif [[ -z "$SPEC_ID" || ! -f "$SPEC_FILE" || ! -f "$CONTEXT_FILE" ]]; then
+  elif [[ -z "$SPEC_ID" || ! -f "$SPEC_FILE" ]]; then
     echo "specification"
   elif [[ "$SCAFFOLDED" == "true" ]]; then
     echo "specification"
@@ -213,7 +212,7 @@ route_reason_from_artifacts() {
     echo "from_override"
   elif [[ -z "$SPEC_ID" ]]; then
     echo "no_spec"
-  elif [[ ! -f "$SPEC_FILE" || ! -f "$CONTEXT_FILE" ]]; then
+  elif [[ ! -f "$SPEC_FILE" ]]; then
     echo "missing_specification_artifacts"
   elif [[ "$SCAFFOLDED" == "true" ]]; then
     echo "scaffolded_spec"
@@ -248,10 +247,6 @@ template_hint() {
   esac
 }
 
-context_template_hint() {
-  echo "$TEMPLATE_ROOT/context-template.md"
-}
-
 skill_for_stage() {
   case "$1" in
     specification) echo "prismspec/skills/prismspec-specification/SKILL.md" ;;
@@ -267,14 +262,14 @@ next_action() {
   case "$STAGE" in
     specification)
       if [[ "$SCAFFOLDED" == "true" ]]; then
-        echo "Fill scaffolded context.md/spec.md, then set scaffolded: false"
+        echo "Fill scaffolded spec.md, including Context Basis, then set scaffolded: false"
       else
-        echo "Run specification and write context.md + spec.md"
+        echo "Run specification and write spec.md with Context Basis"
       fi
       ;;
     planning) echo "Read spec.md and write AC-traced plan.md" ;;
     implementation) echo "Execute plan.md using $MODE mode" ;;
-    review) echo "Review task evidence and write review-summary.json" ;;
+    review) echo "Review task evidence and write review.md" ;;
     verification) echo "Run verification: $VERIFY_CMD" ;;
     done) echo "Workflow complete; report status or start a new spec" ;;
   esac
@@ -285,8 +280,8 @@ command_hint() {
   case "$STAGE" in
     specification)
       if [[ "$SCAFFOLDED" == "true" ]]; then
-        echo "edit $CONTEXT_FILE $SPEC_FILE"
-      elif [[ -n "$SPEC_ID" && ( ! -f "$SPEC_FILE" || ! -f "$CONTEXT_FILE" ) ]]; then
+        echo "edit $SPEC_FILE"
+      elif [[ -n "$SPEC_ID" && ! -f "$SPEC_FILE" ]]; then
         echo "bash prismspec/bin/new.sh $id --template=default --mode=$MODE"
       else
         echo "bash prismspec/bin/new.sh <spec-id> --template=default --mode=$MODE"
@@ -294,7 +289,7 @@ command_hint() {
       ;;
     planning) echo "read $(skill_for_stage "$STAGE") and write $PLAN_FILE" ;;
     implementation) echo "read $(skill_for_stage "$STAGE") and execute $PLAN_FILE" ;;
-    review) echo "read $(skill_for_stage "$STAGE") and write $RUN_DIR/branch/review-summary.json" ;;
+    review) echo "read $(skill_for_stage "$STAGE") and write $REVIEW_FILE" ;;
     verification) echo "$VERIFY_CMD" ;;
     done) echo "bash prismspec/bin/guide.sh --spec=$id --json" ;;
   esac
@@ -315,7 +310,6 @@ missing_artifacts_json() {
 
   printf '['
   if [[ -n "$SPEC_ID" ]]; then
-    [[ -f "$CONTEXT_FILE" ]] || add_item "$CONTEXT_FILE"
     [[ -f "$SPEC_FILE" ]] || add_item "$SPEC_FILE"
     if [[ "$STAGE" != "specification" ]]; then
       [[ -f "$PLAN_FILE" ]] || add_item "$PLAN_FILE"
@@ -341,10 +335,8 @@ if [[ "$JSON" == "true" ]]; then
   printf '  "mode": "%s",\n' "$MODE"
   printf '  "skill": "%s",\n' "$(skill_for_stage "$STAGE")"
   printf '  "spec_dir": "%s",\n' "$SPEC_DIR"
-  printf '  "context_file": "%s",\n' "$CONTEXT_FILE"
   printf '  "run_dir": "%s",\n' "$RUN_DIR"
   printf '  "template_hint": "%s",\n' "$(template_hint)"
-  printf '  "context_template_hint": "%s",\n' "$(context_template_hint)"
   printf '  "verify_command": "%s"\n' "$VERIFY_CMD"
   printf '}\n'
   exit 0
@@ -360,9 +352,7 @@ echo "Stage:       $STAGE"
 echo "Mode:        $MODE"
 echo "Skill:       $(skill_for_stage "$STAGE")"
 echo "Spec dir:    ${SPEC_DIR:-$SPEC_ROOT/<spec-id>}"
-echo "Context:     ${CONTEXT_FILE:-$SPEC_ROOT/<spec-id>/context.md}"
 echo "Evidence:    ${RUN_DIR:-$RUN_ROOT/<spec-id>}"
 echo "Template:    $(template_hint)"
-echo "Context tpl: $(context_template_hint)"
 echo ""
 echo "Next action: $(next_action)"

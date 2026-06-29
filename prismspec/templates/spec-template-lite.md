@@ -27,6 +27,12 @@ updated_at: {timestamp}
 
 - {本次不做什么}
 
+## Context Basis
+
+- Source: {user request / code / tests / docs / knowledge / N/A}
+- Fact / constraint: {影响 Scope、AC、Risk 或 Verification 的事实；没有则写 N/A}
+- Open questions / conflicts: {没有则写 None}
+
 ## Acceptance Criteria
 
 | # | When | Then | Verification |

@@ -206,7 +206,6 @@ fi
 
 case "$TARGET_STATUS" in
   planned|implemented|verified)
-    require_file "$SPEC_DIR/context.md" "context.md"
     require_file "$SPEC_DIR/plan.md" "plan.md"
     ;;
 esac

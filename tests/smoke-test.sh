@@ -154,8 +154,6 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-history.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/summary-draft.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/context/context-lint.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/context/context-run.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
     && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-review.sh" ]] \
@@ -235,7 +233,6 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -f "$SANDBOX/prismspec/templates/spec-template-service.md" ]] \
     && [[ -f "$SANDBOX/prismspec/templates/spec-template-frontend.md" ]] \
     && [[ -f "$SANDBOX/prismspec/templates/spec-template-tdd.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/templates/context-template.md" ]] \
     && [[ -f "$SANDBOX/prismspec/references/mode-selection.md" ]] \
     && [[ -f "$SANDBOX/prismspec/references/definition-of-done.md" ]] \
     && [[ -f "$SANDBOX/prismspec/agents/task-reviewer.md" ]] \
@@ -247,7 +244,6 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
 
   PRISMSPEC_NEW_JSON=$(bash "$SANDBOX/prismspec/bin/new.sh" smoke-new-spec --title="Smoke New Spec" --template=lite --mode=plan --json)
   if echo "$PRISMSPEC_NEW_JSON" | yq -e '.host == "lattice" and .spec_id == "smoke-new-spec" and .template == "lite" and .mode == "plan"' >/dev/null 2>&1 \
-    && [[ -f "$SANDBOX/lattice/specs/smoke-new-spec/context.md" ]] \
     && [[ -f "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" ]] \
     && grep -q "id: smoke-new-spec" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" \
     && grep -q "execution_mode: plan" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" \
@@ -410,51 +406,6 @@ echo ""
 # ── 6. Spec-lint on directory spec layout ──
 echo "── 6. Spec-lint modern layout ──"
 mkdir -p "$SANDBOX/lattice/specs/modern-feature"
-cat > "$SANDBOX/lattice/specs/modern-feature/context.md" << 'CONTEXT'
-# Context: modern-feature
-
-## Decision Frame
-
-| Item | Value |
-|------|-------|
-| Requirement type | feature |
-| Execution mode impact | tdd |
-| Main affected surface | test fixture |
-| Verification focus | spec-lint / prismspec-lint |
-
-## Selected Facts
-
-| Type | Source | Fact | Decision Impact |
-|------|--------|------|-----------------|
-| user | smoke test | Smoke-test PrismSpec modern artifact layout. | Use a minimal fixture. |
-| code | N/A | No production code is required for this fixture. | Keep scope small. |
-| knowledge | N/A | No durable project rule required. | No knowledge dependency. |
-
-## Constraints
-
-| Type | Constraint | Source | Impact |
-|------|------------|--------|--------|
-| test | Keep AC ids stable. | fixture | Lint should pass predictably. |
-
-## Conflicts / Ambiguities
-
-| Issue | Sources | Required Decision |
-|-------|---------|-------------------|
-| None | N/A | N/A |
-
-## Exclusions
-
-| Source / Topic | Why excluded |
-|----------------|--------------|
-| Production code | This fixture validates artifact contracts only. |
-
-## Context Gaps
-
-| Gap | Blocks planning? | Question / Next action |
-|-----|------------------|------------------------|
-| None | no | N/A |
-CONTEXT
-
 cat > "$SANDBOX/lattice/specs/modern-feature/spec.md" << 'SPEC'
 ---
 id: modern-feature
@@ -483,11 +434,13 @@ Add a small behavior with AC tracing.
 
 - Export behavior.
 
-## Context
+## Context Basis
 
 | Source | Constraint | Why it matters |
 |--------|------------|----------------|
-| smoke | Keep it simple | Test modern lint |
+| user | Smoke-test PrismSpec modern artifact layout. | Use a minimal fixture. |
+| code / tests | No production code is required for this fixture. | Keep scope small and AC ids stable. |
+| open questions / conflicts | None. | No blocking decision required. |
 
 ## Acceptance Criteria
 
@@ -550,7 +503,6 @@ else
 fi
 
 mkdir -p "$SANDBOX/lattice/specs/bad-state"
-cp "$SANDBOX/lattice/specs/modern-feature/context.md" "$SANDBOX/lattice/specs/bad-state/context.md"
 cat > "$SANDBOX/lattice/specs/bad-state/spec.md" << 'BAD_STATE_SPEC'
 ---
 id: bad-state
@@ -580,75 +532,6 @@ else
   tail -30 /tmp/lattice-spec-state-lint-bad.log
 fi
 
-CONTEXT_LINT_EXIT=0
-CONTEXT_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/context-lint.sh" modern-feature --strict 2>&1) || CONTEXT_LINT_EXIT=$?
-if [[ $CONTEXT_LINT_EXIT -eq 0 ]]; then
-  pass "context-lint passes complete context basis"
-else
-  fail "context-lint failed complete context basis"
-  echo "$CONTEXT_LINT_OUTPUT" | tail -20
-fi
-
-mkdir -p "$SANDBOX/lattice/specs/bad-context"
-cat > "$SANDBOX/lattice/specs/bad-context/context.md" << 'BAD_CONTEXT'
-# Context: bad-context
-
-## Decision Frame
-
-| Item | Value |
-|------|-------|
-| Requirement type | feature / bugfix / refactor / docs / config |
-
-## Selected Facts
-
-| Type | Source | Fact | Decision Impact |
-|------|--------|------|-----------------|
-| code | `path/to/file` | | |
-
-## Constraints
-
-| Type | Constraint | Source | Impact |
-|------|------------|--------|--------|
-| compatibility / security / data / performance / release | | | |
-
-## Conflicts / Ambiguities
-
-| Issue | Sources | Required Decision |
-|-------|---------|-------------------|
-| TODO | TBD | FIXME |
-
-## Exclusions
-
-| Source / Topic | Why excluded |
-|----------------|--------------|
-| | |
-
-## Context Gaps
-
-| Gap | Blocks planning? | Question / Next action |
-|-----|------------------|------------------------|
-| Unknown data contract | yes | Ask owner |
-BAD_CONTEXT
-BAD_CONTEXT_LINT_EXIT=0
-bash "$SANDBOX/lattice/kernel/context/context-lint.sh" bad-context --strict >/tmp/lattice-context-lint-bad.log 2>&1 || BAD_CONTEXT_LINT_EXIT=$?
-if [[ $BAD_CONTEXT_LINT_EXIT -ne 0 ]] && grep -q "Selected Facts" /tmp/lattice-context-lint-bad.log; then
-  pass "context-lint rejects unfinished context basis"
-else
-  fail "context-lint accepted unfinished context basis"
-  tail -20 /tmp/lattice-context-lint-bad.log
-fi
-
-CONTEXT_RUN_JSON="$SANDBOX/lattice/state/context-runs/modern-feature-smoke.json"
-CONTEXT_RUN_EXIT=0
-CONTEXT_RUN_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/context-run.sh" modern-feature --strict --out="$CONTEXT_RUN_JSON" 2>&1) || CONTEXT_RUN_EXIT=$?
-if [[ $CONTEXT_RUN_EXIT -eq 0 ]] \
-  && [[ -f "$CONTEXT_RUN_JSON" ]] \
-  && yq -e '.kind == "context-run" and .spec_id == "modern-feature" and .metrics.selected_facts == 3 and .metrics.constraints == 1 and .metrics.blocking_gaps == 0 and (.selected_sources | length == 3)' "$CONTEXT_RUN_JSON" >/dev/null 2>&1; then
-  pass "context-run records selected context evidence"
-else
-  fail "context-run output invalid"
-  echo "$CONTEXT_RUN_OUTPUT" | tail -20
-fi
 echo ""
 
 # ── 6c. SDD helper scripts ──
@@ -795,7 +678,6 @@ else
 fi
 
 mkdir -p "$SANDBOX/lattice/specs/missing-evidence"
-cp "$SANDBOX/lattice/specs/modern-feature/context.md" "$SANDBOX/lattice/specs/missing-evidence/context.md"
 cp "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX/lattice/specs/missing-evidence/spec.md"
 cp "$SANDBOX/lattice/specs/modern-feature/plan.md" "$SANDBOX/lattice/specs/missing-evidence/plan.md"
 perl -0pi -e 's/id: modern-feature/id: missing-evidence/; s/- \[ \] T1:/- [x] T1:/g; s/- \[ \] T2:/- [x] T2:/g; s/- \[ \] RED-1:/- [x] RED-1:/g; s/- \[ \] RED-2:/- [x] RED-2:/g' "$SANDBOX/lattice/specs/missing-evidence/spec.md" "$SANDBOX/lattice/specs/missing-evidence/plan.md"
@@ -1125,6 +1007,15 @@ else
   echo "$REVIEW_SUMMARY_OUTPUT" | tail -10
 fi
 
+if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md" ]] \
+  && grep -q 'verdict: "cannot_verify"' "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md" \
+  && grep -q "missing regression test evidence" "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md"; then
+  pass "review-summary writes canonical review.md"
+else
+  fail "review.md artifact invalid"
+  [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md" ]] && sed -n '1,80p' "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md"
+fi
+
 echo ""
 
 # ── 7. AC-coverage (no tests — should report uncovered) ──
@@ -1171,7 +1062,7 @@ fi
 PIPELINE_GATE_JSON="$SANDBOX/lattice/state/pipeline-ac-smoke.json"
 PIPELINE_GATE_EXIT=0
 bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_GATE_JSON" >/tmp/lattice-pipeline-gate-json.log 2>&1 || PIPELINE_GATE_EXIT=$?
-if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 2 and .metrics.tdd_complete == 2 and .metrics.context_run_total == 1 and .metrics.context_selected_facts == 3 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .process_evidence.context_runs[0].kind == "context-run" and .process_evidence.context_runs[0].metrics.selected_facts == 3 and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
+if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 2 and .metrics.tdd_complete == 2 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
   pass "pipeline embeds structured gate JSON in eval run"
 else
   fail "pipeline gate JSON embedding invalid"
@@ -1375,7 +1266,7 @@ fi
 OUTCOME_LINK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" record --eval="$PIPELINE_GATE_JSON" --type=review_finding --severity=medium --source=smoke-review --summary="missing regression test evidence" --context-ref="rules.md#ac-trace" 2>&1)
 OUTCOME_EVENT=$(find "$SANDBOX/lattice/state/outcomes" -type f -name '*.json' -print | head -1)
 if [[ -n "$OUTCOME_EVENT" ]] \
-  && yq -e '.kind == "outcome-link" and .outcome.type == "review_finding" and .outcome.severity == "medium" and .eval_run.run_id != "" and .eval_metrics.context_run_total == 1 and (.context_refs | length == 1)' "$OUTCOME_EVENT" >/dev/null 2>&1; then
+  && yq -e '.kind == "outcome-link" and .outcome.type == "review_finding" and .outcome.severity == "medium" and .eval_run.run_id != "" and (.context_refs | length == 1)' "$OUTCOME_EVENT" >/dev/null 2>&1; then
   pass "outcome-link records post-run outcome evidence"
 else
   fail "outcome-link event invalid"
@@ -1393,7 +1284,7 @@ fi
 
 PIPELINE_SUMMARY_MD="$SANDBOX/lattice/state/eval-summary-smoke.md"
 SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" "$PIPELINE_GATE_JSON" --out="$PIPELINE_SUMMARY_MD" 2>&1)
-if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Context Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Outcome Links" "$PIPELINE_SUMMARY_MD" && grep -q "missing regression test evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
+if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Outcome Links" "$PIPELINE_SUMMARY_MD" && grep -q "missing regression test evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
   pass "eval-summary renders pipeline JSON as Markdown"
 else
   fail "eval-summary output invalid"
@@ -1413,7 +1304,7 @@ mkdir -p "$SANDBOX/lattice/state/eval-runs"
 cp "$PIPELINE_GATE_JSON" "$SANDBOX/lattice/state/eval-runs/pipeline-ac-smoke.json"
 EVAL_HISTORY_MD="$SANDBOX/lattice/state/eval-history-smoke.md"
 HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-history.sh" --out="$EVAL_HISTORY_MD" --limit=5 2>&1)
-if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Context Evidence" "$EVAL_HISTORY_MD" && grep -q "Outcome Links" "$EVAL_HISTORY_MD" && grep -q "Outcomes" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
+if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Outcome Links" "$EVAL_HISTORY_MD" && grep -q "Outcomes" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
   pass "eval-history aggregates eval run JSON"
 else
   fail "eval-history output invalid"

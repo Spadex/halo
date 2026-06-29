@@ -160,7 +160,7 @@ Loop 不新增 SDD 阶段，它嵌入 Verification：
 
 | Gap | 影响 | 下一步 |
 |-----|------|--------|
-| promotion 前语义级治理仍偏人工 | 轻量 lint 和 review evidence 只能记录结构风险与决策，不能自动判断跨文件语义冲突 | metadata + review events + context-runs |
+| promotion 前语义级治理仍偏人工 | 轻量 lint 和 review evidence 只能记录结构风险与决策，不能自动判断跨文件语义冲突 | metadata + review events |
 
 ## 演进顺序
 

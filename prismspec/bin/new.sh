@@ -98,18 +98,15 @@ template_file_for() {
 }
 
 SPEC_TEMPLATE="$(template_file_for "$TEMPLATE")"
-CONTEXT_TEMPLATE="$TEMPLATE_ROOT/context-template.md"
 SPEC_DIR="$SPEC_ROOT/$SPEC_ID"
 SPEC_FILE="$SPEC_DIR/spec.md"
-CONTEXT_FILE="$SPEC_DIR/context.md"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 [[ -f "$SPEC_TEMPLATE" ]] || { echo "Spec template not found: $SPEC_TEMPLATE" >&2; exit 1; }
-[[ -f "$CONTEXT_TEMPLATE" ]] || { echo "Context template not found: $CONTEXT_TEMPLATE" >&2; exit 1; }
 
 if [[ -e "$SPEC_DIR" && "$FORCE" != "true" ]]; then
   echo "Spec directory already exists: $SPEC_DIR" >&2
-  echo "Use --force to overwrite context.md/spec.md." >&2
+  echo "Use --force to overwrite spec.md." >&2
   exit 1
 fi
 
@@ -172,7 +169,6 @@ mark_scaffolded() {
 }
 
 mkdir -p "$SPEC_DIR"
-render_template "$CONTEXT_TEMPLATE" "$CONTEXT_FILE"
 render_template "$SPEC_TEMPLATE" "$SPEC_FILE"
 mark_scaffolded "$SPEC_FILE"
 
@@ -183,7 +179,6 @@ if [[ "$JSON" == "true" ]]; then
   printf '  "template": "%s",\n' "$TEMPLATE"
   printf '  "mode": "%s",\n' "$MODE"
   printf '  "spec_dir": "%s",\n' "$SPEC_DIR"
-  printf '  "context_file": "%s",\n' "$CONTEXT_FILE"
   printf '  "spec_file": "%s"\n' "$SPEC_FILE"
   printf '}\n'
   exit 0
@@ -196,9 +191,8 @@ echo "Spec:    $SPEC_ID"
 echo "Mode:    $MODE"
 echo "Template: $TEMPLATE"
 echo "Files:"
-echo "  $CONTEXT_FILE"
 echo "  $SPEC_FILE"
 echo ""
 echo "Next:"
-echo "  Fill context.md and spec.md, then run:"
+echo "  Fill spec.md, including its Context Basis section, then run:"
 echo "  bash prismspec/bin/lint.sh $SPEC_FILE spec"

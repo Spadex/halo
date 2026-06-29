@@ -40,6 +40,7 @@ Clarify -> Spec -> Build -> Review -> Verify
 These are product surfaces, not necessarily one skill folder each. `skillpack.yaml` maps each block to the underlying Agent Skills-compatible folders and evidence gates:
 
 - Clarify and Spec both use `prismspec-specification`, but Clarify focuses on context facts, assumptions, conflicts, and blocking questions; Spec focuses on approved scope, ACs, risk, mode, and verification plan.
+- Clarify records its result in the `spec.md` Context Basis section rather than a separate required artifact, matching Agent Skills' preference for small, self-contained task outputs.
 - Build composes `prismspec-planning`, `prismspec-implementation`, and `prismspec-debugging`.
 - Review uses `prismspec-review` plus `prismspec/agents/task-reviewer.md`.
 - Verify uses `prismspec-verification` and Lattice delivery gates.

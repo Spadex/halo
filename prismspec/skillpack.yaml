@@ -26,10 +26,9 @@ product_blocks:
     skills:
       - prismspec/skills/prismspec-specification/SKILL.md
     artifacts:
-      - context.md
+      - spec.md#context-basis
     gates:
-      - lattice/kernel/context/context-lint.sh
-      - lattice/kernel/context/context-run.sh
+      - prismspec/bin/lint.sh <spec-dir> spec
   - id: spec
     display_name: Spec
     purpose: Turn clarified intent into scoped, approved, AC-traced, risk-aware specification.
@@ -60,6 +59,7 @@ product_blocks:
     skills:
       - prismspec/skills/prismspec-review/SKILL.md
     artifacts:
+      - review.md
       - review-summary.json
       - review-package.md
     gates:
@@ -135,12 +135,10 @@ workflow:
     - id: specification
       skill: prismspec/skills/prismspec-specification/SKILL.md
       outputs:
-        - context.md
         - spec.md
     - id: planning
       skill: prismspec/skills/prismspec-planning/SKILL.md
       inputs:
-        - context.md
         - spec.md
       outputs:
         - plan.md
@@ -160,6 +158,7 @@ workflow:
         - plan.md
         - task evidence
       outputs:
+        - review.md
         - review-summary.json
     - id: verification
       skill: prismspec/skills/prismspec-verification/SKILL.md
@@ -168,11 +167,11 @@ workflow:
         - plan.md
         - code
         - tests
+        - review.md
         - review-summary.json
       outputs:
         - verify.md
 templates:
-  context: prismspec/templates/context-template.md
   default: prismspec/templates/spec-template.md
   lite: prismspec/templates/spec-template-lite.md
   service: prismspec/templates/spec-template-service.md
@@ -192,9 +191,9 @@ contracts:
   standalone_spec_root: prismspec/specs
   lattice_spec_root: lattice/specs
   required_artifacts:
-    - context.md
     - spec.md
     - plan.md
+    - review.md
     - verify.md
   execution_modes:
     - auto

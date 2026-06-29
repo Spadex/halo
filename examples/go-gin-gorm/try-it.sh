@@ -58,6 +58,7 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh create-item-api branch \
   --test-coverage=pass \
   --risk=pass \
   --evidence="spec-lint, ac-coverage, drift-check"
+sed -n '1,24p' lattice/specs/create-item-api/review.md
 yq '.verdict, .axes' .lattice/sdd/create-item-api/branch/review-summary.json
 echo ""
 

@@ -18,19 +18,11 @@ echo ""
 echo "── Artifact layout ──"
 
 SPEC_BASENAME="$(basename "$SPEC")"
-SPEC_DIR="$(dirname "$SPEC")"
-CONTEXT_FILE="$SPEC_DIR/context.md"
 
 if [[ "$SPEC_BASENAME" == "spec.md" ]]; then
   pass "Directory spec layout"
 else
   fail "Spec must use directory layout: lattice/specs/<spec-id>/spec.md"
-fi
-
-if [[ -f "$CONTEXT_FILE" ]]; then
-  pass "Context basis: ${CONTEXT_FILE#$PROJECT_ROOT/}"
-else
-  fail "Missing context basis: ${CONTEXT_FILE#$PROJECT_ROOT/}"
 fi
 
 echo ""

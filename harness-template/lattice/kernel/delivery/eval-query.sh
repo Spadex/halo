@@ -247,10 +247,10 @@ render_summary_markdown() {
 render_runs_markdown() {
   echo "# Lattice Eval Runs"
   echo ""
-  echo "| Project | Run | Status | Spec | Git | AC | Drift | Review | Context | Loop |"
-  echo "|---|---|---|---|---|---:|---:|---|---|---|"
+  echo "| Project | Run | Status | Spec | Git | AC | Drift | Review | Loop |"
+  echo "|---|---|---|---|---|---:|---:|---|---|"
 
-  local matched=0 emitted=0 i file project slug status run_id spec git ac_total ac_covered drift review_total review_failed review_cannot_verify context_runs context_blocking_gaps retry_count next_action
+  local matched=0 emitted=0 i file project slug status run_id spec git ac_total ac_covered drift review_total review_failed review_cannot_verify retry_count next_action
   if [[ "${#RUN_FILES[@]}" -gt 0 ]]; then
     for ((i = ${#RUN_FILES[@]} - 1; i >= 0; i--)); do
       file="${RUN_FILES[$i]}"
@@ -270,15 +270,13 @@ render_runs_markdown() {
       review_total="$(json_num "$file" '.metrics.review_total')"
       review_failed="$(json_num "$file" '.metrics.review_failed')"
       review_cannot_verify="$(json_num "$file" '.metrics.review_cannot_verify')"
-      context_runs="$(json_num "$file" '.metrics.context_run_total')"
-      context_blocking_gaps="$(json_num "$file" '.metrics.context_blocking_gaps')"
       retry_count="$(json_num "$file" '.loop_state.retry_count')"
       next_action="$(json_get "$file" '.loop_state.next_action')"
-      echo "| $(md_escape "$project") | $(md_escape "${run_id:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "${spec:-none}") | $(md_escape "${git:-unknown}") | $ac_covered/$ac_total | $drift | $review_failed fail / $review_cannot_verify cannot_verify / $review_total | runs=$context_runs, blocking=$context_blocking_gaps | retry=$retry_count, next=$(md_escape "${next_action:-unknown}") |"
+      echo "| $(md_escape "$project") | $(md_escape "${run_id:-unknown}") | $(md_escape "${status:-unknown}") | $(md_escape "${spec:-none}") | $(md_escape "${git:-unknown}") | $ac_covered/$ac_total | $drift | $review_failed fail / $review_cannot_verify cannot_verify / $review_total | retry=$retry_count, next=$(md_escape "${next_action:-unknown}") |"
       emitted=$((emitted + 1))
     done
   fi
-  [[ "$matched" -eq 0 ]] && echo "| _none_ | - | - | - | - | - | - | - | - | - |"
+  [[ "$matched" -eq 0 ]] && echo "| _none_ | - | - | - | - | - | - | - | - |"
   return 0
 }
 
@@ -366,7 +364,7 @@ render_summary_json() {
 render_runs_json() {
   json_query_header
   printf '  "items": [\n'
-  local first=true emitted=0 i file project slug status run_id spec git ac_total ac_covered drift review_total review_failed review_cannot_verify context_runs context_blocking_gaps retry_count next_action
+  local first=true emitted=0 i file project slug status run_id spec git ac_total ac_covered drift review_total review_failed review_cannot_verify retry_count next_action
   if [[ "${#RUN_FILES[@]}" -gt 0 ]]; then
     for ((i = ${#RUN_FILES[@]} - 1; i >= 0; i--)); do
       file="${RUN_FILES[$i]}"
@@ -385,14 +383,12 @@ render_runs_json() {
       review_total="$(json_num "$file" '.metrics.review_total')"
       review_failed="$(json_num "$file" '.metrics.review_failed')"
       review_cannot_verify="$(json_num "$file" '.metrics.review_cannot_verify')"
-      context_runs="$(json_num "$file" '.metrics.context_run_total')"
-      context_blocking_gaps="$(json_num "$file" '.metrics.context_blocking_gaps')"
       retry_count="$(json_num "$file" '.loop_state.retry_count')"
       next_action="$(json_get "$file" '.loop_state.next_action')"
       [[ "$first" == true ]] || printf ',\n'
       first=false
-      printf '    {"project":"%s","run_id":"%s","status":"%s","spec_file":"%s","git_sha":"%s","ac_covered":%s,"ac_total":%s,"drift_count":%s,"review_failed":%s,"review_cannot_verify":%s,"review_total":%s,"context_runs":%s,"context_blocking_gaps":%s,"retry_count":%s,"next_action":"%s"}' \
-        "$(json_escape "$project")" "$(json_escape "${run_id:-unknown}")" "$(json_escape "${status:-unknown}")" "$(json_escape "${spec:-none}")" "$(json_escape "${git:-unknown}")" "$ac_covered" "$ac_total" "$drift" "$review_failed" "$review_cannot_verify" "$review_total" "$context_runs" "$context_blocking_gaps" "$retry_count" "$(json_escape "${next_action:-unknown}")"
+      printf '    {"project":"%s","run_id":"%s","status":"%s","spec_file":"%s","git_sha":"%s","ac_covered":%s,"ac_total":%s,"drift_count":%s,"review_failed":%s,"review_cannot_verify":%s,"review_total":%s,"retry_count":%s,"next_action":"%s"}' \
+        "$(json_escape "$project")" "$(json_escape "${run_id:-unknown}")" "$(json_escape "${status:-unknown}")" "$(json_escape "${spec:-none}")" "$(json_escape "${git:-unknown}")" "$ac_covered" "$ac_total" "$drift" "$review_failed" "$review_cannot_verify" "$review_total" "$retry_count" "$(json_escape "${next_action:-unknown}")"
       emitted=$((emitted + 1))
     done
   fi

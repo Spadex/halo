@@ -39,10 +39,10 @@ Use the JSON fields as the routing source of truth: `host`, `spec_id`, `stage`, 
 
 | Stage | Delegate To | Durable Output |
 |-------|-------------|----------------|
-| `specification` | `prismspec-specification` | `context.md`, `spec.md` |
+| `specification` | `prismspec-specification` | `spec.md` |
 | `planning` | `prismspec-planning` | `plan.md` |
 | `implementation` | `prismspec-implementation` | code, tests, task evidence |
-| `review` | `prismspec-review` | `review-summary.json` |
+| `review` | `prismspec-review` | `review.md` |
 | `verification` | `prismspec-verification` | `verify.md` |
 
 After each completed stage, rerun `guide.sh --json` and continue when the next step is clear.
@@ -62,7 +62,7 @@ When Superpowers is installed or explicitly requested, use its mature workflow s
 
 PrismSpec's main workflow ends at command-backed verification; durable lessons move through `/capture`.
 
-Do not copy Superpowers output paths blindly. For PrismSpec/Lattice work, write `context.md`, `spec.md`, `plan.md`, task evidence, `review-summary.json`, and `verify.md` in the routed PrismSpec locations.
+Do not copy Superpowers output paths blindly. For PrismSpec/Lattice work, write `spec.md`, `plan.md`, task evidence, `review.md`, and `verify.md` in the routed PrismSpec locations. Context Basis belongs inside `spec.md`.
 
 ## Host Modes
 

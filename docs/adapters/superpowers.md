@@ -5,16 +5,16 @@
 
 ## Phase Mapping
 
-PrismSpec keeps its own durable artifacts (`context.md`, `spec.md`, `plan.md`, review evidence, and `verify.md`) and maps its stages to Superpowers skills when Superpowers is present. Lattice-hosted mode stores these artifacts under `lattice/specs/` and adds gates:
+PrismSpec keeps its own durable artifacts (`spec.md`, `plan.md`, review evidence, and `verify.md`) and maps its stages to Superpowers skills when Superpowers is present. Lattice-hosted mode stores these artifacts under `lattice/specs/` and adds gates:
 
 | Lattice Stage | Superpowers Skill | Lattice Artifact / Constraint |
 |---------------|-------------------|-------------------------------|
-| **Specification** | `brainstorming` | Write persistent `context.md` and `spec.md`; load knowledge; select execution policy |
+| **Specification** | `brainstorming` | Write persistent `spec.md` with Context Basis; load knowledge; select execution policy |
 | **Planning** | `writing-plans` | Write `lattice/specs/<id>/plan.md`; include Global Constraints, task interfaces, Scope/AC refs |
 | **Implementation: plan** | `executing-plans` | Execute reviewed plan with necessary tests; generate task brief and review package |
 | **Implementation: tdd** | `test-driven-development` | Red test first; tests trace to ACs; record red/green evidence |
 | **Debugging / failure path** | `systematic-debugging` | Prove root cause before fixes; record repro, hypothesis, and fix evidence |
-| **Review** | Superpowers SDD task reviewer discipline | Write `review-summary.json`; use `pass` / `fail` / `cannot_verify` |
+| **Review** | Superpowers SDD task reviewer discipline | Write `review.md`; use `pass` / `fail` / `cannot_verify` |
 | **Verification** | `verification-before-completion` | Run `lattice/kernel/delivery/pipeline.sh`; write `verify.md` |
 
 ## Superpowers 6.0 Compatibility Notes

@@ -68,10 +68,8 @@ warn_msg() { warn "$*"; WARNS=$((WARNS + 1)); }
 SPEC_FILE="$(resolve_spec_file "$INPUT")"
 SPEC_DIR="$(dirname "$SPEC_FILE")"
 SPEC_REL="$(rel_path "$SPEC_FILE")"
-CONTEXT_FILE="$SPEC_DIR/context.md"
 PLAN_FILE="$SPEC_DIR/plan.md"
 VERIFY_FILE="$SPEC_DIR/verify.md"
-SUMMARY_FILE="$SPEC_DIR/summary.md"
 
 echo "🔍 Spec State Lint: $SPEC_REL"
 echo ""
@@ -155,7 +153,6 @@ require_artifact() {
   fi
 }
 
-require_artifact "$CONTEXT_FILE" "context.md"
 case "$STATUS" in
   planned|implemented|verified)
     require_artifact "$PLAN_FILE" "plan.md"

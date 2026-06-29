@@ -1,4 +1,4 @@
 interface:
   display_name: "PrismSpec Specification"
-  short_description: "Draft context and spec from a requirement"
-  default_prompt: "Use $prismspec-specification to turn this requirement into context.md and spec.md."
+  short_description: "Draft spec with context basis"
+  default_prompt: "Use $prismspec-specification to turn this requirement into spec.md with Context Basis."

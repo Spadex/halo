@@ -16,10 +16,10 @@ The AI can implement freely, but it must move through reviewable artifacts:
 
 | Layer | Question | Artifacts |
 |-------|----------|-----------|
-| Contract | What are we doing, based on what context, and how is it accepted? | `context.md`, `spec.md` |
+| Contract | What are we doing, based on what context, and how is it accepted? | `spec.md` |
 | Plan | Who changes which files in what order, and how is each slice proven? | `plan.md` |
 | Execution | How is each slice implemented, and does it need a red test? | code, tests, task evidence |
-| Review | Does the implementation match the spec, and is the code acceptable? | `review-summary.json` |
+| Review | Does the implementation match the spec, and is the code acceptable? | `review.md` |
 | Verification | What did the repository prove with real commands? | `verify.md` |
 
 The philosophy is simple: **fewer phases, stronger evidence. Reuse mature workflow discipline; put PrismSpec's value in artifacts, context, evidence, and resumability.**
@@ -49,7 +49,7 @@ prismspec/
 │   ├── prismspec-verification/SKILL.md
 │   ├── prismspec-knowledge-capture/SKILL.md
 │   └── prismspec-debugging/SKILL.md
-├── templates/                  # spec/context templates
+├── templates/                  # spec templates
 ├── references/                 # loaded on demand
 ├── agents/                     # task reviewer persona
 ├── commands/                   # slash-command entry points
@@ -74,15 +74,15 @@ Standalone artifacts:
 
 ```text
 prismspec/specs/<spec-id>/
-├── context.md
 ├── spec.md
 ├── plan.md
+├── review.md
 └── verify.md
 
 .prismspec/runs/<spec-id>/
-├── branch/review-summary.json
 └── <task-id>/
     ├── brief.md
+    ├── review.md
     └── review-package.md
 ```
 
@@ -90,9 +90,9 @@ Lattice-hosted artifacts:
 
 ```text
 lattice/specs/<spec-id>/
-├── context.md
 ├── spec.md
 ├── plan.md
+├── review.md
 └── verify.md
 
 .lattice/sdd/<spec-id>/<task-id>/
@@ -140,10 +140,10 @@ bash prismspec/bin/guide.sh --spec=checkout-flow --from=verification --json
 
 | Stage | Goal | Artifacts | Stop When |
 |-------|------|-----------|-----------|
-| Specification | Capture context basis, scope, ACs, risks, and mode. | `context.md`, `spec.md` | ACs are not testable, key decisions are missing, or risk mode cannot be confirmed. |
+| Specification | Capture context basis, scope, ACs, risks, and mode. | `spec.md` | ACs are not testable, key decisions are missing, or risk mode cannot be confirmed. |
 | Planning | Decompose the spec into AC-traced tasks. | `plan.md` | An AC cannot map to an implementation or verification path. |
 | Implementation | Execute one planned slice at a time. | code, tests, task evidence | Scope drifts, red test is unreliable, or verification failure needs product judgment. |
-| Review | Review implementation evidence, diff, and review package. | `review-summary.json` | Evidence is missing, a blocking finding exists, or the spec must change. |
+| Review | Review implementation evidence, diff, and review package. | `review.md` | Evidence is missing, a blocking finding exists, or the spec must change. |
 | Verification | Run external commands and record final evidence. | `verify.md` | Credentials or services are missing, or the fix exceeds scope. |
 
 `/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence.
@@ -187,10 +187,10 @@ PrismSpec supports two implementation policies:
 | Skill | Trigger | Durable Output |
 |-------|---------|----------------|
 | `skills/prismspec-workflow/SKILL.md` | `/prismspec`, spec resume, end-to-end guidance | stage routing |
-| `skills/prismspec-specification/SKILL.md` | `/spec`, new requirement, unclear scope/AC/mode/context | `context.md`, `spec.md` |
+| `skills/prismspec-specification/SKILL.md` | `/spec`, new requirement, unclear scope/AC/mode/context | `spec.md` |
 | `skills/prismspec-planning/SKILL.md` | `/plan`, spec exists but tasks or verification paths are missing | `plan.md` |
 | `skills/prismspec-implementation/SKILL.md` | `/implement`, execute AC-traced tasks | code, tests, task evidence |
-| `skills/prismspec-review/SKILL.md` | `/review`, implementation evidence needs independent review | `review-summary.json` |
+| `skills/prismspec-review/SKILL.md` | `/review`, implementation evidence needs independent review | `review.md` |
 | `skills/prismspec-verification/SKILL.md` | `/verify`, run external verification after implementation and review | `verify.md` |
 | `skills/prismspec-knowledge-capture/SKILL.md` | `/capture`, capture reusable rules, decisions, pitfalls | knowledge draft / project knowledge |
 | `skills/prismspec-debugging/SKILL.md` | bugs, failing tests, build/pipeline failures, unexpected behavior | root cause, repro, fix evidence |

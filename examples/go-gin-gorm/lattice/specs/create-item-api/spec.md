@@ -5,6 +5,7 @@ status: drafted
 template: service
 execution_mode: plan
 mode_source: model-selected
+approval: inferred
 owner: lattice-example
 created_at: 2026-06-28T00:00:00Z
 updated_at: 2026-06-28T00:00:00Z
@@ -32,12 +33,13 @@ Build a small CRUD API for item inventory and demonstrate how Lattice validates 
 - Real database integration setup.
 - Pagination, soft delete, and audit events.
 
-## Context
+## Context Basis
 
 | Source | Constraint / Fact | Impact |
 |--------|-------------------|--------|
-| `context.md` | Current example already has Gin routes, GORM model tags, and AC-named tests. | Use Plan Mode and verify with existing gates. |
+| code / tests | Current example already has Gin routes, GORM model tags, and AC-named tests. | Use Plan Mode and verify with existing gates. |
 | `lattice/context/knowledge/rules.md` | JSON, Go, and DB naming conventions must remain consistent. | Include naming rules and DDL/model drift checks. |
+| open questions / conflicts | None. | No blocking decision required. |
 
 ## Acceptance Criteria
 
@@ -100,7 +102,7 @@ CREATE TABLE `items` (
 
 | Gate / Test | Required? | Evidence |
 |-------------|-----------|----------|
-| spec-lint | yes | Directory layout, context basis, required sections |
+| spec-lint | yes | Directory layout, Context Basis, required sections |
 | prismspec-lint | yes | PrismSpec spec contract |
 | AC coverage | yes | AC-1 through AC-4 map to tests |
 | drift check | yes | Route and DDL alignment |

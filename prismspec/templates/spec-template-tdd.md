@@ -17,49 +17,60 @@ updated_at: {timestamp}
 
 {描述 bug、核心链路风险、历史回归点或必须被测试钉住的行为。}
 
-## 2. Regression Boundary
+## 2. Context Basis
+
+> 只记录会影响红灯测试、回归边界、不变量、兼容性或验证策略的已采用事实。没有外部依据时写 N/A。
+
+| Source | Constraint / Fact | Impact On Test |
+|--------|-------------------|----------------|
+| user request / bug report | | |
+| code / tests | | |
+| docs / incidents / knowledge | | |
+| open questions / conflicts | | |
+
+## 3. Regression Boundary
 
 | Existing Behavior | Must Preserve? | Evidence |
 |-------------------|----------------|----------|
 | | yes / no | |
 
-## 3. Invariants
+## 4. Invariants
 
 | Invariant | Why It Must Hold | Verification |
 |-----------|------------------|--------------|
 | | | |
 
-## 4. Acceptance Criteria
+## 5. Acceptance Criteria
 
 | # | Given | When | Then | Red Test |
 |---|-------|------|------|----------|
 | AC-1 | | | | `test('AC-1 ...')` |
 
-## 5. Red Test Plan
+## 6. Red Test Plan
 
 | Test | Expected Initial Failure | Makes Green When |
 |------|--------------------------|------------------|
 | AC-1 | | |
 
-## 6. Implementation Constraints
+## 7. Implementation Constraints
 
 - {必须保持的接口、兼容性、性能、权限、数据一致性约束}
 
-## 7. Risk Notes
+## 8. Risk Notes
 
 | Risk | Mitigation | Verification |
 |------|------------|--------------|
 | regression | red/green evidence | |
 | concurrency / idempotency / state | | |
 
-## 8. Execution Policy
+## 9. Execution Policy
 
 - Mode: `tdd`
 - Reason: {为什么需要 red-first}
 - Source: model-selected | project-default | user-override
 - Rule: no red test, no implementation.
 
-## 9. Verification Plan
+## 10. Verification Plan
 
 | Gate / Test | Required? | Evidence |
 |-------------|-----------|----------|
@@ -69,7 +80,7 @@ updated_at: {timestamp}
 | build / type-check | yes | |
 | integration / smoke | conditional | |
 
-## 10. Approval
+## 11. Approval
 
 - Status: explicit / inferred / skipped-with-reason
 - Source: user message / project default / reason

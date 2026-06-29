@@ -15,7 +15,7 @@ Usage:
   bash prismspec/bin/lint.sh prismspec skillpack
 
 Checks:
-  spec      context.md exists; spec.md has ACs, execution mode, risk, and verification plan
+  spec      spec.md has Context Basis, ACs, execution mode, risk, and verification plan
   plan      plan.md references AC ids and includes verification
   evidence  verify.md records commands/results
   skillpack canonical skills, templates, references, command, and routing contract exist
@@ -183,7 +183,7 @@ check_skillpack() {
   done
 
   local template
-  for template in context-template.md spec-template.md spec-template-lite.md spec-template-service.md spec-template-frontend.md spec-template-tdd.md; do
+  for template in spec-template.md spec-template-lite.md spec-template-service.md spec-template-frontend.md spec-template-tdd.md; do
     check_file "$root/templates/$template" "template"
   done
 
@@ -225,9 +225,7 @@ else
 fi
 
 PLAN_FILE="$SPEC_DIR/plan.md"
-CONTEXT_FILE="$SPEC_DIR/context.md"
 VERIFY_FILE="$SPEC_DIR/verify.md"
-SUMMARY_FILE="$SPEC_DIR/summary.md"
 
 contains_heading() {
   local file="$1" pattern="$2"
@@ -235,7 +233,6 @@ contains_heading() {
 }
 
 check_spec() {
-  [[ -f "$CONTEXT_FILE" ]] || bad "context.md missing: $CONTEXT_FILE"
   [[ -f "$SPEC_FILE" ]] || { bad "spec.md missing: $SPEC_FILE"; return; }
 
   grep -qiE '^scaffolded:[[:space:]]*true[[:space:]]*$' "$SPEC_FILE" \
@@ -246,6 +243,7 @@ check_spec() {
   grep -qiE '^approval:[[:space:]]*(explicit|inferred|skipped-with-reason)[[:space:]]*$|Status:[[:space:]]*(explicit|inferred|skipped-with-reason)' "$SPEC_FILE" || bad "spec.md has no approval status"
   contains_heading "$SPEC_FILE" 'Intent|Objective|Goal|Background' || bad "spec.md missing intent/objective section"
   contains_heading "$SPEC_FILE" 'Scope' || bad "spec.md missing scope section"
+  contains_heading "$SPEC_FILE" 'Context|Context Basis|上下文依据' || bad "spec.md missing Context Basis section"
   contains_heading "$SPEC_FILE" 'Risk|风险' || bad "spec.md missing risk section"
   contains_heading "$SPEC_FILE" 'Verification|Test Strategy|验证|测试' || bad "spec.md missing verification/test section"
 

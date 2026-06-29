@@ -16,11 +16,10 @@ Use Superpowers as the default behavioral reference for workflow discipline:
 
 PrismSpec owns the artifact contract:
 
-- `context.md`
 - `spec.md`
 - `plan.md`
 - task evidence under `.prismspec/runs/` or `.lattice/sdd/`
-- `review-summary.json`
+- `review.md`
 - `verify.md`
 - Lattice context, verification, evidence, eval, and learn gates
 
@@ -30,10 +29,10 @@ Do not create a PrismSpec-only behavior when a Superpowers skill already covers 
 
 | PrismSpec Stage | Superpowers Reference | PrismSpec Addition |
 |---|---|---|
-| `specification` | `brainstorming` | `context.md`, stable `AC-{n}`, execution mode, context discovery, Lattice context gates |
+| `specification` | `brainstorming` | `spec.md` Context Basis, stable `AC-{n}`, execution mode, context discovery, Lattice spec gates |
 | `planning` | `writing-plans` | AC-traced `plan.md`, Lattice plan lint, task evidence paths |
 | `implementation` | `subagent-driven-development`, `executing-plans`, `test-driven-development` | task status scripts, TDD evidence JSON, Lattice task evidence lint |
-| `review` | Superpowers SDD task reviewer discipline, code review skills | `review-summary.json`, `pass/fail/cannot_verify`, AC/evidence grounding |
+| `review` | Superpowers SDD task reviewer discipline, code review skills | `review.md`, `pass/fail/cannot_verify`, AC/evidence grounding |
 | `verification` | `verification-before-completion` | command-backed `verify.md`, Lattice delivery pipeline, AC coverage and drift gates |
 | optional `debugging` | `systematic-debugging` | root-cause evidence, AC/task mapping, reproducible command, fix evidence |
 | optional `knowledge-capture` | no required Superpowers main stage | durable, reusable, non-secret lessons from `verify.md` or review evidence |
@@ -48,7 +47,7 @@ For non-trivial work, PrismSpec specification should follow the Superpowers `bra
 4. Present 2-3 approaches with tradeoffs and a recommendation when design choices matter.
 5. Present the selected design in readable sections.
 6. Get approval before planning or implementation.
-7. Write the approved design into PrismSpec artifacts instead of `docs/superpowers/specs/`.
+7. Write the approved design into PrismSpec `spec.md` instead of `docs/superpowers/specs/`.
 8. Self-review the written spec for placeholders, contradictions, ambiguity, scope, and testability.
 9. Ask for review when approval was not already explicit.
 

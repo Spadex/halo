@@ -8,7 +8,7 @@ controller:
 
 stages:
   - name: specification
-    output: ["lattice/specs/{spec-id}/spec.md", "lattice/specs/{spec-id}/context.md"]
+    output: ["lattice/specs/{spec-id}/spec.md"]
     template: "lattice/kernel/orchestrator/templates/spec-template.md"
     gate: spec-lint
     layers: [orchestrator, context]
@@ -27,7 +27,7 @@ stages:
     description: "Execute plan or red-test-first TDD policy and produce task evidence"
 
   - name: review
-    output: ".lattice/sdd/{spec-id}/branch/review-summary.json"
+    output: "lattice/specs/{spec-id}/review.md"
     gate: [evidence]
     layers: [orchestrator]
     description: "Review implementation evidence with pass/fail/cannot_verify verdicts"

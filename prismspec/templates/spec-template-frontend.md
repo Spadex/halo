@@ -27,25 +27,36 @@ updated_at: {timestamp}
 
 - {本次不做的后端、埋点、支付、账号、复杂设计系统改造等}
 
-## 3. User Journey
+## 3. Context Basis
+
+> 只记录会影响用户旅程、组件契约、状态、可访问性、响应式或验证策略的已采用事实。没有外部依据时写 N/A。
+
+| Source | Constraint / Fact | Impact |
+|--------|-------------------|--------|
+| user request | | |
+| existing UI / code / design system | | |
+| tests / docs / knowledge | | |
+| open questions / conflicts | | |
+
+## 4. User Journey
 
 | Step | User Action | System Response | State |
 |------|-------------|-----------------|-------|
 | 1 | | | default / loading / success / empty / error |
 
-## 4. UI Contract
+## 5. UI Contract
 
 | Area / Component | Behavior | Data Needed | Responsive / A11y Notes |
 |------------------|----------|-------------|--------------------------|
 | | | | |
 
-## 5. Acceptance Criteria
+## 6. Acceptance Criteria
 
 | # | Given | When | Then | Verification |
 |---|-------|------|------|--------------|
 | AC-1 | | | | component / e2e / visual / manual |
 
-## 6. Edge States
+## 7. Edge States
 
 | State | Expected Behavior | Verification |
 |-------|-------------------|--------------|
@@ -55,25 +66,25 @@ updated_at: {timestamp}
 | error | | |
 | mobile / narrow viewport | | |
 
-## 7. Design Decisions
+## 8. Design Decisions
 
 | # | Decision | Rationale | Alternatives | Reversible? |
 |---|----------|-----------|--------------|-------------|
 | D-1 | | | | yes / no |
 
-## 8. Execution Policy
+## 9. Execution Policy
 
 - Mode: `{plan|tdd}`
 - Reason: {低风险 UI / 核心转化链路 / 回归风险 / 状态复杂度}
 - Source: model-selected | project-default | user-override
 
-## 9. Risk Notes
+## 10. Risk Notes
 
 | Risk | Mitigation | Verification |
 |------|------------|--------------|
 | responsive / accessibility / state regression | | |
 
-## 10. Verification Plan
+## 11. Verification Plan
 
 | Check | Required? | Evidence |
 |-------|-----------|----------|
@@ -83,7 +94,7 @@ updated_at: {timestamp}
 | screenshot / visual review | conditional | |
 | accessibility basics | conditional | |
 
-## 11. Approval
+## 12. Approval
 
 - Status: explicit / inferred / skipped-with-reason
 - Source: user message / project default / reason

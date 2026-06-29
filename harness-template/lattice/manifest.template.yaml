@@ -15,7 +15,7 @@ project:
 kernel:
   layers:
     orchestrator: true     # PrismSpec routing, spec state, task evidence
-    context: true          # Context map, project knowledge, context-run evidence
+    context: true          # Context map, project knowledge
     delivery: true         # Verification gates and Evidence/Eval output
 
 tools:
@@ -147,4 +147,3 @@ context:
       - model_prior
     conflict: project_wins
     sensitivity: redact_secret
-  runs_dir: "lattice/state/context-runs"

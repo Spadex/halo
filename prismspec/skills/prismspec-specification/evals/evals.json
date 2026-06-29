@@ -7,7 +7,7 @@
       "reason": "New requirement with unclear scope and ACs."
     },
     {
-      "prompt": "Turn this vague bug report into context.md and spec.md before implementation.",
+      "prompt": "Turn this vague bug report into a spec.md with Context Basis before implementation.",
       "reason": "Requires durable specification artifacts."
     },
     {
@@ -31,7 +31,7 @@
   ],
   "assertions": [
     "Asks one material question at a time when critical context is missing.",
-    "Writes context.md and spec.md with testable AC ids.",
+    "Writes spec.md with Context Basis and testable AC ids.",
     "Does not advance while scaffolded placeholders remain."
   ]
 }

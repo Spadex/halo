@@ -19,7 +19,7 @@ Do not say done, fixed, passing, complete, verified, or equivalent unless the pr
 
 - `spec.md`
 - `plan.md`
-- `review-summary.json` when review evidence is required.
+- `review.md` when review evidence is required.
 - Current code and tests.
 - Lattice pipeline when installed.
 - `prismspec/references/superpowers-alignment.md` when completion discipline is unclear.

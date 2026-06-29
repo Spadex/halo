@@ -19,15 +19,17 @@ Use exactly one verdict:
 - `fail`: a concrete blocker or regression exists.
 - `cannot_verify`: evidence is insufficient; do not guess.
 
-## Structured Evidence
+## Canonical Artifact
 
-Lattice-hosted projects should write review verdicts to:
+PrismSpec review should write a human-readable artifact to:
 
 ```text
-.lattice/sdd/<spec-id>/<task-id>/review-summary.json
+lattice/specs/<spec-id>/review.md
 ```
 
-Recommended command:
+`review.md` should include verdicts for all axes, concrete findings, disposition, and evidence checked. Task-scoped reviews may use `.lattice/sdd/<spec-id>/<task-id>/review.md`; Lattice-hosted projects may also generate `review-summary.json` as a machine sidecar for pipeline/eval collection.
+
+Recommended helper:
 
 ```bash
 bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> <task-id> \
@@ -38,9 +40,9 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> <task-id> \
   --evidence="go test ./..."
 ```
 
-The pipeline collects this file into `process_evidence.review_summaries[]`.
+The helper writes `review.md` and `review-summary.json`. The pipeline collects the JSON sidecar into `process_evidence.review_summaries[]`.
 
-## JSON Shape
+## JSON Sidecar Shape
 
 ```json
 {

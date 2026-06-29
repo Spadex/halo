@@ -36,10 +36,10 @@ Google Agent Skills 示例的关键启示不是某个具体技能内容，而是
 
 | Block | 用户问题 | 主要 Skill | 关键产物 | 通过条件 |
 |---|---|---|---|---|
-| Clarify | 需求到底是什么？哪些问题会阻塞？ | `prismspec-specification` | `context.md` 中的 selected facts、constraints、conflicts、open questions | blocking questions 已解决或显式记录；上下文依据可追踪 |
+| Clarify | 需求到底是什么？哪些问题会阻塞？ | `prismspec-specification` | `spec.md` Context Basis 中的 selected facts、constraints、conflicts、open questions | blocking questions 已解决或显式记录；上下文依据可追踪 |
 | Spec | 做什么、不做什么、如何验收？ | `prismspec-specification` | `spec.md` | `scaffolded: false`；AC 可测试；risk/mode/verification plan 明确；approval 状态存在 |
 | Build | 按什么任务顺序实现？每片如何证明？ | `prismspec-planning`、`prismspec-implementation`、`prismspec-debugging` | `plan.md`、task evidence、TDD evidence、debug evidence | task 可独立执行和 review；失败先定位根因；完成受 evidence gate 约束 |
-| Review | 实现是否符合 spec，代码质量是否可接受？ | `prismspec-review` | `review-summary.json`、review package | read-only review；spec/code/test/risk verdict 不为 `fail`；`cannot_verify` 被处理 |
+| Review | 实现是否符合 spec，代码质量是否可接受？ | `prismspec-review` | `review.md`、review package | read-only review；spec/code/test/risk verdict 不为 `fail`；`cannot_verify` 被处理 |
 | Verify | 当前仓库真实证明了什么？ | `prismspec-verification` | `verify.md`、eval run JSON | fresh command evidence；pipeline/gates 通过或残留风险显式记录 |
 
 ## Block 细化
@@ -54,14 +54,13 @@ Clarify 的目标是减少 Agent 猜测，不是写长 PRD。
 - 需要读取哪些最小上下文；
 - 哪些事实被采用、排除或发现冲突；
 - 哪些问题会阻塞进入 Spec；
-- 如果继续推进，哪些假设要写入 `context.md`。
+- 如果继续推进，哪些假设要写入 `spec.md` 的 Context Basis。
 
 当前能力：
 
 - `lattice/context/README.md` context map；
-- `context-template.md`；
-- `context-lint.sh`；
-- `context-run.sh`；
+- `spec-template*.md` 的 Context Basis 区块；
+- `prismspec/bin/lint.sh <spec-dir> spec`；
 - knowledge backend。
 
 主要 gap：
@@ -152,7 +151,7 @@ Review 的目标是独立质量判断，不是实现者自评。
 
 - review dispatch 仍主要靠 Agent 执行，不是独立 runtime；
 - final whole-branch review 的自动化程度不足；
-- finding lifecycle 只有 summary，没有状态流转。
+- finding lifecycle 只有 review artifact，没有状态流转。
 
 ### Verify
 
@@ -184,9 +183,9 @@ Verify 的目标是用命令证明完成状态。
 
 ## 推荐演进顺序
 
-1. **Clarify P0**：把 blocking questions、assumptions、conflicts 做成 `context.md` 可 lint 的明确区块。
+1. **Clarify P0**：把 blocking questions、assumptions、conflicts 做成 `spec.md` Context Basis 可 lint 的明确区块。
 2. **Spec P0**：新增 spec review evidence，检查 AC 可测性、scope、risk、context contradiction。
-3. **Review P0**：把 review package -> reviewer -> summary -> blocking gate 做成可执行闭环。
+3. **Review P0**：把 review package -> reviewer -> `review.md` -> blocking gate 做成可执行闭环。
 4. **Build P1**：补 progress ledger、debug evidence JSON、multi-agent lease。
 5. **Verify P1**：扩展 Node/Python drift parser 和 dashboard trend。
 

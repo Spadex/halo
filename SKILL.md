@@ -29,18 +29,18 @@ Use current files and command output as the source of truth. Do not route from c
 | initialize Lattice from remote installer | Run the documented `install.sh --init` command after confirming the target project path |
 | inspect installed harness | Run `bash lattice/kernel/doctor.sh` |
 | PrismSpec / guided workflow | Run `bash prismspec/bin/guide.sh --json`, then follow the routed PrismSpec stage skill |
-| spec / draft specification | Write `lattice/specs/<spec-id>/context.md` and `spec.md` |
+| spec / draft specification | Write `lattice/specs/<spec-id>/spec.md` with Context Basis |
 | plan | Write AC-traced `plan.md` |
 | implement / tdd | Execute `plan` or `tdd` according to `spec.md` |
 | debug / root cause | Follow `prismspec/skills/prismspec-debugging/SKILL.md` before changing code for an unexplained failure |
-| review | Write or inspect `review-summary.json` evidence |
+| review | Write or inspect `review.md` evidence |
 | verify / run pipeline | Run `bash lattice/kernel/delivery/pipeline.sh --json-out` when available |
 | capture | Follow `prismspec/skills/prismspec-knowledge-capture/SKILL.md` for durable knowledge capture |
 
 ## Contracts
 
 - PrismSpec is the only SDD workflow source: `prismspec/skills/*/SKILL.md`.
-- Default spec layout: `lattice/specs/<spec-id>/context.md` + `spec.md`.
+- Default spec layout: `lattice/specs/<spec-id>/spec.md`; Context Basis belongs inside `spec.md`.
 - Templates live under `prismspec/templates/`.
 - Do not recreate SDD workflow logic under `lattice/skills/`; Lattice hosts PrismSpec and adds repo-local harness contracts.
 - User-owned assets are not overwritten on upgrade: `lattice/manifest.yaml`, `lattice/context/`, `lattice/specs/`.

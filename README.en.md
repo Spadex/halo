@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">Lattice</h1>
   <p align="center">
-    <strong>Repo-local AI Coding harness for teams</strong>
+    <strong>Repo-local AI Coding control plane for teams</strong>
   </p>
   <p align="center">
     <a href="README.md">中文文档</a> ·
@@ -16,30 +16,57 @@
 
 ## What Is Lattice
 
-Lattice is an AI Coding engineering framework installed into an application repository. It does not replace Claude Code, Cursor, Aider, Superpowers, or other agents. It gives them versioned, reviewable, and verifiable project contracts:
+Lattice is a repo-local AI Coding control plane for teams. It turns the requirement understanding, project context, execution policy, verification gates, and delivery evidence that usually stay inside individual AI coding sessions into reusable engineering contracts inside the code repository, so individual productivity compounds into team productivity.
 
-| Capability | Purpose |
-|------------|---------|
-| PrismSpec | Turns intent into `context.md`, `spec.md`, `plan.md`, review evidence, and `verify.md`. |
-| Context | Provides an agent-readable context map, project knowledge, external references, and per-spec context basis. |
-| Verification | Runs build, lint, test, AC coverage, drift checks, compliance, and other gates before delivery claims. |
-| Evidence / Eval | Records command output, gate results, `eval-runs/*.json`, history, and outcomes to support "done" claims. |
+| Capability Layer | Purpose |
+|------------------|---------|
+| Specification & Planning | Turns requirement understanding into executable specs, acceptance criteria, and task plans so AI coding starts with clear boundaries. |
+| Context Engineering | Keeps project knowledge, historical lessons, external constraints, and team rules in the repository so individual judgment becomes reusable team context. |
+| Delivery Verification | Uses build, lint, test, AC coverage, drift checks, and compliance gates to verify that code, specs, and project constraints stay aligned before delivery. |
+| Evidence Intelligence | Aggregates command output, gate results, eval runs, history, and outcomes so completion status, quality risk, and improvement direction are traceable. |
 
-In short: **Lattice turns individual AI Coding practice into reusable team engineering assets.**
+In short: **Lattice turns repeated individual AI Coding gains into reusable, reviewable, and verifiable team engineering capability.**
+
+## What Problem It Solves
+
+Individual AI Coding can be fast, but team adoption often breaks down when:
+
+- requirements, assumptions, and critical context stay inside chat;
+- code changes lack reviewable specs, plans, and review evidence;
+- "done" depends on a summary instead of fresh command output;
+- project rules, lessons, and verification practices do not become shared assets.
+
+Lattice turns those implicit individual workflows into versioned, reviewable, and verifiable engineering assets inside the repository.
+
+## What You Get
+
+A Lattice-guided AI Coding task leaves a clear delivery chain in the repo:
+
+| Artifact | Purpose |
+|----------|---------|
+| `spec.md` | Requirement, Context Basis, scope, ACs, risks, and verification plan. |
+| `plan.md` | AC-traced tasks, file boundaries, and verification commands. |
+| `review.md` | Read-only review verdicts, findings, and risk dispositions. |
+| `verify.md` | Commands, exit codes, results, residual risks, and knowledge candidates. |
+| `lattice/state/eval-runs/*.json` | Structured delivery evidence for queries, summaries, CI, and dashboards. |
 
 ## Quick Start
 
 ### Install Into A Target Project
 
 ```bash
-# Remote install
+# Run inside your application repository
+cd /path/to/your-project
 bash <(curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh) --init
 
-# Or install from a local clone
-./install.sh /path/to/your-project --init
+# Or clone locally first, then install into the current repository
+git clone https://github.com/zdolphin07-dotcom/lattice.git /tmp/lattice
+/tmp/lattice/install.sh "$PWD" --init
 ```
 
 Prerequisites: Bash 4+, `yq` 4.x, and `git`.
+
+Installation adds `lattice/`, `prismspec/`, and agent entry files. On upgrade, framework code under `kernel/` and PrismSpec can be refreshed; project-owned assets such as `lattice/manifest.yaml`, `lattice/context/`, and `lattice/specs/` should not be overwritten.
 
 ### Run The Example
 
@@ -49,7 +76,40 @@ cd lattice
 bash examples/go-gin-gorm/try-it.sh
 ```
 
-The example demonstrates directory specs, per-spec context, spec lint, AC coverage, drift checks, eval JSON, and the context knowledge backend.
+The example demonstrates directory specs, embedded Context Basis in `spec.md`, spec lint, AC coverage, drift checks, eval JSON, and the context knowledge backend.
+
+## Core Workflow
+
+```text
+Intent -> Clarify -> Spec -> Build -> Review -> Verify
+```
+
+`/prismspec` is the controller, not an extra phase. It routes from existing artifacts:
+
+```bash
+bash prismspec/bin/guide.sh --json
+```
+
+PrismSpec is not documentation ceremony. It moves the important AI coding decisions out of chat and into a resumable contract chain and evidence chain. The user-facing product blocks are backed by Agent Skills-compatible skill folders, command gates, and evidence:
+
+| Block | Goal | Primary Artifacts |
+|---|---|---|
+| Clarify | Resolve intent, context basis, assumptions, conflicts, and blocking questions. | `spec.md#Context Basis` |
+| Spec | Capture scope, non-goals, ACs, risks, mode, and verification plan. | `spec.md` |
+| Build | Plan and implement AC-traced slices with Plan/TDD/debugging evidence. | `plan.md`, task evidence, TDD/debug evidence |
+| Review | Independently inspect implementation evidence, diff, and quality risk. | `review.md`, review package |
+| Verify | Prove completion with fresh commands or the Lattice pipeline. | `verify.md`, eval run JSON |
+
+`/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence.
+
+Plan Mode and TDD Mode are implementation policies inside the same workflow:
+
+| Mode | Use When | Evidence |
+|------|----------|----------|
+| `plan` | Docs, config, low-risk features, simple refactors, or changes already well covered by tests. | `plan.md`, relevant tests or no-test rationale, verification commands. |
+| `tdd` | Bug fixes, permissions, security, state machines, concurrency, idempotency, migrations, or regressions. | Red test, green test, AC-to-test trace, and related verification. |
+
+Projects can set the default mode in `lattice/manifest.yaml`. Users can override per spec. Risk discovered later may upgrade `plan -> tdd`; downgrading `tdd -> plan` requires explicit user override.
 
 ## Installed Layout
 
@@ -72,14 +132,13 @@ your-project/
 │   │   ├── eval-runs/
 │   │   ├── loops/
 │   │   ├── outcomes/
-│   │   ├── context-runs/
 │   │   ├── learn-promotions/
 │   │   └── knowledge-reviews/
 │   └── specs/
 │       └── <spec-id>/
-│           ├── context.md
 │           ├── spec.md
 │           ├── plan.md
+│           ├── review.md
 │           └── verify.md
 └── prismspec/
     ├── skillpack.yaml
@@ -91,46 +150,15 @@ your-project/
 
 `kernel/` is upgradeable framework code. `manifest.yaml`, `context/`, and `specs/` are project-owned assets and should not be overwritten during upgrades.
 
-## Core Workflow
-
-```text
-Intent -> Clarify -> Spec -> Build -> Review -> Verify
-```
-
-`/prismspec` is the controller, not an extra phase. It routes from existing artifacts:
-
-```bash
-bash prismspec/bin/guide.sh --json
-```
-
-PrismSpec is not documentation ceremony. It moves the important AI coding decisions out of chat and into a resumable contract chain and evidence chain. The user-facing product blocks are backed by Agent Skills-compatible skill folders, command gates, and evidence:
-
-| Block | Goal | Primary Artifacts |
-|---|---|---|
-| Clarify | Resolve intent, context basis, assumptions, conflicts, and blocking questions. | `context.md` |
-| Spec | Capture scope, non-goals, ACs, risks, mode, and verification plan. | `spec.md` |
-| Build | Plan and implement AC-traced slices with Plan/TDD/debugging evidence. | `plan.md`, task evidence, TDD/debug evidence |
-| Review | Independently inspect implementation evidence, diff, and quality risk. | `review-summary.json`, review package |
-| Verify | Prove completion with fresh commands or the Lattice pipeline. | `verify.md`, eval run JSON |
-
-`/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence.
-
-Plan Mode and TDD Mode are implementation policies inside the same workflow:
-
-| Mode | Use When | Evidence |
-|------|----------|----------|
-| `plan` | Docs, config, low-risk features, simple refactors, or changes already well covered by tests. | `plan.md`, relevant tests or no-test rationale, verification commands. |
-| `tdd` | Bug fixes, permissions, security, state machines, concurrency, idempotency, migrations, or regressions. | Red test, green test, AC-to-test trace, and related verification. |
-
-Projects can set the default mode in `lattice/manifest.yaml`. Users can override per spec. Risk discovered later may upgrade `plan -> tdd`; downgrading `tdd -> plan` requires explicit user override.
-
 ## Components
+
+The capability layers above are the user-facing view; the component model below is the repository implementation view.
 
 | Component | Responsibility | Key Paths |
 |-----------|----------------|-----------|
 | PrismSpec | Standalone Spec Coding skill pack. | `prismspec/skills/`, `prismspec/bin/`, `prismspec/templates/` |
 | Orchestrator | Agent control plane for stage routing, status transitions, task selection, and evidence gating. | `lattice/kernel/orchestrator/` |
-| Context | Context map, project knowledge, external references, optional retrieval backend, and per-spec context-run evidence. | `lattice/context/`, `lattice/kernel/context/` |
+| Context | Context map, project knowledge, external references, and optional retrieval backend. | `lattice/context/`, `lattice/kernel/context/` |
 | Verification | Reproducible pipeline and gates. | `lattice/kernel/delivery/` |
 | Evidence / Eval | Gate output, structured eval runs, Markdown summary/history, central sink, dashboard, queries, and outcomes. | `lattice/state/eval-runs/*.json`, `*.md`, `lattice/state/outcomes/` |
 
@@ -166,17 +194,13 @@ See the [Design Wiki](docs/wiki/) and script `--help` output for the full comman
 
 Lattice currently provides a minimum trusted loop for repo-local AI Coding:
 
-| Area | Available Capabilities |
-|------|------------------------|
-| Install and init | `install.sh`, `init.sh`, `doctor.sh` manifest/skillpack contract checks, smoke tests, GitHub Actions eval artifact template. |
-| PrismSpec | Agent Skills-compatible canonical skills, per-skill evals, `new.sh`, `doctor.sh`, `guide.sh`, skillpack/artifact `lint.sh`, multiple templates, Plan/TDD/debugging policy, standalone and Lattice-hosted modes. |
-| Product blocks | `skillpack.yaml` exposes Clarify / Spec / Build / Review / Verify for hosts, installers, and UIs. |
-| Spec lifecycle | `context.md`, `spec.md`, `plan.md`, review evidence, `verify.md`, status transitions, transition events/history. |
-| Implementation evidence | `task-next.sh`, `task-complete.sh`, task brief, review package, review summary, TDD/debugging evidence, task evidence lint. |
-| Verification / Evidence | Pipeline, spec lint, AC coverage, drift check, compliance, spec lock, structured eval JSON, Markdown summary/history. |
-| Loop and outcome | Loop state, failure category, escalation draft, outcome link/report, central eval sink, static dashboard, eval query, PR comment dry run. |
-| Context / Learn | Context map, external map, knowledge backend, context-lint, context-run, knowledge metadata/governance lint, knowledge review, learn draft promote/discard, summary-to-learn-draft. |
-| Examples and adapters | Runnable Go/Gin/GORM example, Claude Code / Cursor / Aider / Superpowers / Agent Skills adapter docs. |
+| Verified Capability | Evidence |
+|---------------------|----------|
+| Install and init | `install.sh --init`, `lattice/kernel/doctor.sh`, smoke test. |
+| PrismSpec workflow | `new.sh`, `guide.sh --json`, `lint.sh prismspec skillpack`, templates, and Plan/TDD policy. |
+| Delivery verification | Lattice pipeline, spec lint, AC coverage, drift check, and compliance gates. |
+| Evidence loop | `eval-runs/*.json`, Markdown summary/history, loop state, and outcome link/report. |
+| Runnable example | `examples/go-gin-gorm/try-it.sh` demonstrates spec, AC coverage, drift check, and eval summary. |
 
 Still evolving:
 

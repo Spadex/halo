@@ -39,7 +39,7 @@ Use these component names consistently in product docs and agent-facing docs:
 |------|---------|
 | PrismSpec | Spec Coding workflow and skill pack. |
 | Orchestrator | Agent control plane for stage routing, spec status, task selection, and evidence gating. |
-| Context | Project context supply: map, project knowledge, external references, and per-spec context basis. |
+| Context | Project context supply: map, project knowledge, external references, and selected facts recorded in `spec.md`. |
 | Verification | Deterministic command execution: pipeline and gates. |
 | Evidence / Eval | Structured records, summaries, history, outcomes, central sink, and dashboard. |
 | Loop / Learn | Retry, escalation, learn drafts, reviewer evidence, and knowledge promotion. |
@@ -50,7 +50,7 @@ Do not use `Eval` as a synonym for running tests. Verification runs commands; Ev
 
 - Keep the public product experience Chinese-first; keep English docs as secondary entry points.
 - Keep PrismSpec independent. Do not duplicate SDD workflow logic under `harness-template/lattice/skills/`.
-- Use directory specs as the only default shape: `lattice/specs/<spec-id>/context.md` + `spec.md`.
+- Use directory specs as the only default shape: `lattice/specs/<spec-id>/spec.md`, `plan.md`, `review.md`, and `verify.md`.
 - Preserve the install boundary: `kernel/` is framework code; `manifest.yaml`, `context/`, and `specs/` are user assets.
 - Do not overwrite project-owned files on upgrade unless the user explicitly asks.
 - Prefer small shell contracts for install, routing, and gates. Move only genuinely complex parsing into separate tools.
@@ -66,7 +66,7 @@ Do not use `Eval` as a synonym for running tests. Verification runs commands; Ev
 | User-facing positioning | `README.md`, `README.en.md` |
 | Design explanation | `docs/wiki/*.md` |
 | Spec workflow behavior | `prismspec/skills/*/SKILL.md`, `prismspec/bin/guide.sh`, `prismspec/bin/lint.sh` |
-| Spec/context templates | `prismspec/templates/` |
+| Spec templates | `prismspec/templates/` |
 | Install/init behavior | `install.sh`, `init.sh`, `harness-template/` |
 | Pipeline behavior | `harness-template/lattice/kernel/delivery/` |
 | Context behavior | `harness-template/lattice/context/`, `harness-template/lattice/kernel/context/` |

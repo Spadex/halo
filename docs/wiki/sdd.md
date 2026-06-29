@@ -32,10 +32,10 @@ PrismSpec 的核心判断：
 
 | 层 | 解决的问题 | 产物 |
 |----|------------|------|
-| Contract | 需求、上下文、验收和风险可审查 | `context.md`、`spec.md` |
+| Contract | 需求、上下文、验收和风险可审查 | `spec.md` |
 | Tasking | 实现任务可分派、可恢复、可 review | `plan.md` |
 | Evidence | 每个实现切片有证据 | task evidence、TDD evidence、review package |
-| Review | 规格符合性与代码质量分离判断 | `review-summary.json` |
+| Review | 规格符合性与代码质量分离判断 | `review.md` |
 | Verification | 完成声明由真实命令支撑 | `verify.md` |
 
 ## Host 模式
@@ -53,10 +53,10 @@ Lattice-hosted 模式会额外使用 manifest、项目 context 地图、verifica
 
 | Product Block | 内部阶段 | 目标 | 持久产物 | 临时证据 |
 |------|------|------|----------|----------|
-| Clarify | Specification | 明确 intent、context、assumptions、conflicts、blocking questions | `context.md` | context-run |
+| Clarify | Specification | 明确 intent、context、assumptions、conflicts、blocking questions | `spec.md#Context Basis` | spec lint |
 | Spec | Specification | 明确 scope、AC、risk、mode、verification plan | `spec.md` | approval/status |
 | Build | Planning + Implementation | 将 spec 拆成任务并执行 plan/TDD 切片 | `plan.md`、code、tests | `brief.md`、TDD/debug evidence |
-| Review | Review | 审查实现证据、diff、review package | `review-summary.json` | `pass` / `fail` / `cannot_verify` |
+| Review | Review | 审查实现证据、diff、review package | `review.md` | `pass` / `fail` / `cannot_verify` |
 | Verify | Verification | 用外部命令证明结果 | `verify.md` | pipeline output、eval run |
 
 产物设计原则：
@@ -67,7 +67,7 @@ Lattice-hosted 模式会额外使用 manifest、项目 context 地图、verifica
 
 ## Specification
 
-Specification 是第一阶段，产物是 `context.md` 和 `spec.md`。它对齐 Superpowers `brainstorming` 的协作设计纪律，但不是随意头脑风暴，而是先固化上下文依据，再把需求压缩成可执行契约。
+Specification 是第一阶段，产物是自包含的 `spec.md`。它对齐 Superpowers `brainstorming` 的协作设计纪律，但不是随意头脑风暴，而是先在 Context Basis 中固化上下文依据，再把需求压缩成可执行契约。
 
 必须明确：
 
@@ -88,7 +88,7 @@ Specification 是第一阶段，产物是 `context.md` 和 `spec.md`。它对齐
 - verification command 是什么；
 - 项目启用了哪些 verification gates。
 
-Specification 不应该全量复制 manifest、代码或知识库到 spec。Agent 应先读取项目 context 地图，再按需查找相关代码、测试、schema、历史 spec、项目知识和外部知识。`context.md` 只记录被采用的事实、引用、冲突和开放问题；`spec.md` 只保留影响 Scope、AC、Risk、Execution Policy 的结论。
+Specification 不应该全量复制 manifest、代码或知识库到 spec。Agent 应先读取项目 context 地图，再按需查找相关代码、测试、schema、历史 spec、项目知识和外部知识。`spec.md` 的 Context Basis 只记录被采用的事实、引用、冲突和开放问题，并保留会影响 Scope、AC、Risk、Execution Policy 的结论。
 
 ## Spec 模板策略
 
@@ -185,7 +185,7 @@ Plan Mode：
 4. 对行为变化补测试或写明无需测试的理由。
 5. 运行 focused verification。
 6. 生成 review package。
-7. 需要 review 时写出 `review-summary.json`。
+7. 需要 review 时写出 `review.md`。
 
 TDD Mode：
 
@@ -260,7 +260,7 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 
 已实现：
 
-- `new.sh` 初始 `context.md` / `spec.md` 目录化产物创建，并用 `scaffolded: true` 标记未完成骨架。
+- `new.sh` 初始 `spec.md` 目录化产物创建，并用 `scaffolded: true` 标记未完成骨架。
 - `guide.sh` artifact-based routing；当 spec 仍是 scaffolded 时继续路由到 Specification。
 - `doctor.sh` standalone / Lattice-hosted skill pack 健康检查。
 - `lint.sh` skillpack / spec / plan / evidence contract 校验。
@@ -268,19 +268,17 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - canonical skill `agents/openai.yaml` UI/发现元数据。
 - 多模板策略。
 - Lattice-hosted 与 standalone 路径分流。
-- task brief / review package / review summary / TDD evidence helper。
+- task brief / review package / review artifact / TDD evidence helper。
 - learn draft promotion/discard workflow。
 - summary knowledge candidate to learn draft helper。
 - knowledge governance lint。
 - knowledge metadata lint。
-- context-run evidence。
 - knowledge review evidence。
 - outcome link evidence。
 - outcome attribution report。
 - central eval sink。
 - static eval dashboard。
 - eval query。
-- context-lint。
 - plan-lint。
 - task-evidence-lint。
 - root-cause debugging support skill。

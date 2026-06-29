@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# review-summary.sh - Write structured review verdict evidence.
+# review-summary.sh - Write review.md plus structured review verdict evidence.
 # Usage: review-summary.sh <spec-id> [task-id] --spec-compliance=pass --code-quality=pass --test-coverage=pass --risk=pass
 source "$(dirname "$0")/../../_lib.sh"
 
 for arg in "$@"; do
-  [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "review summary" "Write review-summary.json evidence" \
+  [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "review summary" "Write review.md and review-summary.json evidence" \
     "review-summary.sh <spec-id> [task-id] --spec-compliance=pass|fail|cannot_verify --code-quality=pass|fail|cannot_verify --test-coverage=pass|fail|cannot_verify --risk=pass|fail|cannot_verify" \
     "review-summary.sh <spec-id> T1 ... --finding='medium|file:line|issue' --evidence='go test ./...' --out=<file>"
 done
@@ -94,9 +94,29 @@ for axis in "$SPEC_COMPLIANCE" "$CODE_QUALITY" "$TEST_COVERAGE" "$RISK"; do
 done
 
 TASK_DIR="$PROJECT_ROOT/.lattice/sdd/$SPEC_ID/$TASK_ID"
-OUT="${OUT:-$TASK_DIR/review-summary.json}"
-[[ "$OUT" == /* ]] || OUT="$PROJECT_ROOT/$OUT"
-mkdir -p "$(dirname "$OUT")"
+if [[ -z "$OUT" ]]; then
+  JSON_OUT="$TASK_DIR/review-summary.json"
+  if [[ "$TASK_ID" == "branch" ]]; then
+    MD_OUT="$PROJECT_ROOT/lattice/specs/$SPEC_ID/review.md"
+  else
+    MD_OUT="$TASK_DIR/review.md"
+  fi
+else
+  [[ "$OUT" == /* ]] || OUT="$PROJECT_ROOT/$OUT"
+  case "$OUT" in
+    *.md)
+      MD_OUT="$OUT"
+      JSON_OUT="$(dirname "$OUT")/review-summary.json"
+      ;;
+    *)
+      JSON_OUT="$OUT"
+      MD_OUT="$(dirname "$OUT")/review.md"
+      ;;
+  esac
+fi
+[[ "$JSON_OUT" == /* ]] || JSON_OUT="$PROJECT_ROOT/$JSON_OUT"
+[[ "$MD_OUT" == /* ]] || MD_OUT="$PROJECT_ROOT/$MD_OUT"
+mkdir -p "$(dirname "$JSON_OUT")" "$(dirname "$MD_OUT")"
 
 CREATED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 REVIEW_PACKAGE=".lattice/sdd/$SPEC_ID/$TASK_ID/review-package.md"
@@ -145,6 +165,54 @@ REVIEW_PACKAGE=".lattice/sdd/$SPEC_ID/$TASK_ID/review-package.md"
   printf '    "review_package": "%s"\n' "$(json_escape "$REVIEW_PACKAGE")"
   printf '  }\n'
   printf '}\n'
-} > "$OUT"
+} > "$JSON_OUT"
 
-echo "Review summary: ${OUT#$PROJECT_ROOT/}"
+{
+  printf -- '---\n'
+  printf 'schema_version: lattice.review.v1\n'
+  printf 'kind: review\n'
+  printf 'spec_id: "%s"\n' "$SPEC_ID"
+  printf 'task_id: "%s"\n' "$TASK_ID"
+  printf 'created_at: "%s"\n' "$CREATED_AT"
+  printf 'verdict: "%s"\n' "$VERDICT"
+  printf 'spec_compliance: "%s"\n' "$SPEC_COMPLIANCE"
+  printf 'code_quality: "%s"\n' "$CODE_QUALITY"
+  printf 'test_coverage: "%s"\n' "$TEST_COVERAGE"
+  printf 'risk: "%s"\n' "$RISK"
+  printf -- '---\n\n'
+  printf '# Review: %s / %s\n\n' "$SPEC_ID" "$TASK_ID"
+  printf '## Verdict\n\n'
+  printf '| Axis | Verdict |\n'
+  printf '|------|---------|\n'
+  printf '| Overall | `%s` |\n' "$VERDICT"
+  printf '| Spec compliance | `%s` |\n' "$SPEC_COMPLIANCE"
+  printf '| Code quality | `%s` |\n' "$CODE_QUALITY"
+  printf '| Test coverage | `%s` |\n' "$TEST_COVERAGE"
+  printf '| Risk | `%s` |\n\n' "$RISK"
+  printf '## Findings\n\n'
+  if [[ "${#FINDINGS[@]}" -gt 0 ]]; then
+    for finding in "${FINDINGS[@]}"; do
+      IFS='|' read -r severity reference issue <<< "$finding"
+      printf -- '- Severity: `%s`\n' "${severity:-unspecified}"
+      printf '  Reference: `%s`\n' "${reference:-N/A}"
+      printf '  Issue: %s\n' "${issue:-N/A}"
+    done
+    printf '\n'
+  else
+    printf 'No findings recorded by the structured helper.\n\n'
+  fi
+  printf '## Evidence Checked\n\n'
+  if [[ "${#EVIDENCE[@]}" -gt 0 ]]; then
+    for item in "${EVIDENCE[@]}"; do
+      printf -- '- `%s`\n' "$item"
+    done
+  else
+    printf 'No evidence entries were passed to the helper.\n'
+  fi
+  printf '\n## Machine Summary\n\n'
+  printf -- '- JSON sidecar: `%s`\n' "${JSON_OUT#$PROJECT_ROOT/}"
+  printf -- '- Review package: `%s`\n' "$REVIEW_PACKAGE"
+} > "$MD_OUT"
+
+echo "Review: ${MD_OUT#$PROJECT_ROOT/}"
+echo "Review summary: ${JSON_OUT#$PROJECT_ROOT/}"

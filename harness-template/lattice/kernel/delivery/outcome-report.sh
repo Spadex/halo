@@ -99,11 +99,9 @@ cleanup() {
 trap cleanup EXIT
 
 risk_flags() {
-  local file="$1" type severity flags context_runs blocking_gaps review_failed review_cannot_verify
+  local file="$1" type severity flags review_failed review_cannot_verify
   type="$(json_get "$file" '.outcome.type')"
   severity="$(json_get "$file" '.outcome.severity')"
-  context_runs="$(json_num "$file" '.eval_metrics.context_run_total')"
-  blocking_gaps="$(json_num "$file" '.eval_metrics.context_blocking_gaps')"
   review_failed="$(json_num "$file" '.eval_metrics.review_failed')"
   review_cannot_verify="$(json_num "$file" '.eval_metrics.review_cannot_verify')"
   flags=()
@@ -114,8 +112,6 @@ risk_flags() {
   case "$severity" in
     high|critical) flags+=("severe-outcome") ;;
   esac
-  [[ "$context_runs" -eq 0 ]] && flags+=("no-context-run")
-  [[ "$blocking_gaps" -gt 0 ]] && flags+=("blocking-context-gap")
   [[ "$review_failed" -gt 0 ]] && flags+=("review-failed")
   [[ "$review_cannot_verify" -gt 0 ]] && flags+=("review-cannot-verify")
 

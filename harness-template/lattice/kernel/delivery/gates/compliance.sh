@@ -6,7 +6,7 @@ source "$(dirname "$0")/../../_lib.sh"
 
 for arg in "$@"; do
   [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "delivery gate compliance" "Check agent behavioral compliance (soft gate)" \
-    "compliance.sh [spec-file]    Check context basis and knowledge references" \
+    "compliance.sh [spec-file]    Check spec Context Basis and knowledge references" \
     "compliance.sh --strict       Strict mode (warnings treated as failures)" \
     "compliance.sh --json-out[=<file>] Write structured gate JSON"
 done
@@ -32,8 +32,6 @@ fi
 
 [[ -f "$SPEC" ]] || { echo "⚠️  Spec not found: $SPEC"; exit 0; }
 
-SPEC_DIR="$(dirname "$SPEC")"
-CONTEXT_FILE="$SPEC_DIR/context.md"
 knowledge_dir=$(manifest_get '.context.knowledge.dir')
 PROJECT_KNOWLEDGE_DIR="${PROJECT_ROOT}/${knowledge_dir:-lattice/context/knowledge}"
 
@@ -90,23 +88,22 @@ write_gate_json() {
 }
 
 echo "── Context basis check ──"
-if [[ -f "$CONTEXT_FILE" ]]; then
-  echo "  ✅ Found per-spec context basis: ${CONTEXT_FILE#$PROJECT_ROOT/}"
-  record_finding "context_basis" "pass" "per-spec context basis found"
-  if grep -qiE '^## +(Decision Frame|Selected Facts|Constraints|Conflicts|Context Gaps)' "$CONTEXT_FILE"; then
-    echo "  ✅ Context basis has structured decision sections"
+if grep -qiE '^## +.*(Context|Context Basis|上下文依据)' "$SPEC"; then
+  echo "  ✅ Spec includes Context Basis"
+  record_finding "context_basis" "pass" "spec includes Context Basis"
+  if grep -qiE 'Selected Facts|Constraints|Conflicts|Context Gaps|Open Questions|Sources|References|N/A|None' "$SPEC"; then
+    echo "  ✅ Context Basis records sources, constraints, gaps, or explicit N/A"
     record_finding "context_structure" "pass" "structured decision sections found"
   else
-    echo "  ⚠️  Context basis is present but lacks structured decision sections"
-    echo "     Expected Decision Frame, Selected Facts, Constraints, Conflicts, or Context Gaps."
+    echo "  ⚠️  Context Basis is present but lacks source, constraint, gap, or N/A markers"
     ((WARNINGS++)) || true
-    record_finding "context_structure" "warning" "context basis lacks structured decision sections"
+    record_finding "context_structure" "warning" "Context Basis lacks traceable structure"
   fi
 else
-  echo "  ⚠️  Missing per-spec context basis: ${CONTEXT_FILE#$PROJECT_ROOT/}"
-  echo "     Expected the design phase to persist retrieved context and gaps."
+  echo "  ⚠️  Missing Context Basis section in spec.md"
+  echo "     Expected Specification to persist selected facts, constraints, conflicts, or explicit N/A in spec.md."
   ((WARNINGS++)) || true
-  record_finding "context_basis" "warning" "missing per-spec context basis"
+  record_finding "context_basis" "warning" "missing Context Basis section"
 fi
 
 echo ""
@@ -114,7 +111,6 @@ echo "── Knowledge source check ──"
 KNOWLEDGE_FILES=$(find "$PROJECT_KNOWLEDGE_DIR" -name "*.md" -not -name "README.md" 2>/dev/null || true)
 TOTAL_KB=0
 SEARCH_FILES=("$SPEC")
-[[ -f "$CONTEXT_FILE" ]] && SEARCH_FILES+=("$CONTEXT_FILE")
 
 while IFS= read -r kb_file; do
   [[ -z "$kb_file" ]] && continue
@@ -122,14 +118,14 @@ while IFS= read -r kb_file; do
 done <<< "$KNOWLEDGE_FILES"
 
 if [[ "$TOTAL_KB" -gt 0 ]] && grep -qiE 'lattice/context/knowledge|knowledge/' "${SEARCH_FILES[@]}" 2>/dev/null; then
-  echo "  ✅ Spec/context references project knowledge paths"
-  record_finding "knowledge_reference" "pass" "spec/context references project knowledge paths"
+  echo "  ✅ Spec references project knowledge paths"
+  record_finding "knowledge_reference" "pass" "spec references project knowledge paths"
 elif [[ "$TOTAL_KB" -gt 0 ]]; then
-  echo "  ⚠️  Spec/context does not reference project knowledge paths"
+  echo "  ⚠️  Spec does not reference project knowledge paths"
   echo "     Found $TOTAL_KB entries under lattice/context/knowledge."
   echo "     This is acceptable only when the current change does not depend on durable project knowledge."
   ((WARNINGS++)) || true
-  record_finding "knowledge_reference" "warning" "spec/context does not reference project knowledge paths"
+  record_finding "knowledge_reference" "warning" "spec does not reference project knowledge paths"
 elif [[ "$TOTAL_KB" -eq 0 ]]; then
   echo "  ⏭️  Context knowledge is empty, skipping"
   record_finding "knowledge_reference" "skip" "context knowledge is empty"
@@ -137,7 +133,7 @@ fi
 
 echo ""
 echo "── Source trace check ──"
-if [[ -f "$CONTEXT_FILE" ]] && grep -qiE '\| *(user|code|test|schema|contract|knowledge|external) *\|' "$CONTEXT_FILE"; then
+if grep -qiE '\| *(user|code|test|schema|contract|knowledge|external) *\|' "${SEARCH_FILES[@]}" 2>/dev/null; then
   echo "  ✅ Context basis records source categories"
   record_finding "source_trace" "pass" "context basis records source categories"
 else
@@ -148,7 +144,7 @@ fi
 
 echo ""
 echo "── Ambiguity tracking check ──"
-if [[ -f "$CONTEXT_FILE" ]] && grep -qiE 'Open Questions|Context Gaps|Conflicts|Ambiguities|None|N/A' "$CONTEXT_FILE" 2>/dev/null; then
+if grep -qiE 'Open Questions|Context Gaps|Conflicts|Ambiguities|None|N/A' "${SEARCH_FILES[@]}" 2>/dev/null; then
   echo "  ✅ Context basis records ambiguities or explicitly marks none"
   record_finding "ambiguity_tracking" "pass" "context basis records ambiguities or marks none"
 else

@@ -89,7 +89,7 @@ Use checkbox task rows so Lattice can track execution state. Every AC in `spec.m
     - Brief: `.lattice/sdd/<spec-id>/T1/brief.md`
     - Review package: `.lattice/sdd/<spec-id>/T1/review-package.md`
     - Implementer report: `.lattice/sdd/<spec-id>/T1/report.md`
-    - Review summary: `.lattice/sdd/<spec-id>/T1/review-summary.json`
+    - review artifact: `.lattice/sdd/<spec-id>/T1/review.md`
   - Done when:
     - [ ] <observable condition>
 ```

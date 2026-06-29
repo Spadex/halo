@@ -18,7 +18,7 @@ Lattice 的 Context 层不是知识库产品，也不是校验系统，而是给
 | Less but relevant | 不追求加载更多 context，只保留影响本次决策的事实。 |
 | Code remains truth | 当前代码、测试、schema、接口契约仍是真相源。 |
 | Project over central | 项目内知识优先于中心知识，中心知识只作补充。 |
-| Context before spec | Specification 先形成 `context.md`，再写 `spec.md`。 |
+| Context in spec | Specification 将本次采用的上下文依据写入 `spec.md` 的 Context Basis。 |
 | Tooling stays light | shell 只做同步、检索辅助和轻量 sanity check，不承载智能判断。 |
 
 ## 推荐结构
@@ -38,12 +38,11 @@ lattice/
 │   └── sources.yaml           # 可选：给脚本/自动化消费的结构化来源声明
 ├── specs/
 │   └── <spec-id>/
-│       ├── context.md         # 本次 spec 的最小上下文依据
-│       ├── spec.md
+│       ├── spec.md            # 含本次 spec 的 Context Basis
 │       ├── plan.md
-│       └── summary.md
+│       ├── review.md
+│       └── verify.md
 └── state/
-    ├── context-runs/          # 结构化记录每次 spec 采用的 context 依据
     ├── learn-promotions/      # knowledge draft 晋升或废弃事件
     └── knowledge-reviews/     # knowledge reviewer 决策证据
 ```
@@ -59,10 +58,10 @@ lattice/
 3. 不同来源冲突时如何取舍。
 4. 哪些内容不要直接塞进 prompt 或 spec。
 
-模板文件：
+初始化模板文件：
 
 ```text
-prismspec/templates/context-template.md
+prismspec/templates/spec-template.md
 ```
 
 推荐结构：
@@ -144,23 +143,16 @@ prismspec/templates/context-template.md
 - 需要联网或访问私有系统时，先确认权限和数据边界。
 ```
 
-## `context.md`
+## `spec.md` Context Basis
 
-`lattice/specs/<spec-id>/context.md` 是单次需求的上下文依据。它不是资料汇编，而是 Agent 从上下文地图中按需加载、筛选和压缩后的结果。
+`lattice/specs/<spec-id>/spec.md` 的 Context Basis 是单次需求的上下文依据。它不是资料汇编，而是 Agent 从上下文地图中按需加载、筛选和压缩后的结果。
 
 推荐模板：
 
 ```markdown
-# Context: <spec-id>
+## Context Basis
 
-## Decision Frame
-- Requirement type:
-- Key decisions:
-  - Scope:
-  - AC:
-  - Risk / Mode:
-  - Interface:
-  - Verification:
+> 只放影响 Scope / AC / Risk / Execution Policy 的已采用上下文；不复制完整代码、知识库或聊天记录。没有外部依据时写 N/A。
 
 ## Selected Facts
 | Type | Source | Fact | Decision Impact |
@@ -193,12 +185,10 @@ prismspec/templates/context-template.md
 |------|--------|------|
 | 判断本次需求需要哪些上下文 | Agent / Skill | 需要语义理解和取舍。 |
 | 搜索相关代码、测试、schema、历史 spec | Agent / Skill | 模型根据需求主动查。 |
-| 选择哪些事实进入 `context.md` | Agent / Skill | 只保留影响决策的事实。 |
+| 选择哪些事实进入 Context Basis | Agent / Skill | 只保留影响决策的事实。 |
 | 提供上下文地图和知识资产 | Lattice / 项目 | 让 Agent 知道去哪里找。 |
 | 提供模板和取舍规则 | Lattice / 项目 | 稳定输出结构，降低噪声。 |
 | 同步中心知识 | Lattice tooling | Git/文件同步适合脚本。 |
-| 轻量结构检查 | Lattice tooling | 用 `context-lint.sh` 做 sanity check，不做语义裁判。 |
-
 Lattice 负责供给和约束，模型负责理解和选择。
 
 ## `sources.yaml` 的定位
@@ -296,59 +286,16 @@ bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escala
 
 `--require-review` 要求同一个 draft 已有 `approve` 事件且 `conflicts_checked=true`。这让轻量个人使用仍然顺滑，同时让团队知识库可以逐步收紧治理。
 
-## `context-lint.sh` 的定位
-
-`context-lint.sh` 检查 `context.md` 是否像一个可用的 Context Basis，而不是空模板：
-
-- 必备 section 是否齐全；
-- Decision Frame 是否有具体值；
-- Selected Facts 是否至少有一条完整事实；
-- 表格里是否残留空值、TODO/TBD/FIXME 或模板占位；
-- `--strict` 模式下是否还有 blocking context gaps。
-
-推荐用法：
-
-```bash
-bash lattice/kernel/context/context-lint.sh <spec-id>
-bash lattice/kernel/context/context-lint.sh <spec-id> --strict
-```
-
-它只做结构与占位符级别的 sanity check，不判断事实是否语义正确。事实是否可信、是否足够，仍由 Agent 和 reviewer 结合代码、测试、schema、项目知识来判断。
-
-## `context-run.sh` 的定位
-
-`context-run.sh` 把单次 `context.md` 的采用情况记录成结构化 JSON，解决“Agent 这次到底用了哪些上下文”的可追踪问题。它不判断上下文是否正确，只记录：
-
-- selected facts 数量和来源；
-- constraints、conflicts、exclusions、context gaps 数量；
-- blocking gaps 数量；
-- 被采用的 source 和被排除的 source。
-
-推荐用法：
-
-```bash
-bash lattice/kernel/context/context-run.sh <spec-id>
-bash lattice/kernel/context/context-run.sh <spec-id> --strict
-```
-
-输出位置：
-
-```text
-lattice/state/context-runs/<run-id>.json
-```
-
-`pipeline.sh --json-out` 在存在 spec context 时会自动生成并嵌入 context-run evidence，`eval-summary.sh` 和 `eval-history.sh` 会展示 Context Evidence。
-
 ## 与 PrismSpec 的关系
 
 PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文。
 
 | 阶段 | Context 作用 | 产物 |
 |------|--------------|------|
-| Specification | Agent 按上下文地图发现、筛选、压缩本次需求相关事实 | `context.md`、`spec.md` |
-| Planning | 基于 `context.md` 和 `spec.md` 拆任务和验证证据 | `plan.md` |
-| Implementation | 遵守 `context.md` 中的事实、约束和排除项 | 代码、测试、task evidence |
-| Review | 检查实现证据是否覆盖 context 约束和 AC | `review-summary.json` |
+| Specification | Agent 按上下文地图发现、筛选、压缩本次需求相关事实 | `spec.md` Context Basis |
+| Planning | 基于 `spec.md` 拆任务和验证证据 | `plan.md` |
+| Implementation | 遵守 `spec.md` Context Basis 中的事实、约束和排除项 | 代码、测试、task evidence |
+| Review | 检查实现证据是否覆盖 context 约束和 AC | `review.md` |
 | Verification | 验证交付结果，不重新发明上下文 | gate output |
 | Knowledge Capture | 将可复用经验写入 drafts，待确认后进入项目知识 | `verify.md`、knowledge draft |
 
@@ -360,7 +307,6 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 | 项目知识文件仍需真实沉淀 | Agent 只能看到结构，缺少真实领域知识 | P0 |
 | `sources.yaml` 尚未被自动化消费 | 当前更多是未来扩展点 | P1 |
 | 语义冲突处理仍依赖 reviewer | 已有 metadata lint 和 review evidence，但不能自动判断跨文件语义冲突 | P1 |
-| context-run 仍偏计数型 | 已有 context-lint 做基础 sanity check，但还缺真实样本和跨项目统计 | P1 |
 
 ## 推荐演进
 

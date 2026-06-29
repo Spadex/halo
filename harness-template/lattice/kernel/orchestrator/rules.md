@@ -17,12 +17,12 @@ Use the returned `stage`, `mode`, `skill`, `spec_dir`, `run_dir`, and `verify_co
 
 | Trigger | Route | Output |
 |---------|-------|--------|
-| Requirement without spec | Specification | `lattice/specs/<spec-id>/context.md`, `spec.md` |
+| Requirement without spec | Specification | `lattice/specs/<spec-id>/spec.md` with Context Basis |
 | `/prismspec` | PrismSpec controller | Next stage from `guide.sh --json` |
 | `/spec` | Specification skill | context basis and spec |
 | `/plan` | Planning skill | AC-traced `plan.md` |
 | `/implement` | Implementation skill | code, tests, task evidence |
-| `/review` | Review skill | `review-summary.json` |
+| `/review` | Review skill | `review.md` |
 | `/verify` | Verification skill | `verify.md`, eval JSON when available |
 | `/capture` | Knowledge capture skill | knowledge draft or promoted project knowledge |
 
@@ -43,19 +43,17 @@ Current code, tests, schemas, contracts, and command output override stale notes
 
 ### Specification
 
-- Write both `context.md` and `spec.md`.
+- Write `spec.md` with a Context Basis section.
 - Read `lattice/context/README.md` first when present.
 - Load only context that changes scope, AC, risk, interface, compatibility, or verification.
 - Optional curated knowledge search: `bash lattice/kernel/context/backends/knowledge.sh <keywords>`.
-- Do not paste large knowledge files into the spec; record selected facts, constraints, conflicts, exclusions, and gaps in `context.md`.
+- Do not paste large knowledge files into the spec; record selected facts, constraints, conflicts, exclusions, and gaps in `spec.md` Context Basis.
 - Record `execution_mode`, reason, and source: `model-selected`, `project-default`, or `user-override`.
 - Use stable `AC-{n}` identifiers.
 
 Run when available:
 
 ```bash
-bash lattice/kernel/context/context-lint.sh <spec-id>
-bash lattice/kernel/context/context-run.sh <spec-id> --strict
 bash lattice/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>
 ```
 
@@ -122,6 +120,8 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
   --risk=pass|fail|cannot_verify
 ```
 
+The canonical review artifact is `lattice/specs/<spec-id>/review.md`. The helper also writes `.lattice/sdd/<spec-id>/branch/review-summary.json` as machine-readable pipeline input.
+
 ### Verification
 
 Verification is command-backed proof, not a prose assertion.
@@ -178,15 +178,14 @@ lattice/
 │   └── drafts/
 ├── specs/
 │   └── <spec-id>/
-│       ├── context.md
 │       ├── spec.md
 │       ├── plan.md
+│       ├── review.md
 │       └── verify.md
 └── state/
     ├── eval-runs/
     ├── loops/
     ├── outcomes/
-    ├── context-runs/
     ├── learn-promotions/
     └── knowledge-reviews/
 
@@ -200,6 +199,7 @@ prismspec/
 .lattice/sdd/<spec-id>/<task-id>/
 ├── brief.md
 ├── review-package.md
+├── review.md
 ├── review-summary.json
 └── tdd-evidence.json
 

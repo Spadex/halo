@@ -15,7 +15,7 @@ Verification 和 Eval 的边界必须分清：
 | Verification | 运行外部命令，判断本次交付是否通过。 | pipeline output、gate JSON、`verify.md` |
 | Evidence / Eval | 保存、汇总和分析验证结果、过程证据和交付后 outcome。 | `eval-runs/*.json`、summary/history、outcome report、central sink、dashboard |
 
-因此，Lattice 不把 Eval 设计成另一个测试框架，而是把测试、drift、review、TDD、context、loop 和 outcome 收敛成统一的质量观察面。
+因此，Lattice 不把 Eval 设计成另一个测试框架，而是把测试、drift、review、TDD、loop 和 outcome 收敛成统一的质量观察面。
 
 ## 设计原则
 
@@ -36,7 +36,7 @@ flowchart TB
     L2["L2 Traceability\nAC coverage / plan lint / task evidence"]
     L3["L3 Functional\nunit / integration / smoke"]
     L4["L4 Drift\nroute / schema / error code"]
-    L5["L5 Process\ncontext-run / review / TDD / loop"]
+    L5["L5 Process\nreview / TDD / loop"]
     L6["L6 Outcome\nreview findings / rework / incidents / success"]
 
     L1 --> L2 --> L3 --> L4 --> L5 --> L6
@@ -53,10 +53,9 @@ flowchart TB
 | `drift-check.sh` | drift diagnostics、gate JSON | Spec 与代码、schema、route 是否偏移。 |
 | `compliance.sh` | warnings、gate JSON | 是否引用知识、是否保留澄清和合规痕迹。 |
 | build/lint/test | terminal output | 工程基础质量。 |
-| `review-summary.sh` | review verdict JSON | task reviewer 的 spec compliance、code quality、test coverage、risk 证据是否完整。 |
+| `review-summary.sh` | `review.md` + review verdict JSON | task reviewer 的 spec compliance、code quality、test coverage、risk 证据是否完整。 |
 | `tdd-evidence.sh` | TDD red/green JSON | TDD task 是否有红灯、绿灯和 AC trace。 |
-| `context-run.sh` | context-run JSON | 本次 spec 采用、排除和缺失了哪些 context。 |
-| `pipeline.sh --json-out` | eval run JSON | 汇总 gate、process、context 和 loop evidence。 |
+| `pipeline.sh --json-out` | eval run JSON | 汇总 gate、process 和 loop evidence。 |
 | `spec-status.sh` / `spec-history.sh` | transition JSON、history Markdown | spec lifecycle 是否按状态推进。 |
 | `loop state` | `lattice/state/loops/*.json` | 失败步骤、retry、failure category、next action。 |
 | `knowledge-review.sh` / `learn-draft.sh` | review event、promotion/discard event | learn draft 是否经过治理。 |
@@ -92,8 +91,8 @@ eval run 的核心字段：
 | `pipeline.status` | `pass`、`fail` 或 `escalation`。 |
 | `steps[]` | 每个 pipeline step 的命令、状态、exit code、耗时和摘要。 |
 | `gates[]` | AC coverage、drift、compliance 等结构化 gate evidence。 |
-| `metrics` | AC、drift、review、TDD、context、loop 等可聚合指标。 |
-| `process_evidence` | review summary、TDD evidence、context-run evidence。 |
+| `metrics` | AC、drift、review、TDD、loop 等可聚合指标。 |
+| `process_evidence` | review summary、TDD evidence。 |
 | `loop_state` | retry、失败分类、下一步动作和 learn draft。 |
 
 这份 JSON 是机器事实源；Markdown summary/history、CI Step Summary、dashboard 和 query 都应从它派生。
@@ -119,7 +118,7 @@ bash lattice/kernel/delivery/outcome-link.sh record \
 - outcome 类型和严重度分布；
 - 被 outcome 引用最多的 context refs；
 - 需要复盘的 run、spec、source、summary；
-- 风险线索，例如 `negative-outcome`、`severe-outcome`、`no-context-run`、`blocking-context-gap`、`review-failed`、`review-cannot-verify`。
+- 风险线索，例如 `negative-outcome`、`severe-outcome`、`review-failed`、`review-cannot-verify`。
 
 这些是复盘优先级线索，不是自动因果判定。
 
@@ -179,7 +178,6 @@ bash lattice/kernel/delivery/eval-query.sh outcomes --sink-dir=lattice/state/eva
 | escalation count | 超出重试预算次数。 |
 | review verdict | pass / fail / cannot_verify 分布。 |
 | TDD completeness | TDD red/green evidence 完整度。 |
-| context evidence | context-run 数量、selected facts、blocking gaps。 |
 | outcome links | review finding、rework、escaped defect、incident、success 数量。 |
 
 中期指标：

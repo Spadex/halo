@@ -27,15 +27,16 @@ updated_at: {timestamp}
 
 - {本次明确不做的内容，避免 AI 或 reviewer 自动扩张范围}
 
-## 3. Context
+## 3. Context Basis
 
-> 只放影响 Scope / AC / Risk / Execution Policy 的上下文，不复制完整代码或知识库。
+> 只放影响 Scope / AC / Risk / Execution Policy 的已采用上下文；不复制完整代码、知识库或聊天记录。没有外部依据时写 N/A。
 
 | Source | Constraint / Fact | Impact |
 |--------|-------------------|--------|
 | user request | | |
 | code / tests | | |
 | docs / knowledge | | |
+| open questions / conflicts | | |
 
 ## 4. Acceptance Criteria
 

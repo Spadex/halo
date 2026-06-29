@@ -102,4 +102,3 @@ context:
     cache_dir: "lattice/context/.central"
     mode: read-only
     conflict: project-wins
-  runs_dir: "lattice/state/context-runs"

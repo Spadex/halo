@@ -7,9 +7,8 @@ Context 层负责给 AI Agent 提供可靠的项目上下文。主入口是 `lat
 1. 读取 `lattice/context/README.md`。
 2. 根据上下文地图查找相关项目知识、外部引用、代码、测试、schema、接口契约和历史 spec。
 3. 只选择会影响 scope、AC、risk、interface、compatibility 或 verification 的事实。
-4. 将本次采用的上下文依据写入 `lattice/specs/<spec-id>/context.md`。
-5. 用 `context-run.sh` 记录本次采用、排除和未解决的 context 依据。
-6. 基于 `context.md` 编写 `spec.md`。
+4. 将本次采用的上下文依据写入 `lattice/specs/<spec-id>/spec.md` 的 Context Basis。
+5. 基于 `spec.md` 继续规划和实现。
 
 ## Directory Contract
 
@@ -26,7 +25,7 @@ lattice/context/
   drafts/                      # 待确认的知识沉淀
   sources.yaml                 # 可选：给脚本/自动化消费
 lattice/specs/<spec-id>/
-  context.md                   # 本次 spec 的最小上下文依据
+  spec.md                      # 含本次 spec 的 Context Basis
 ```
 
 ## Optional Tooling
@@ -34,9 +33,6 @@ lattice/specs/<spec-id>/
 ```bash
 # 检索 curated project knowledge
 lattice/kernel/context/backends/knowledge.sh auth rate-limit idempotency
-
-# 记录 per-spec context 采用证据
-lattice/kernel/context/context-run.sh <spec-id> --strict
 
 # 兼容旧入口
 lattice/kernel/context/loader.sh auth rate-limit idempotency
