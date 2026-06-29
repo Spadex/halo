@@ -21,10 +21,10 @@ All notable changes to this project will be documented in this file.
 - Failure category and default action fields in loop state, eval summaries, and escalation learn drafts.
 - Configurable failure categories via `lattice/config/failure-categories.yaml`.
 - `failure-category-lint.sh` and doctor integration for failure category config validation.
-- Escalation learn drafts under `lattice/context/drafts/` when retry budget is exhausted.
-- `learn-draft.sh` to promote or discard confirmed learn drafts with archived source drafts and audit events under `lattice/state/learn-promotions/`.
+- Escalation knowledge drafts under `lattice/context/drafts/` when retry budget is exhausted.
+- `learn-draft.sh` to promote or discard confirmed knowledge drafts with archived source drafts and audit events under `lattice/state/learn-promotions/`.
 - `knowledge-review.sh` to record approve/reject reviewer decisions under `lattice/state/knowledge-reviews/`; `learn-draft.sh promote --require-review` can require approved review evidence with conflict checks.
-- `summary-learn-draft.sh` to convert `summary.md` Knowledge Candidates into reviewable learn drafts.
+- `summary-learn-draft.sh` to convert Knowledge Candidates into reviewable knowledge drafts.
 - `knowledge-lint.sh` to flag missing metadata, missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
 - `context-lint.sh` to reject empty or unfinished per-spec context basis files before context-run evidence is recorded.
 - `context-run.sh` to record per-spec selected facts, constraints, exclusions, conflicts, and context gaps under `lattice/state/context-runs/`.
@@ -39,14 +39,14 @@ All notable changes to this project will be documented in this file.
 - `summary-draft.sh` to generate `summary.md` closeout drafts from spec, plan, verification, task evidence, and optional eval JSON.
 - `review-summary.sh` and `tdd-evidence.sh` to capture process evidence as structured JSON.
 - GitHub Actions eval artifact workflow template installed by `init.sh --ci=github`.
-- **PrismSpec** standalone spec-coding skill pack with guided `/sdd`, canonical `SKILL.md` files, templates, references, and workflow scripts.
+- **PrismSpec** standalone spec-coding skill pack with guided `/prismspec`, canonical `SKILL.md` files, templates, references, and workflow scripts.
 - Chinese-first project entrypoint via the root `README.md`; English documentation moved to `README.en.md`.
 - CI validation for PrismSpec skill frontmatter and PrismSpec shell scripts.
 - Root `AGENTS.md` to make the repository easier for coding agents to navigate.
 
 ### Changed
 
-- README and wiki now describe pipeline/gate eval JSON, central eval sink, loop state, outcome links/reports, configurable failure categories, failure category lint, escalation learn drafts, learn draft promotion/discard, knowledge governance lint, review/TDD process evidence, Markdown summaries/history, GitHub Actions artifacts, Step Summary, and PR comments as implemented.
+- README and wiki now describe pipeline/gate eval JSON, central eval sink, loop state, outcome links/reports, configurable failure categories, failure category lint, escalation knowledge drafts, knowledge draft promotion/discard, knowledge governance lint, review/TDD process evidence, Markdown summaries/history, GitHub Actions artifacts, Step Summary, and PR comments as implemented.
 - Pipeline eval runs, eval summaries, and eval history now include Context Evidence when a spec has `context.md`.
 - Default architecture and glossary knowledge templates now include `Source` columns for promotion governance.
 - Default project knowledge templates now include `owner`, `verified_at`, and `applies_to` front matter.
@@ -55,7 +55,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `/sdd` guide now requires actual verification evidence and no longer treats review packages as verification output.
+- PrismSpec guide now requires actual verification evidence and no longer treats review packages as verification output.
 - Public contribution docs now use Lattice naming and current paths.
 
 ## [1.0.0] — 2026-06-23
@@ -69,7 +69,7 @@ All notable changes to this project will be documented in this file.
 - **AC tracing**: Acceptance Criteria numbering from spec through test naming to coverage verification.
 - **Knowledge layer**: Keyword-based retrieval with synonym support, central repo sync.
 - **Multi-language support**: Go (Gin/GORM), Node (Express/Prisma), Python (FastAPI/SQLAlchemy), Rust detection.
-- **Agent skills**: `/init` (project setup), `/verify` (pipeline execution), `/learn` (knowledge capture).
+- **Agent skills**: project setup, verification, and knowledge capture.
 - **Escalation protocol**: Exit code 2 triggers human intervention after retry exhaustion.
 - **Adapter documentation**: Engine-specific integration guides under `docs/adapters/`.
 

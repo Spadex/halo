@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# summary-learn-draft.sh — Convert summary.md knowledge candidates into a reviewable learn draft.
+# summary-learn-draft.sh — Convert verify.md knowledge candidates into a reviewable knowledge draft.
 source "$(dirname "$0")/../_lib.sh"
 
-usage_line="summary-learn-draft.sh <spec-id|path/to/summary.md> [--out=<file>]"
+usage_line="summary-learn-draft.sh <spec-id|path/to/verify.md> [--out=<file>]"
 for arg in "$@"; do
-  [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "summary learn draft" "Create a learn draft from summary.md Knowledge Candidates" \
+  [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "knowledge draft" "Create a knowledge draft from verify.md Knowledge Candidates" \
     "$usage_line" \
     "summary-learn-draft.sh checkout-flow"
 done
@@ -20,15 +20,15 @@ for arg in "$@"; do
   esac
 done
 
-resolve_summary_file() {
+resolve_source_file() {
   local input="$1" abs
   [[ -n "$input" ]] || { echo "Usage: $usage_line"; exit 1; }
   if [[ "$input" == *.md || "$input" == */* ]]; then
     [[ "$input" == /* ]] && abs="$input" || abs="$PROJECT_ROOT/$input"
   else
-    abs="$PROJECT_ROOT/lattice/specs/$input/summary.md"
+    abs="$PROJECT_ROOT/lattice/specs/$input/verify.md"
   fi
-  [[ -f "$abs" ]] || { echo "Summary file not found: $input"; exit 1; }
+  [[ -f "$abs" ]] || { echo "Verification file not found: $input"; exit 1; }
   printf '%s' "$abs"
 }
 
@@ -54,19 +54,19 @@ extract_candidates() {
     || true
 }
 
-SUMMARY_FILE="$(resolve_summary_file "$INPUT")"
-SUMMARY_DIR="$(dirname "$SUMMARY_FILE")"
-SPEC_ID="$(basename "$SUMMARY_DIR")"
-SUMMARY_REL="$(rel_path "$SUMMARY_FILE")"
-CANDIDATES="$(extract_candidates "$SUMMARY_FILE")"
+SOURCE_FILE="$(resolve_source_file "$INPUT")"
+SOURCE_DIR="$(dirname "$SOURCE_FILE")"
+SPEC_ID="$(basename "$SOURCE_DIR")"
+SOURCE_REL="$(rel_path "$SOURCE_FILE")"
+CANDIDATES="$(extract_candidates "$SOURCE_FILE")"
 
 if [[ -z "$CANDIDATES" ]]; then
-  echo "No durable knowledge candidates found in: $SUMMARY_REL"
+  echo "No durable knowledge candidates found in: $SOURCE_REL"
   exit 1
 fi
 
 if [[ -z "$OUT" ]]; then
-  OUT="$PROJECT_ROOT/lattice/context/drafts/summary-${SPEC_ID}-$(date -u +%Y%m%dT%H%M%SZ).md"
+  OUT="$PROJECT_ROOT/lattice/context/drafts/knowledge-${SPEC_ID}-$(date -u +%Y%m%dT%H%M%SZ).md"
 elif [[ "$OUT" != /* ]]; then
   OUT="$PROJECT_ROOT/$OUT"
 fi
@@ -79,18 +79,18 @@ esac
 mkdir -p "$(dirname "$OUT")"
 {
   echo "---"
-  echo "run_id: \"summary-${SPEC_ID}\""
+  echo "run_id: \"knowledge-${SPEC_ID}\""
   echo "failure_category: \"knowledge_candidate\""
   echo "default_action: \"review_and_promote_if_durable\""
-  echo "source_summary: \"${SUMMARY_REL}\""
+  echo "source_file: \"${SOURCE_REL}\""
   echo "created_at: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\""
   echo "---"
   echo ""
-  echo "# Learn Draft: Summary Knowledge Candidates"
+  echo "# Knowledge Draft: Verification Candidates"
   echo ""
   echo "## Source"
   echo ""
-  echo "- Summary: \`${SUMMARY_REL}\`"
+  echo "- Source: \`${SOURCE_REL}\`"
   echo "- Spec: \`lattice/specs/${SPEC_ID}/spec.md\`"
   echo ""
   echo "## Lesson Candidate"

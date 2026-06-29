@@ -38,41 +38,24 @@ commands:
       path: prismspec/commands/verify.md
     - id: capture
       path: prismspec/commands/capture.md
-  aliases:
-    - id: sdd
-      target: prismspec
-      path: prismspec/commands/sdd.md
-    - id: brainstorm
-      target: spec
-      path: prismspec/commands/brainstorm.md
-    - id: finish
-      target: verify
-      path: prismspec/commands/finish.md
-    - id: learn
-      target: capture
-      path: prismspec/commands/learn.md
 skills:
   canonical:
     - id: workflow
       type: controller
       path: prismspec/skills/workflow/SKILL.md
       interface: prismspec/skills/workflow/agents/openai.yaml
-      legacy_id: sdd
     - id: specification
       type: stage
       path: prismspec/skills/specification/SKILL.md
       interface: prismspec/skills/specification/agents/openai.yaml
-      legacy_id: brainstorm
     - id: planning
       type: stage
       path: prismspec/skills/planning/SKILL.md
       interface: prismspec/skills/planning/agents/openai.yaml
-      legacy_id: plan
     - id: implementation
       type: stage
       path: prismspec/skills/implementation/SKILL.md
       interface: prismspec/skills/implementation/agents/openai.yaml
-      legacy_id: implement
     - id: review
       type: stage
       path: prismspec/skills/review/SKILL.md
@@ -81,17 +64,10 @@ skills:
       type: stage
       path: prismspec/skills/verification/SKILL.md
       interface: prismspec/skills/verification/agents/openai.yaml
-      legacy_id: verify
     - id: knowledge-capture
       type: support
       path: prismspec/skills/knowledge-capture/SKILL.md
       interface: prismspec/skills/knowledge-capture/agents/openai.yaml
-      legacy_id: learn
-  legacy:
-    - id: finish
-      target: verification
-      path: prismspec/skills/branch-closeout/SKILL.md
-      interface: prismspec/skills/branch-closeout/agents/openai.yaml
 workflow:
   stages:
     - id: specification
@@ -157,8 +133,6 @@ contracts:
     - spec.md
     - plan.md
     - verify.md
-  optional_artifacts:
-    - summary.md
   execution_modes:
     - auto
     - plan

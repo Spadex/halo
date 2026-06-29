@@ -209,7 +209,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "GitHub Actions eval workflow missing or invalid"
   fi
 
-  for command in prismspec spec plan implement review verify capture sdd brainstorm finish learn; do
+  for command in prismspec spec plan implement review verify capture; do
     if [[ -f "$SANDBOX/.claude/commands/${command}.md" ]]; then
       pass "$command slash command installed"
     else
@@ -224,7 +224,6 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -f "$SANDBOX/prismspec/skills/implementation/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/review/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/verification/SKILL.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/branch-closeout/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skills/knowledge-capture/SKILL.md" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/new.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/guide.sh" ]] \
@@ -239,8 +238,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     && [[ -f "$SANDBOX/prismspec/references/mode-selection.md" ]] \
     && [[ -f "$SANDBOX/prismspec/references/definition-of-done.md" ]] \
     && [[ -f "$SANDBOX/prismspec/agents/task-reviewer.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/commands/prismspec.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/commands/sdd.md" ]]; then
+    && [[ -f "$SANDBOX/prismspec/commands/prismspec.md" ]]; then
     pass "PrismSpec deliverable module installed"
   else
     fail "PrismSpec standalone module missing"
@@ -287,7 +285,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   fi
 
   FLAT_SKILL_COUNT=$(find "$SANDBOX/prismspec/skills" -maxdepth 1 -type f -name '*.md' -not -name 'README.md' | wc -l | tr -d ' ')
-  LATTICE_SDD_SKILL_COUNT=$(find "$SANDBOX/lattice/skills" -maxdepth 1 -type f \( -name 'sdd.md' -o -name 'brainstorm.md' -o -name 'plan.md' -o -name 'implement.md' -o -name 'review.md' -o -name 'verify.md' -o -name 'finish.md' -o -name 'learn.md' \) | wc -l | tr -d ' ')
+  LATTICE_SDD_SKILL_COUNT=$(find "$SANDBOX/lattice/skills" -maxdepth 1 -type f \( -name 'prismspec.md' -o -name 'spec.md' -o -name 'plan.md' -o -name 'implement.md' -o -name 'review.md' -o -name 'verify.md' -o -name 'capture.md' \) | wc -l | tr -d ' ')
   if [[ "$FLAT_SKILL_COUNT" == "0" ]] && [[ "$LATTICE_SDD_SKILL_COUNT" == "0" ]]; then
     pass "SDD workflow has a single canonical skill source"
   else
@@ -301,11 +299,11 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "PrismSpec guide did not detect initial specification stage"
   fi
 
-  GUIDE_ALIAS_OUTPUT=$(bash "$SANDBOX/prismspec/bin/guide.sh" spec=example mode=tdd --json)
-  if echo "$GUIDE_ALIAS_OUTPUT" | grep -q '"spec_id": "example"' && echo "$GUIDE_ALIAS_OUTPUT" | grep -q '"mode": "tdd"'; then
-    pass "PrismSpec guide accepts command aliases"
+  GUIDE_SHORT_ARG_OUTPUT=$(bash "$SANDBOX/prismspec/bin/guide.sh" spec=example mode=tdd --json)
+  if echo "$GUIDE_SHORT_ARG_OUTPUT" | grep -q '"spec_id": "example"' && echo "$GUIDE_SHORT_ARG_OUTPUT" | grep -q '"mode": "tdd"'; then
+    pass "PrismSpec guide accepts short arguments"
   else
-    fail "PrismSpec guide did not accept command aliases"
+    fail "PrismSpec guide did not accept short arguments"
   fi
 
   if [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" ]] \
@@ -1063,41 +1061,36 @@ else
   tail -20 /tmp/lattice-summary-learn-empty.log
 fi
 
-cat >> "$SANDBOX/lattice/specs/modern-feature/summary.md" << 'SUMMARY_LEARN_CANDIDATE'
+cat >> "$SANDBOX/lattice/specs/modern-feature/verify.md" << 'SUMMARY_LEARN_CANDIDATE'
+
+## Knowledge Candidates
+
 - Keep task completion gated by task evidence before advancing spec status.
 SUMMARY_LEARN_CANDIDATE
-SUMMARY_LEARN_DRAFT="$SANDBOX/lattice/context/drafts/summary-modern-feature-smoke.md"
+SUMMARY_LEARN_DRAFT="$SANDBOX/lattice/context/drafts/knowledge-modern-feature-smoke.md"
 SUMMARY_LEARN_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" modern-feature --out="$SUMMARY_LEARN_DRAFT" 2>&1)
 if [[ -f "$SUMMARY_LEARN_DRAFT" ]] \
-  && grep -q "Learn Draft: Summary Knowledge Candidates" "$SUMMARY_LEARN_DRAFT" \
+  && grep -q "Knowledge Draft: Verification Candidates" "$SUMMARY_LEARN_DRAFT" \
   && grep -q "Keep task completion gated by task evidence" "$SUMMARY_LEARN_DRAFT" \
   && grep -q "Review Checklist" "$SUMMARY_LEARN_DRAFT"; then
-  pass "summary-learn-draft creates reviewable learn draft"
+  pass "summary-learn-draft creates reviewable knowledge draft"
 else
-  fail "summary-learn-draft did not create expected draft"
+  fail "summary-learn-draft did not create expected knowledge draft"
   echo "$SUMMARY_LEARN_OUTPUT" | tail -20
   [[ -f "$SUMMARY_LEARN_DRAFT" ]] && cat "$SUMMARY_LEARN_DRAFT"
 fi
 
-SPEC_STATUS_FINISHED_EXIT=0
-SPEC_STATUS_FINISHED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature finished --from=verified 2>&1) || SPEC_STATUS_FINISHED_EXIT=$?
-if [[ $SPEC_STATUS_FINISHED_EXIT -eq 0 ]] && grep -q '^status: finished$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then
-  pass "spec-status advances verified spec to finished"
-else
-  fail "spec-status failed to advance verified spec to finished"
-  echo "$SPEC_STATUS_FINISHED_OUTPUT" | tail -20
-fi
 TRANSITION_COUNT_FINAL=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
-FINISHED_TRANSITION_EVENT="$(
+VERIFIED_TRANSITION_EVENT="$(
   find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
-        yq -e '.kind == "spec-transition" and .from_status == "verified" and .to_status == "finished"' "$file" >/dev/null 2>&1 && echo "$file"
+        yq -e '.kind == "spec-transition" and .from_status == "implemented" and .to_status == "verified"' "$file" >/dev/null 2>&1 && echo "$file"
       done \
     | tail -1 || true
 )"
-if [[ "$TRANSITION_COUNT_FINAL" == "4" ]] \
-  && [[ -f "$FINISHED_TRANSITION_EVENT" ]] \
-  && yq -e '.kind == "spec-transition" and .from_status == "verified" and .to_status == "finished"' "$FINISHED_TRANSITION_EVENT" >/dev/null 2>&1; then
+if [[ "$TRANSITION_COUNT_FINAL" == "3" ]] \
+  && [[ -f "$VERIFIED_TRANSITION_EVENT" ]] \
+  && yq -e '.kind == "spec-transition" and .from_status == "implemented" and .to_status == "verified"' "$VERIFIED_TRANSITION_EVENT" >/dev/null 2>&1; then
   pass "spec-status records complete transition audit trail"
 else
   fail "spec-status transition audit trail invalid"
@@ -1108,7 +1101,7 @@ SPEC_HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-histor
 if [[ -f "$SPEC_HISTORY_MD" ]] \
   && grep -q "Lattice Spec History" "$SPEC_HISTORY_MD" \
   && grep -q "modern-feature" "$SPEC_HISTORY_MD" \
-  && grep -q "finished" "$SPEC_HISTORY_MD" \
+  && grep -q "verified" "$SPEC_HISTORY_MD" \
   && grep -q "plan=true, task=true, state=true" "$SPEC_HISTORY_MD"; then
   pass "spec-history aggregates transition events"
 else

@@ -2,7 +2,7 @@
 # spec-status.sh — Advance spec lifecycle status with transition guards.
 source "$(dirname "$0")/../../_lib.sh"
 
-usage_line="spec-status.sh <spec-id|path/to/spec.md> <drafted|planned|implemented|verified|finished> [--from=<status>] [--force]"
+usage_line="spec-status.sh <spec-id|path/to/spec.md> <drafted|planned|implemented|verified> [--from=<status>] [--force]"
 for arg in "$@"; do
   [[ "$arg" == "--help" || "$arg" == "-h" ]] && cli_help "spec status" "Advance spec.md status and updated_at safely" \
     "$usage_line" \
@@ -66,7 +66,7 @@ has_frontmatter() {
 
 valid_status() {
   case "$1" in
-    drafted|planned|implemented|verified|finished) return 0 ;;
+    drafted|planned|implemented|verified) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -75,7 +75,7 @@ transition_allowed() {
   local from="$1" to="$2"
   [[ "$from" == "$to" ]] && return 0
   case "$from:$to" in
-    drafted:planned|planned:implemented|implemented:verified|verified:finished) return 0 ;;
+    drafted:planned|planned:implemented|implemented:verified) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -199,29 +199,24 @@ fi
 
 if [[ "$FORCE" != "true" ]] && ! transition_allowed "$CURRENT_STATUS" "$TARGET_STATUS"; then
   echo "Illegal transition: $CURRENT_STATUS -> $TARGET_STATUS"
-  echo "Allowed path: drafted -> planned -> implemented -> verified -> finished"
+  echo "Allowed path: drafted -> planned -> implemented -> verified"
   echo "Use --force only when intentionally repairing spec metadata."
   exit 1
 fi
 
 case "$TARGET_STATUS" in
-  planned|implemented|verified|finished)
+  planned|implemented|verified)
     require_file "$SPEC_DIR/context.md" "context.md"
     require_file "$SPEC_DIR/plan.md" "plan.md"
     ;;
 esac
 case "$TARGET_STATUS" in
-  verified|finished)
+  verified)
     require_file "$SPEC_DIR/verify.md" "verify.md"
     ;;
 esac
 case "$TARGET_STATUS" in
-  finished)
-    require_file "$SPEC_DIR/summary.md" "summary.md"
-    ;;
-esac
-case "$TARGET_STATUS" in
-  implemented|verified|finished)
+  implemented|verified)
     if plan_has_incomplete_tasks "$SPEC_DIR/plan.md"; then
       echo "plan.md has incomplete tasks; complete or split them before status=$TARGET_STATUS"
       exit 1
@@ -229,14 +224,14 @@ case "$TARGET_STATUS" in
     ;;
 esac
 
-if [[ "$TARGET_STATUS" == "planned" || "$TARGET_STATUS" == "implemented" || "$TARGET_STATUS" == "verified" || "$TARGET_STATUS" == "finished" ]]; then
+if [[ "$TARGET_STATUS" == "planned" || "$TARGET_STATUS" == "implemented" || "$TARGET_STATUS" == "verified" ]]; then
   if [[ -x "$KERNEL_DIR/orchestrator/sdd/plan-lint.sh" ]]; then
     bash "$KERNEL_DIR/orchestrator/sdd/plan-lint.sh" "$SPEC_DIR/plan.md" >/dev/null
     PLAN_LINT_CHECKED=true
   fi
 fi
 
-if [[ "$TARGET_STATUS" == "implemented" || "$TARGET_STATUS" == "verified" || "$TARGET_STATUS" == "finished" ]]; then
+if [[ "$TARGET_STATUS" == "implemented" || "$TARGET_STATUS" == "verified" ]]; then
   if [[ -x "$KERNEL_DIR/orchestrator/sdd/task-evidence-lint.sh" ]]; then
     bash "$KERNEL_DIR/orchestrator/sdd/task-evidence-lint.sh" "$SPEC_DIR/plan.md"
     TASK_EVIDENCE_CHECKED=true

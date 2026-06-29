@@ -18,7 +18,7 @@ Lattice 的 Context 层不是知识库产品，也不是校验系统，而是给
 | Less but relevant | 不追求加载更多 context，只保留影响本次决策的事实。 |
 | Code remains truth | 当前代码、测试、schema、接口契约仍是真相源。 |
 | Project over central | 项目内知识优先于中心知识，中心知识只作补充。 |
-| Context before spec | Brainstorming 先形成 `context.md`，再写 `spec.md`。 |
+| Context before spec | Specification 先形成 `context.md`，再写 `spec.md`。 |
 | Tooling stays light | shell 只做同步、检索辅助和轻量 sanity check，不承载智能判断。 |
 
 ## 推荐结构
@@ -236,7 +236,7 @@ knowledge loader = 可选工具，用于检索 curated project knowledge
 lattice/kernel/context/backends/knowledge.sh
 ```
 
-`loader.sh` 只保留为兼容包装，不应在 Brainstorming 里写成必做主入口。
+`loader.sh` 只保留为兼容包装，不应在 Specification 里写成必做主入口。
 
 ## `knowledge-lint.sh` 的定位
 

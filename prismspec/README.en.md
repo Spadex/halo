@@ -8,7 +8,7 @@ PrismSpec is a standalone, progressive Spec Coding skill pack. It turns an AI co
 specification -> planning -> implementation(plan|tdd) -> review -> verification
 ```
 
-`/prismspec` is the controller, not an extra phase. It reads current artifacts and routes to the next stage skill. `/sdd` remains as a compatibility alias.
+`/prismspec` is the controller, not an extra phase. It reads current artifacts and routes to the next stage skill.
 
 ## Positioning
 
@@ -33,8 +33,7 @@ prismspec/
 │   ├── implementation/SKILL.md
 │   ├── review/SKILL.md
 │   ├── verification/SKILL.md
-│   ├── knowledge-capture/SKILL.md
-│   └── branch-closeout/SKILL.md # optional legacy branch closeout helper
+│   └── knowledge-capture/SKILL.md
 ├── templates/                  # spec/context templates
 ├── references/                 # loaded on demand
 ├── agents/                     # task reviewer persona
@@ -155,14 +154,13 @@ PrismSpec supports two implementation policies:
 
 | Skill | Trigger | Durable Output |
 |-------|---------|----------------|
-| `skills/workflow/SKILL.md` | `/prismspec`, `/sdd`, spec resume, end-to-end guidance | stage routing |
+| `skills/workflow/SKILL.md` | `/prismspec`, spec resume, end-to-end guidance | stage routing |
 | `skills/specification/SKILL.md` | `/spec`, new requirement, unclear scope/AC/mode/context | `context.md`, `spec.md` |
 | `skills/planning/SKILL.md` | `/plan`, spec exists but tasks or verification paths are missing | `plan.md` |
 | `skills/implementation/SKILL.md` | `/implement`, execute AC-traced tasks | code, tests, task evidence |
 | `skills/review/SKILL.md` | `/review`, implementation evidence needs independent review | `review-summary.json` |
 | `skills/verification/SKILL.md` | `/verify`, run external verification after implementation and review | `verify.md` |
 | `skills/knowledge-capture/SKILL.md` | `/capture`, capture reusable rules, decisions, pitfalls | knowledge draft / project knowledge |
-| `skills/branch-closeout/SKILL.md` | legacy `/finish`, only for explicit branch closeout | optional `summary.md` |
 
 Every canonical skill follows the same quality bar: trigger-rich frontmatter, workflow, inputs/outputs, stop conditions, common rationalizations, red flags, and verification checklist.
 

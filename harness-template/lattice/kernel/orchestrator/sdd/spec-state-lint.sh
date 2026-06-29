@@ -113,8 +113,8 @@ echo ""
 
 echo "── State contract ──"
 case "$STATUS" in
-  drafted|planned|implemented|verified|finished) pass_msg "status is valid: $STATUS" ;;
-  *) fail_msg "status must be drafted, planned, implemented, verified, or finished" ;;
+  drafted|planned|implemented|verified) pass_msg "status is valid: $STATUS" ;;
+  *) fail_msg "status must be drafted, planned, implemented, or verified" ;;
 esac
 
 case "$EXECUTION_MODE" in
@@ -157,22 +157,17 @@ require_artifact() {
 
 require_artifact "$CONTEXT_FILE" "context.md"
 case "$STATUS" in
-  planned|implemented|verified|finished)
+  planned|implemented|verified)
     require_artifact "$PLAN_FILE" "plan.md"
     ;;
 esac
 case "$STATUS" in
-  verified|finished)
+  verified)
     require_artifact "$VERIFY_FILE" "verify.md"
     ;;
 esac
-case "$STATUS" in
-  finished)
-    require_artifact "$SUMMARY_FILE" "summary.md"
-    ;;
-esac
 
-if [[ "$STATUS" == "implemented" || "$STATUS" == "verified" || "$STATUS" == "finished" ]]; then
+if [[ "$STATUS" == "implemented" || "$STATUS" == "verified" ]]; then
   if [[ -f "$PLAN_FILE" ]]; then
     if grep -qE '^- \[ \] (T[0-9]+|RED-[0-9]+):' "$PLAN_FILE"; then
       fail_msg "plan.md has incomplete tasks for status=$STATUS"

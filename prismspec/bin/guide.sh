@@ -18,13 +18,6 @@ Usage:
 Stages:
   specification | planning | implementation | review | verification
 
-Legacy stage aliases:
-  brainstorm -> specification
-  plan       -> planning
-  implement  -> implementation
-  verify     -> verification
-  finish     -> verification
-
 Examples:
   bash prismspec/bin/guide.sh
   bash prismspec/bin/guide.sh --spec=checkout-flow
@@ -49,11 +42,11 @@ done
 normalize_stage() {
   case "$1" in
     "" ) echo "" ;;
-    spec|specification|brainstorm) echo "specification" ;;
+    spec|specification) echo "specification" ;;
     plan|planning) echo "planning" ;;
     implement|implementation) echo "implementation" ;;
     review) echo "review" ;;
-    verify|verification|finish) echo "verification" ;;
+    verify|verification) echo "verification" ;;
     done) echo "done" ;;
     *) return 1 ;;
   esac
@@ -186,7 +179,6 @@ has_incomplete_tasks() {
 
 has_verification_evidence() {
   [[ -n "$VERIFY_FILE" && -f "$VERIFY_FILE" ]] && return 0
-  [[ -n "$SUMMARY_FILE" && -f "$SUMMARY_FILE" ]] && grep -qiE 'verification|pipeline|test|pass|fail' "$SUMMARY_FILE" && return 0
   [[ -n "$RUN_DIR" && -d "$RUN_DIR" ]] && find "$RUN_DIR" -type f \( -name 'verify.md' -o -name 'evidence.json' \) | grep -q .
 }
 

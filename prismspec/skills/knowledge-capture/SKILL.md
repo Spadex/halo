@@ -7,18 +7,18 @@ description: Captures durable project knowledge discovered during PrismSpec work
 
 ## Overview
 
-Promote only durable lessons into knowledge. Keep one-off implementation details in `verify.md` or legacy `summary.md`.
+Promote only durable lessons into knowledge. Keep one-off implementation details in `verify.md` or task evidence.
 
 ## Inputs
 
-- `verify.md` or `summary.md`
+- `verify.md`
 - Verification or review findings.
 - Existing `lattice/context/knowledge/`, `lattice/context/drafts/`, or `prismspec/knowledge/`.
 
 ## Workflow
 
 1. Check existing knowledge before writing a new entry.
-2. In Lattice-hosted mode, convert durable candidates from `verify.md` or legacy `summary.md` with the available learn draft helper.
+2. In Lattice-hosted mode, convert durable candidates from `verify.md` with the available knowledge draft helper.
 3. Decide whether the lesson is durable, reusable, and non-secret.
 4. Write one concise knowledge entry per rule or pitfall.
 5. Include trigger context, rule, source, and practical guidance.

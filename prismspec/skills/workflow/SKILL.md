@@ -57,7 +57,7 @@ When Superpowers is installed or explicitly requested, use its mature workflow s
 | `review` | Superpowers SDD task reviewer discipline |
 | `verification` | `superpowers:verification-before-completion` |
 
-Use `superpowers:finishing-a-development-branch` only when branch/worktree closeout is explicitly in scope. PrismSpec's main workflow ends at command-backed verification; durable lessons move through `/capture`.
+PrismSpec's main workflow ends at command-backed verification; durable lessons move through `/capture`.
 
 Do not copy Superpowers output paths blindly. For PrismSpec/Lattice work, write `context.md`, `spec.md`, `plan.md`, task evidence, `review-summary.json`, and `verify.md` in the routed PrismSpec locations.
 

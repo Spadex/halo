@@ -273,7 +273,7 @@ copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/context" "lattice/c
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/skills/init.md" "lattice/skills/init.md"
 
-for f in init.md prismspec.md spec.md plan.md implement.md review.md verify.md capture.md sdd.md brainstorm.md finish.md learn.md; do
+for f in init.md prismspec.md spec.md plan.md implement.md review.md verify.md capture.md; do
   copy_if_not_exists "$HARNESS_TEMPLATE_DIR/.claude/commands/$f" ".claude/commands/$f"
 done
 
@@ -560,6 +560,5 @@ echo "  /implement               — Execute plan/tdd policy"
 echo "  /review                  — Review implementation evidence"
 echo "  /verify                  — Run verification pipeline"
 echo "  /capture \"lesson\"        — Capture durable project knowledge"
-echo "  /sdd, /brainstorm, /finish, /learn remain legacy aliases"
 echo "  Describe a requirement — Full spec-driven workflow"
 echo "══════════════════════════════════"

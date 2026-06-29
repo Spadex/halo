@@ -97,7 +97,7 @@ your-project/
 Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Verification
 ```
 
-`/prismspec` is the controller, not an extra phase. It routes from existing artifacts; `/sdd` remains as a compatibility alias:
+`/prismspec` is the controller, not an extra phase. It routes from existing artifacts:
 
 ```bash
 bash prismspec/bin/guide.sh --json
@@ -111,7 +111,7 @@ bash prismspec/bin/guide.sh --json
 | Review | Review implementation evidence, diff, and review package. | `review-summary.json` |
 | Verification | Run independent commands or the Lattice pipeline. | `verify.md` |
 
-`/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence. `/finish` remains only as a legacy branch/worktree closeout alias.
+`/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence.
 
 Plan Mode and TDD Mode are implementation policies inside the same workflow:
 
@@ -149,15 +149,14 @@ Projects can set the default mode in `lattice/manifest.yaml`. Users can override
 | Check task evidence | `bash lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` |
 | Advance spec status | `bash lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` |
 | Write review verdict | `bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch --spec-compliance=pass --code-quality=pass --test-coverage=pass --risk=pass` |
-| Draft optional summary | `bash lattice/kernel/orchestrator/sdd/summary-draft.sh <spec-id>` |
-| Create learn draft from knowledge candidates | `bash lattice/kernel/context/summary-learn-draft.sh <spec-id>` |
+| Create knowledge draft from candidates | `bash lattice/kernel/context/summary-learn-draft.sh <spec-id>` |
 | Render eval summary | `bash lattice/kernel/delivery/eval-summary.sh lattice/state/eval-runs/<run-id>.json` |
 | Aggregate eval history | `bash lattice/kernel/delivery/eval-history.sh --out=lattice/state/eval-runs/history.md` |
 | Publish central eval sink | `bash lattice/kernel/delivery/eval-sink.sh publish --sink-dir=lattice/state/eval-sink` |
 | Render static dashboard | `bash lattice/kernel/delivery/eval-dashboard.sh --sink-dir=lattice/state/eval-sink --out=lattice/state/eval-sink/dashboard.html` |
 | Query central sink | `bash lattice/kernel/delivery/eval-query.sh summary --sink-dir=lattice/state/eval-sink` |
-| Approve learn draft | `bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/<draft>.md --reviewer=<name> --reason=<reason> --conflicts-checked` |
-| Promote learn draft | `bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/<draft>.md --require-review --to=lattice/context/knowledge/pitfalls.md` |
+| Approve knowledge draft | `bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/<draft>.md --reviewer=<name> --reason=<reason> --conflicts-checked` |
+| Promote knowledge draft | `bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/<draft>.md --require-review --to=lattice/context/knowledge/pitfalls.md` |
 
 See the [Design Wiki](docs/wiki/) and script `--help` output for the full command contracts.
 

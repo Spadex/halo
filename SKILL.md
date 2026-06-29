@@ -4,8 +4,8 @@ description: >
   Lattice — repo-local AI Coding harness for teams.
   Use when Codex needs to initialize Lattice in a target project, route PrismSpec workflow work,
   load project context, run verification gates, record command-backed evidence, or capture learnings.
-  Triggers include "lattice init", "initialize harness", "prismspec", "sdd", "PrismSpec", "verify",
-  "run pipeline", "eval", "context", and "learn".
+  Triggers include "lattice init", "initialize harness", "prismspec", "PrismSpec", "verify",
+  "run pipeline", "eval", "context", and "capture".
 ---
 
 # Lattice Skill

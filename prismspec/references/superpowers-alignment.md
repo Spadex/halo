@@ -12,7 +12,6 @@ Use Superpowers as the default behavioral reference for workflow discipline:
 - `test-driven-development` for red/green/refactor discipline.
 - `verification-before-completion` for evidence before completion claims.
 - `requesting-code-review` and `receiving-code-review` for review handling.
-- `finishing-a-development-branch` only for explicit branch/worktree closeout. It is not a required PrismSpec main stage.
 
 PrismSpec owns the artifact contract:
 
@@ -22,7 +21,6 @@ PrismSpec owns the artifact contract:
 - task evidence under `.prismspec/runs/` or `.lattice/sdd/`
 - `review-summary.json`
 - `verify.md`
-- optional legacy `summary.md`
 - Lattice context, verification, evidence, eval, and learn gates
 
 Do not create a PrismSpec-only behavior when a Superpowers skill already covers the same workflow discipline. Add PrismSpec rules only when they are needed for durable artifacts, Lattice gates, context discovery, execution mode, AC traceability, or verification evidence.
@@ -38,9 +36,9 @@ Do not create a PrismSpec-only behavior when a Superpowers skill already covers 
 | `verification` | `verification-before-completion` | command-backed `verify.md`, Lattice delivery pipeline, AC coverage and drift gates |
 | optional `knowledge-capture` | no required Superpowers main stage | durable, reusable, non-secret lessons from `verify.md` or review evidence |
 
-## Brainstorming Compatibility
+## Specification Compatibility
 
-For non-trivial work, PrismSpec brainstorming should follow the Superpowers shape:
+For non-trivial work, PrismSpec specification should follow the Superpowers `brainstorming` shape:
 
 1. Explore project context before proposing design.
 2. Ask one material question at a time.

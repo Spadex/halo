@@ -40,13 +40,6 @@ stages:
     layers: [delivery]
     description: "Run independent verification gates; fix and re-run on failure"
 
-  - name: legacy-finishing
-    output: "lattice/specs/{spec-id}/summary.md"
-    gate: [evidence]
-    layers: [orchestrator, delivery]
-    optional: true
-    description: "Optional branch/worktree closeout for teams that still require summary.md"
-
   - name: deploy
     command: "lattice/kernel/delivery/deploy.sh"
     gate: smoke

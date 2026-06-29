@@ -122,7 +122,7 @@ sequenceDiagram
 Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Verification
 ```
 
-`/prismspec` 只是引导入口，不新增阶段；`/sdd` 保留为兼容别名。Loop / Learn 不新增主流程，只在 Verification 后通过 `/capture` 可选触发。
+`/prismspec` 只是引导入口，不新增阶段。Loop / Learn 不新增主流程，只在 Verification 后通过 `/capture` 可选触发。
 
 ## 产物边界
 

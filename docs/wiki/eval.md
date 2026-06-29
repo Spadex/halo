@@ -187,7 +187,7 @@ bash lattice/kernel/delivery/eval-query.sh outcomes --sink-dir=lattice/state/eva
 | 指标 | 含义 |
 |------|------|
 | spec churn | spec 在 planned 后被修改次数。 |
-| knowledge hit rate | Brainstorming 阶段项目知识命中比例。 |
+| knowledge hit rate | Specification 阶段项目知识命中比例。 |
 | missed AC rate | review 或线上发现的漏验收比例。 |
 | review finding density | 每次 review 发现的问题密度。 |
 

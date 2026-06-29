@@ -118,7 +118,7 @@ check_skillpack() {
   check_contains "$manifest" 'bash prismspec/bin/lint\.sh prismspec skillpack' "skillpack self lint gate"
 
   local command
-  for command in prismspec spec plan implement review verify capture sdd brainstorm finish learn; do
+  for command in prismspec spec plan implement review verify capture; do
     check_file "$root/commands/$command.md" "$command command"
   done
   check_executable "$root/bin/new.sh" "new"
@@ -127,7 +127,7 @@ check_skillpack() {
   check_executable "$root/bin/doctor.sh" "doctor"
 
   local stage
-  for stage in workflow specification planning implementation review verification knowledge-capture branch-closeout; do
+  for stage in workflow specification planning implementation review verification knowledge-capture; do
     check_skill_file "$root" "$stage"
     check_skill_interface "$root" "$stage"
     check_contains "$manifest" "path: prismspec/skills/$stage/SKILL\\.md" "$stage canonical skill catalog entry"
@@ -231,8 +231,6 @@ check_plan() {
 check_evidence() {
   if [[ -f "$VERIFY_FILE" ]]; then
     grep -qiE 'command|exit|pass|fail|pipeline|test|build|lint|命令|通过|失败' "$VERIFY_FILE" || bad "verify.md lacks command/result evidence"
-  elif [[ -f "$SUMMARY_FILE" ]]; then
-    grep -qiE 'verification|command|pass|fail|pipeline|test|build|lint|验证|通过|失败' "$SUMMARY_FILE" || bad "summary.md lacks verification evidence"
   else
     bad "verification evidence missing: verify.md"
   fi

@@ -150,7 +150,7 @@ check_dir "lattice/state/knowledge-reviews" "knowledge review event root"
 echo ""
 
 echo "── Agent commands ──"
-for command in prismspec spec plan implement review verify capture sdd brainstorm finish learn; do
+for command in prismspec spec plan implement review verify capture; do
   if [[ -f "$PROJECT_ROOT/.claude/commands/${command}.md" ]]; then
     pass ".claude command: $command"
   else

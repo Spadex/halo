@@ -76,7 +76,7 @@ Read `prismspec/references/superpowers-alignment.md` before changing the workflo
 | Rationalization | Reality |
 |---|---|
 | "I will fill the spec after coding." | That is documentation, not specification. |
-| "I should read the whole repo first." | Brainstorming needs bounded context, not full implementation detail. |
+| "I should read the whole repo first." | Specification needs bounded context, not full implementation detail. |
 | "The default template is always fine." | Different risk shapes need different spec emphasis. |
 | "Mode can be decided during coding." | Mode affects the plan and evidence requirements. |
 | "This is too simple to need approval." | Simple designs can be short, but implementation still needs an approved or explicitly recorded contract. |
