@@ -2,18 +2,23 @@
 
 > English version: [README.en.md](README.en.md)
 
-PrismSpec 是一套可独立使用、也可被 Lattice 托管的 Spec-Driven Development skill pack。它不替代 Coding Agent，而是把一次 AI Coding 任务约束成可恢复、可审查、可验证的产物链。
+PrismSpec 是一套风险自适应的 Spec Coding 工作流，也是一组可独立使用、可被 Lattice 托管的 Agent Skills。它用最小必要契约，把模糊意图压缩成可执行、可审查、可验证的工程约束，并在实现阶段支持 `plan` 与 `tdd` 两种 mode。
+
+PrismSpec 不替代 Coding Agent，也不主张一套流程打天下。它只负责把一次 AI Coding 任务落到可恢复的产物链：`spec.md`、`plan.md`、`review.md`、`verify.md`。
 
 ## 核心判断
 
-AI Coding 的主要风险通常不是“不会写代码”，而是需求、上下文、验证和经验都停留在对话里。PrismSpec 的设计目标是把这些关键状态移出聊天窗口，沉淀为仓库内的工程资产。
+AI Coding 的主要风险通常不是“不会写代码”，而是需求、上下文、风险判断、验证和经验都停留在对话里。PrismSpec 的设计目标是把这些关键状态移出聊天窗口，并按任务风险选择刚好足够的执行强度。
 
 | 设计取舍 | PrismSpec 的选择 |
 |----------|------------------|
-| 少做流程 | 只有会产生 durable artifact 或降低真实风险的阶段才保留 |
-| 多留证据 | 每个完成声明都必须能追溯到文件、命令或 review evidence |
+| 最小必要契约 | 只保留会产生 durable artifact 或降低真实风险的阶段 |
+| 风险自适应 | 低风险走 `plan`，高风险走 `tdd`；发现风险允许 `plan -> tdd` 升级 |
+| 证据优先 | 每个完成声明都必须能追溯到文件、命令或 review evidence |
 | 不造轮子 | Workflow discipline 优先对齐 Superpowers；skill packaging 对齐 Agent Skills |
 | 可恢复 | 任意时刻都从文件状态路由，而不是依赖对话记忆 |
+
+一句话：**PrismSpec 追求的不是更多文档，而是刚好足够强的工程契约。**
 
 ## 流程
 
@@ -116,11 +121,13 @@ bash prismspec/bin/guide.sh --spec=checkout-flow --json
 
 ## 执行策略
 
+PrismSpec 当前刻意只提供两个稳定执行落点，而不是把流程做成复杂连续档位：
+
 | Mode | 适用场景 | 必须产生 |
 |------|----------|----------|
 | `plan` | 低风险功能、文档、配置、简单重构、已有测试覆盖充分 | AC-traced plan、相关测试或 no-test rationale、verification evidence |
 | `tdd` | bug fix、权限、安全、资金、状态机、迁移、并发、幂等、历史回归 | red test、green test、AC-to-test trace、regression evidence |
-| `auto` | 由 Agent 根据风险选择 | 若发现风险，允许 `plan -> tdd` 升级 |
+| `auto` | 由 Agent 根据风险选择 `plan` 或 `tdd` | 若发现风险，允许 `plan -> tdd` 升级 |
 
 不允许静默 `tdd -> plan` 降级；如果用户显式覆盖，必须记录风险。
 
@@ -185,6 +192,7 @@ Artifact lint 会检查：
 ## 设计原则
 
 - Spec 是契约，不是长文档。
+- Plan 和 TDD 是同一工作流的两种风险档位，不是两套流程。
 - Context 是依据，不是资料堆积。
 - Plan 是可分派任务，不是待办清单。
 - Review 判断 intent 和质量，Verification 证明事实。

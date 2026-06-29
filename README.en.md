@@ -22,16 +22,18 @@
 
 ## What Is Lattice
 
-Lattice is a repo-local AI Coding control plane for teams. It turns the requirement understanding, project context, execution policy, verification gates, and delivery evidence that usually stay inside individual AI coding sessions into reusable engineering contracts inside the code repository, so individual productivity compounds into team productivity.
+Lattice is a repo-local AI Coding control plane for teams. It embeds PrismSpec: a risk-adaptive Spec Coding workflow that uses the minimum necessary contract to compress ambiguous intent into executable, reviewable, and verifiable engineering constraints, with two implementation modes: `plan` and `tdd`.
+
+PrismSpec turns an AI coding task into `spec.md`, `plan.md`, `review.md`, and `verify.md`. Lattice adds project context, verification gates, evidence/eval, loop, and learn so individual productivity compounds into reusable team engineering capability.
 
 | Capability Layer | Purpose |
 |------------------|---------|
-| Specification & Planning | Turns requirement understanding into executable specs, acceptance criteria, and task plans so AI coding starts with clear boundaries. |
+| Specification & Planning | Compresses ambiguous intent into executable specs, acceptance criteria, and task plans so AI coding starts with clear boundaries. |
 | Context Engineering | Keeps project knowledge, historical lessons, external constraints, and team rules in the repository so individual judgment becomes reusable team context. |
 | Delivery Verification | Uses build, lint, test, AC coverage, drift checks, and compliance gates to verify that code, specs, and project constraints stay aligned before delivery. |
 | Evidence Intelligence | Aggregates command output, gate results, eval runs, history, and outcomes so completion status, quality risk, and improvement direction are traceable. |
 
-In short: **Lattice turns repeated individual AI Coding gains into reusable, reviewable, and verifiable team engineering capability.**
+In short: **PrismSpec provides the risk-adaptive Spec Coding contract; Lattice connects that contract to team-level context, verification, and evidence loops.**
 
 ## What Problem It Solves
 
@@ -136,7 +138,7 @@ Intent -> Clarify -> Spec -> Build -> Review -> Verify
 bash prismspec/bin/guide.sh --json
 ```
 
-PrismSpec is not documentation ceremony. It moves the important AI coding decisions out of chat and into a resumable contract chain and evidence chain. The user-facing product blocks are backed by Agent Skills-compatible skill folders, command gates, and evidence:
+PrismSpec is not documentation ceremony, and it is not one rigid workflow for every task. It moves important AI coding decisions out of chat and into a resumable contract chain and evidence chain, then selects `plan` or `tdd` execution strength based on risk. The user-facing product blocks are backed by Agent Skills-compatible skill folders, command gates, and evidence:
 
 | Block | Goal | Primary Artifacts |
 |---|---|---|
@@ -150,12 +152,12 @@ Machine-side evidence such as task briefs, review packages, `review-summary.json
 
 `/capture` is a post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence and is not a required stage in the default delivery chain.
 
-Plan Mode and TDD Mode are implementation policies inside the same workflow:
+Plan Mode and TDD Mode are two risk tiers inside the same implementation workflow:
 
 | Mode | Use When | Evidence |
 |------|----------|----------|
 | `plan` | Docs, config, low-risk features, simple refactors, or changes already well covered by tests. | `plan.md`, relevant tests or no-test rationale, verification commands. |
-| `tdd` | Bug fixes, permissions, security, state machines, concurrency, idempotency, migrations, or regressions. | Red test, green test, AC-to-test trace, and related verification. |
+| `tdd` | Bug fixes, permissions, security, money, state machines, concurrency, idempotency, migrations, or regressions. | Red test, green test, AC-to-test trace, and related verification. |
 
 Projects can set the default mode in `lattice/manifest.yaml`. Users can override per spec. Risk discovered later may upgrade `plan -> tdd`; downgrading `tdd -> plan` requires explicit user override.
 

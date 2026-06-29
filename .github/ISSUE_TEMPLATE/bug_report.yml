@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible Lattice bug.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please remove secrets, tokens, private customer data, and proprietary code before submitting.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction Steps
+      description: List the exact commands or workflow steps.
+      placeholder: |
+        1. Run ...
+        2. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, shell, bash version, git version, yq version, and Lattice commit/tag.
+      placeholder: |
+        OS:
+        Shell:
+        bash --version:
+        git --version:
+        yq --version:
+        Lattice commit/tag:
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant Output
+      description: Paste command output, doctor output, or a redacted log.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit Checks
+      options:
+        - label: I removed secrets, tokens, and private data.
+          required: true
+        - label: I checked `SUPPORT.md` troubleshooting notes.
+          required: true

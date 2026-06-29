@@ -26,8 +26,6 @@ All notable changes to this project will be documented in this file.
 - `knowledge-review.sh` to record approve/reject reviewer decisions under `lattice/state/knowledge-reviews/`; `learn-draft.sh promote --require-review` can require approved review evidence with conflict checks.
 - `summary-learn-draft.sh` to convert Knowledge Candidates into reviewable knowledge drafts.
 - `knowledge-lint.sh` to flag missing metadata, missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
-- `context-lint.sh` to reject empty or unfinished per-spec context basis files before context-run evidence is recorded.
-- `context-run.sh` to record per-spec selected facts, constraints, exclusions, conflicts, and context gaps under `lattice/state/context-runs/`.
 - `pr-comment.sh` to create or update a stable GitHub PR comment from the eval Markdown summary.
 - `spec-state-lint.sh` to validate spec front matter and status-to-artifact readiness.
 - `spec-status.sh` to advance spec lifecycle status with guarded transitions, stale-state protection, and JSON transition events.
@@ -47,10 +45,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - README and wiki now describe pipeline/gate eval JSON, central eval sink, loop state, outcome links/reports, configurable failure categories, failure category lint, escalation knowledge drafts, knowledge draft promotion/discard, knowledge governance lint, review/TDD process evidence, Markdown summaries/history, GitHub Actions artifacts, Step Summary, and PR comments as implemented.
-- Pipeline eval runs, eval summaries, and eval history now include Context Evidence when a spec has `context.md`.
 - Default architecture and glossary knowledge templates now include `Source` columns for promotion governance.
 - Default project knowledge templates now include `owner`, `verified_at`, and `applies_to` front matter.
-- PrismSpec README now documents `context.md` in both standalone and Lattice-hosted artifact layouts.
+- PrismSpec now treats `spec.md#Context Basis` as the default per-spec context contract instead of a separate `context.md` artifact.
 - Plan lint now enforces a stricter task schema with AC coverage, mode/scope, evidence paths, done conditions, stable task order, and TDD red-test ordering.
 
 ### Fixed

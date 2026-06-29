@@ -40,6 +40,7 @@ flowchart LR
 | [Eval 设计](eval.md) | Evidence / Eval 的数据模型与未来结构化指标 |
 | [Loop 设计](loop.md) | verify-fix-rerun-escalate-learn 闭环 |
 | [Gap 与 Roadmap](gaps-and-roadmap.md) | 当前 gap、优先级和里程碑 |
+| [发布验收 Review](release-readiness-review.md) | 公开发布前的自测结果、用户体验检查和商业化 gap |
 
 ## 设计原则
 

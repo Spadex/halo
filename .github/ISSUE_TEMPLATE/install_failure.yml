@@ -1,0 +1,54 @@
+name: Install failure
+description: Report a failure during install, init, or doctor.
+title: "[Install]: "
+labels: ["install"]
+body:
+  - type: textarea
+    id: command
+    attributes:
+      label: Install Command
+      description: Paste the exact command you ran.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste the full install/init/doctor output after redacting secrets.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        OS:
+        Shell:
+        bash --version:
+        git --version:
+        yq --version:
+        Repository visibility: public/private/internal
+    validations:
+      required: true
+  - type: dropdown
+    id: install_path
+    attributes:
+      label: Install Path
+      options:
+        - Remote curl install
+        - Local clone install
+        - Upgrade existing project
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit Checks
+      options:
+        - label: I verified the install URL is accessible from a browser or `curl` without local credentials when using remote install.
+          required: false
+        - label: I removed secrets, tokens, and private data.
+          required: true

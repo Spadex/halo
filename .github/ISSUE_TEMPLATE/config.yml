@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Support guide
+    url: https://github.com/zdolphin07-dotcom/lattice/blob/main/SUPPORT.md
+    about: Read troubleshooting and support scope before opening an issue.
+  - name: Security policy
+    url: https://github.com/zdolphin07-dotcom/lattice/blob/main/SECURITY.md
+    about: Read how to report security-sensitive issues.

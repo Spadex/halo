@@ -2,7 +2,9 @@
 
 > 中文版: [README.md](README.md)
 
-PrismSpec is a standalone Spec-Driven Development skill pack that can also be hosted by Lattice. It turns an AI coding task into a stable contract chain and evidence chain:
+PrismSpec is a risk-adaptive Spec Coding workflow and a standalone Agent Skills pack that can also be hosted by Lattice. It uses the minimum necessary contract to compress ambiguous intent into executable, reviewable, and verifiable engineering constraints, with two implementation modes: `plan` and `tdd`.
+
+PrismSpec does not replace the coding agent, and it is not one rigid workflow for every task. It turns an AI coding task into a stable, resumable artifact chain:
 
 ```text
 specification -> planning -> implementation(plan|tdd) -> review -> verification
@@ -22,7 +24,7 @@ The AI can implement freely, but it must move through reviewable artifacts:
 | Review | Does the implementation match the spec, and is the code acceptable? | `review.md` |
 | Verification | What did the repository prove with real commands? | `verify.md` |
 
-The philosophy is simple: **fewer phases, stronger evidence. Reuse mature workflow discipline; put PrismSpec's value in artifacts, context, evidence, and resumability.**
+The philosophy is simple: **minimum necessary contract, risk-adaptive execution, stronger evidence. Reuse mature workflow discipline; put PrismSpec's value in artifacts, context, evidence, and resumability.**
 
 The primary human-readable artifact contract is only `spec.md`, `plan.md`, `review.md`, and `verify.md`. `review-summary.json`, `review-package.md`, task briefs, TDD/debug evidence, and eval run JSON are machine-side or task-side evidence, not extra user-facing stages.
 
@@ -175,14 +177,14 @@ Template rule: use `lite` when possible; use `tdd` for permissions, security, mo
 
 ## Execution Modes
 
-PrismSpec supports two implementation policies:
+PrismSpec intentionally exposes two stable execution modes instead of a complex continuum:
 
 | Mode | Use When | Must Produce |
 |------|----------|--------------|
 | `plan` | Low-risk features, docs, config, straightforward refactors, or behavior already covered by tests. | AC-traced plan, relevant tests or no-test rationale, verification evidence. |
 | `tdd` | Bug fixes, permissions, security, money, state machines, migrations, concurrency, idempotency, or regressions. | Red test, green test, AC-to-test trace, regression verification. |
 
-`auto` means the model chooses based on risk. `plan -> tdd` escalation is allowed when risk is discovered. `tdd -> plan` downgrade requires explicit user override and recorded risk.
+`auto` means the model chooses `plan` or `tdd` based on risk. `plan -> tdd` escalation is allowed when risk is discovered. `tdd -> plan` downgrade requires explicit user override and recorded risk.
 
 ## Canonical Skills
 
@@ -246,6 +248,7 @@ Long-form guidance lives in `references/` and is loaded on demand:
 ## Design Principles
 
 - Spec is a contract, not a long document.
+- Plan and TDD are two risk tiers inside one workflow, not separate workflows.
 - Prefer mature Superpowers workflow discipline when it exists; do not invent parallel PrismSpec behavior for the same thing.
 - A workflow node exists only when it creates a durable artifact or prevents real engineering risk.
 - Context starts with a map, then the Agent discovers, selects, and compresses relevant facts.

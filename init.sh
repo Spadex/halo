@@ -229,7 +229,7 @@ done
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/VERSION" "lattice/kernel/VERSION"
 
-for dir in specs state state/eval-runs state/eval-sink state/loops state/outcomes state/learn-promotions state/knowledge-reviews skills config context context/knowledge context/knowledge/decisions context/drafts context/drafts/promoted context/drafts/discarded state/context-runs; do
+for dir in specs state state/eval-runs state/eval-sink state/loops state/outcomes state/learn-promotions state/knowledge-reviews skills config context context/knowledge context/knowledge/decisions context/drafts context/drafts/promoted context/drafts/discarded; do
   mkdir -p "lattice/$dir"
   [[ -f "lattice/$dir/.gitkeep" ]] || touch "lattice/$dir/.gitkeep"
 done
@@ -387,7 +387,7 @@ project:
 kernel:
   layers:
     orchestrator: true     # PrismSpec routing, spec state, task evidence
-    context: true          # Context map, project knowledge, context-run evidence
+    context: true          # Context map, project knowledge, and spec Context Basis
     delivery: true         # Verification gates and Evidence/Eval output
 
 tools:
@@ -506,7 +506,6 @@ context:
       - model_prior
     conflict: project_wins
     sensitivity: redact_secret
-  runs_dir: "lattice/state/context-runs"
 YAML
   echo "  ✅ $MANIFEST_FILE"
 fi

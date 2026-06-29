@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Syntax check (bash -n)
-        run: bash -n init.sh install.sh tests/smoke-test.sh $(find harness-template prismspec/bin -name '*.sh')
+        run: bash -n init.sh install.sh tests/*.sh $(find harness-template prismspec/bin -name '*.sh')
 
       - name: Validate PrismSpec skill frontmatter
         run: |
@@ -27,7 +27,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
       - name: ShellCheck
-        run: shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find harness-template prismspec/bin -name '*.sh')
+        run: shellcheck --severity=warning init.sh install.sh tests/*.sh $(find harness-template prismspec/bin -name '*.sh')
 
   smoke-test:
     runs-on: ubuntu-latest
@@ -46,3 +46,29 @@ jobs:
 
       - name: Run smoke test
         run: bash tests/smoke-test.sh
+
+  example-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Run Go/Gin/GORM example
+        run: bash examples/go-gin-gorm/try-it.sh
+
+  release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Run release readiness check
+        run: bash tests/release-check.sh
