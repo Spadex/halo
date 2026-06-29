@@ -28,9 +28,11 @@ This skill aligns with Superpowers `writing-plans`: global constraints, concrete
 6. Upgrade `plan -> tdd` when discovered risk requires red-test evidence.
 7. Write `plan.md` next to `spec.md`.
 8. Include mode, scope, interfaces, files/contracts, AC links, verification, evidence paths, and done conditions per task.
-9. Run the self-review checklist below before implementation starts.
-10. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/plan-lint.sh <spec-id>` before implementation starts.
-11. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` after plan-lint passes.
+9. For implementation tasks, include concrete steps that a zero-context implementer can follow: exact file paths, code/test locations, focused command, expected result, and commit or evidence boundary.
+10. For TDD tasks, include the red test intent, exact command, expected failure reason, green command, and regression command.
+11. Run the self-review checklist below before implementation starts.
+12. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/plan-lint.sh <spec-id>` before implementation starts.
+13. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` after plan-lint passes.
 
 ## Plan Header
 
@@ -77,6 +79,12 @@ Use checkbox task rows so Lattice can track execution state. Every AC in `spec.m
     - Touched files/contracts: <module/api/schema/ui/config>
   - Files: `<path>`, `<path>`
   - Verification: `<exact command, test name, or gate>`
+  - Steps:
+    - [ ] Write or update `<test path>` for `<specific behavior>`.
+    - [ ] Run `<focused command>` and expect `<pass/fail reason>`.
+    - [ ] Change `<implementation path>` to produce `<exact output/state>`.
+    - [ ] Rerun `<focused command>` and expect `<pass>`.
+    - [ ] Run `<regression command>` or record no-test rationale.
   - Evidence:
     - Brief: `.lattice/sdd/<spec-id>/T1/brief.md`
     - Review package: `.lattice/sdd/<spec-id>/T1/review-package.md`
@@ -94,6 +102,7 @@ For TDD tasks, list explicit `RED-{n}` tasks before implementation tasks:
   - Expected failure: <why this should fail before implementation>
   - Test file: `<path>`
   - Verification: `<exact command or test name>`
+  - Expected command result: fail because `<missing behavior>`, not setup or syntax.
   - Done when:
     - [ ] Expected failure is captured in the related task evidence.
 ```
@@ -116,6 +125,7 @@ These are plan failures:
 - "Similar to Task N" instead of repeating the exact requirement.
 - Verification that says only "run tests" without a command, test name, expected result, or gate.
 - Type, method, field, route, config, or artifact names that are used before they are defined.
+- Steps that tell an implementer what to accomplish but not where to edit, what to run, or what result proves the step.
 
 ## Self-Review
 
@@ -126,6 +136,7 @@ Before reporting the plan ready, review it once as if you were the future task r
 3. **Placeholder scan:** no vague placeholders or "similar to" instructions remain.
 4. **Type/interface consistency:** names and signatures match across neighboring tasks.
 5. **Reviewer pre-flight:** if the plan mandates something a reviewer would flag as a defect, surface the conflict before implementation.
+6. **Zero-context execution:** a fresh implementer with only one task, the global constraints, and relevant interfaces can complete the task without reading the whole plan.
 
 ## Outputs
 
@@ -155,6 +166,7 @@ Before reporting the plan ready, review it once as if you were the future task r
 - Verification says "run tests" without exact commands.
 - Plan omits `Global Constraints` or per-task `Interfaces`.
 - A task cannot be reviewed from its brief, report, review package, and evidence alone.
+- TDD red task lacks the expected failure reason.
 
 ## Verification
 
@@ -164,4 +176,5 @@ Before reporting the plan ready, review it once as if you were the future task r
 - [ ] Every behavior task references at least one AC.
 - [ ] Global constraints and task interfaces are present and concrete.
 - [ ] Every task has verification evidence requirements.
+- [ ] Behavior tasks include concrete steps, focused commands, and expected results.
 - [ ] No task is too large to complete and verify in one focused session.

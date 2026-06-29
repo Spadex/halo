@@ -40,18 +40,26 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 
 8. For task-scoped review, replace `branch` with the task id, for example `T1`.
 9. Critical or important findings block verification. Minor findings may be recorded as residual risk or follow-up.
+10. When receiving external review feedback, evaluate it technically before implementing it:
+    - read the full feedback;
+    - restate unclear items or ask before changing code;
+    - verify the claim against code, spec, plan, tests, and evidence;
+    - push back with technical reasoning when feedback conflicts with the project contract;
+    - implement one accepted item at a time and test each fix.
 
 ## Outputs
 
 - Branch review summary: `.lattice/sdd/<spec-id>/branch/review-summary.json` or `.prismspec/runs/<spec-id>/branch/review-summary.json`.
 - Optional task review summaries: `.lattice/sdd/<spec-id>/<task-id>/review-summary.json`.
 - Findings with file/line references where possible.
+- Disposition for received review feedback: accepted, rejected with reason, cannot_verify, or needs user decision.
 
 ## Stop Conditions
 
 - Required review packages, reports, or evidence are missing.
 - The diff includes unplanned scope that needs spec or plan updates.
 - A finding requires product, architecture, data, security, or permission decisions.
+- Review feedback is unclear and could cause the wrong change.
 
 ## Common Rationalizations
 
@@ -61,6 +69,7 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 | "Verification will catch it." | Review checks intent, scope, and maintainability before broad commands run. |
 | "Cannot verify is close enough." | It is a residual risk and must block or be explicitly accepted. |
 | "Minor cleanup can be hidden in review." | Findings need concrete disposition. |
+| "The reviewer said it, so implement it." | External review feedback must be verified against this codebase and spec. |
 
 ## Red Flags
 
@@ -68,6 +77,8 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 - Review summary has only prose and no verdict.
 - `cannot_verify` is treated as pass.
 - Review starts without `spec.md`, `plan.md`, or task evidence.
+- Feedback is implemented before it is understood.
+- Multiple review items are batched without focused verification.
 
 ## Verification
 
@@ -75,3 +86,5 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 - [ ] Verdict axes include spec compliance, code quality, test coverage, and risk.
 - [ ] Findings are grounded in diff, evidence, or missing evidence.
 - [ ] Blocking findings are fixed before verification or recorded as explicit blockers.
+- [ ] Accepted review feedback has focused verification evidence.
+- [ ] Rejected review feedback has technical reasoning or a user decision.

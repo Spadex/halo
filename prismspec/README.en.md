@@ -2,13 +2,27 @@
 
 > 中文版: [README.md](README.md)
 
-PrismSpec is a standalone, progressive Spec Coding skill pack. It turns an AI coding task into a resumable, reviewable, and verifiable artifact chain:
+PrismSpec is a standalone Spec-Driven Development skill pack that can also be hosted by Lattice. It turns an AI coding task into a stable contract chain and evidence chain:
 
 ```text
 specification -> planning -> implementation(plan|tdd) -> review -> verification
 ```
 
 `/prismspec` is the controller, not an extra phase. It reads current artifacts and routes to the next stage skill.
+
+## One-Screen Model
+
+The AI can implement freely, but it must move through reviewable artifacts:
+
+| Layer | Question | Artifacts |
+|-------|----------|-----------|
+| Contract | What are we doing, based on what context, and how is it accepted? | `context.md`, `spec.md` |
+| Plan | Who changes which files in what order, and how is each slice proven? | `plan.md` |
+| Execution | How is each slice implemented, and does it need a red test? | code, tests, task evidence |
+| Review | Does the implementation match the spec, and is the code acceptable? | `review-summary.json` |
+| Verification | What did the repository prove with real commands? | `verify.md` |
+
+The philosophy is simple: **fewer phases, stronger evidence. Reuse mature workflow discipline; put PrismSpec's value in artifacts, context, evidence, and resumability.**
 
 ## Positioning
 
@@ -27,13 +41,14 @@ PrismSpec does not depend on Lattice. Lattice embeds PrismSpec as its default Sp
 prismspec/
 ├── skillpack.yaml              # machine-readable skill-pack contract
 ├── skills/
-│   ├── workflow/SKILL.md       # lifecycle controller
-│   ├── specification/SKILL.md
-│   ├── planning/SKILL.md
-│   ├── implementation/SKILL.md
-│   ├── review/SKILL.md
-│   ├── verification/SKILL.md
-│   └── knowledge-capture/SKILL.md
+│   ├── prismspec-workflow/SKILL.md       # lifecycle controller
+│   ├── prismspec-specification/SKILL.md
+│   ├── prismspec-planning/SKILL.md
+│   ├── prismspec-implementation/SKILL.md
+│   ├── prismspec-review/SKILL.md
+│   ├── prismspec-verification/SKILL.md
+│   ├── prismspec-knowledge-capture/SKILL.md
+│   └── prismspec-debugging/SKILL.md
 ├── templates/                  # spec/context templates
 ├── references/                 # loaded on demand
 ├── agents/                     # task reviewer persona
@@ -41,9 +56,15 @@ prismspec/
 └── bin/                        # deterministic new/guide/lint/doctor helpers
 ```
 
-`skills/*/SKILL.md` is the only canonical skill source. Do not maintain parallel flat `skills/*.md` entries.
+`skills/prismspec-*/SKILL.md` is the only canonical skill source. Each folder name matches the frontmatter `name`, following Agent Skills packaging conventions. Do not maintain parallel flat `skills/*.md` entries.
 
-Each canonical skill includes `agents/openai.yaml` for UI, installer, or marketplace discovery: `display_name`, `short_description`, and a default invocation prompt. The root-level `agents/` directory contains the task reviewer persona; it has a different role.
+Each canonical skill includes:
+
+- `agents/openai.yaml` for UI, installer, or marketplace discovery;
+- `evals/evals.json` for should-trigger, should-not-trigger, and behavior assertions;
+- `SKILL.md` for the core workflow needed after the skill triggers.
+
+The root-level `agents/` directory contains the task reviewer persona; it has a different role.
 
 `skillpack.yaml` is the distributable contract. It declares workflow stages, skills, templates, references, host modes, and quality gates. Agents, installers, and wrappers should prefer it over guessing the layout from the README.
 
@@ -127,6 +148,17 @@ bash prismspec/bin/guide.sh --spec=checkout-flow --from=verification --json
 
 `/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence.
 
+## Alignment
+
+PrismSpec aligns with two mature practices:
+
+| Standard | How PrismSpec Uses It |
+|----------|------------------------|
+| Superpowers | Reuse proven coding workflow discipline: brainstorming, writing plans, TDD, task review, systematic debugging, and verification before completion. |
+| Agent Skills | Follow distributable skill packaging: folder name = skill name, trigger-rich description, progressive disclosure, `agents/openai.yaml`, and `evals/evals.json`. |
+
+PrismSpec does not reinvent brainstorming, TDD, or verification discipline. It anchors those disciplines in durable artifacts, project context, evidence, and Lattice gates.
+
 ## Templates
 
 | Template | Use When | Focus |
@@ -154,13 +186,14 @@ PrismSpec supports two implementation policies:
 
 | Skill | Trigger | Durable Output |
 |-------|---------|----------------|
-| `skills/workflow/SKILL.md` | `/prismspec`, spec resume, end-to-end guidance | stage routing |
-| `skills/specification/SKILL.md` | `/spec`, new requirement, unclear scope/AC/mode/context | `context.md`, `spec.md` |
-| `skills/planning/SKILL.md` | `/plan`, spec exists but tasks or verification paths are missing | `plan.md` |
-| `skills/implementation/SKILL.md` | `/implement`, execute AC-traced tasks | code, tests, task evidence |
-| `skills/review/SKILL.md` | `/review`, implementation evidence needs independent review | `review-summary.json` |
-| `skills/verification/SKILL.md` | `/verify`, run external verification after implementation and review | `verify.md` |
-| `skills/knowledge-capture/SKILL.md` | `/capture`, capture reusable rules, decisions, pitfalls | knowledge draft / project knowledge |
+| `skills/prismspec-workflow/SKILL.md` | `/prismspec`, spec resume, end-to-end guidance | stage routing |
+| `skills/prismspec-specification/SKILL.md` | `/spec`, new requirement, unclear scope/AC/mode/context | `context.md`, `spec.md` |
+| `skills/prismspec-planning/SKILL.md` | `/plan`, spec exists but tasks or verification paths are missing | `plan.md` |
+| `skills/prismspec-implementation/SKILL.md` | `/implement`, execute AC-traced tasks | code, tests, task evidence |
+| `skills/prismspec-review/SKILL.md` | `/review`, implementation evidence needs independent review | `review-summary.json` |
+| `skills/prismspec-verification/SKILL.md` | `/verify`, run external verification after implementation and review | `verify.md` |
+| `skills/prismspec-knowledge-capture/SKILL.md` | `/capture`, capture reusable rules, decisions, pitfalls | knowledge draft / project knowledge |
+| `skills/prismspec-debugging/SKILL.md` | bugs, failing tests, build/pipeline failures, unexpected behavior | root cause, repro, fix evidence |
 
 Every canonical skill follows the same quality bar: trigger-rich frontmatter, workflow, inputs/outputs, stop conditions, common rationalizations, red flags, and verification checklist.
 
@@ -181,6 +214,7 @@ bash prismspec/bin/lint.sh lattice/specs/checkout-flow
 
 - `skillpack.yaml` entrypoints, workflow stages, and quality gates;
 - canonical `skills/*/SKILL.md` frontmatter, trigger descriptions, core sections, and `agents/openai.yaml`;
+- every skill's `evals/evals.json`;
 - templates, references, command, guide/lint scripts;
 - absence of flat skill wrappers.
 
@@ -203,6 +237,7 @@ Long-form guidance lives in `references/` and is loaded on demand:
 | `review-evidence-checklist.md` | pass/fail/cannot_verify verdict rules |
 | `definition-of-done.md` | verification completion standard |
 | `superpowers-alignment.md` | Prefer proven Superpowers workflow discipline; PrismSpec adds artifact/context/evidence contracts |
+| `agent-skills-alignment.md` | Agent Skills packaging, triggering, eval, and progressive disclosure standards |
 
 `agents/` provides one task-scoped reviewer persona: `task-reviewer.md`. It returns both spec compliance and code quality verdicts, supports `cannot_verify`, and avoids multi-reviewer drift and duplicate review cost.
 

@@ -8,6 +8,7 @@ Lattice is agent-agnostic. It injects behavioral constraints at phase boundaries
 | **Cursor** | `.cursorrules` `@file` directive | [cursor.md](cursor.md) |
 | **Aider** | `--read` flag / `.aider.conf.yml` | [aider.md](aider.md) |
 | **Superpowers** | Workflow engine phase mapping | [superpowers.md](superpowers.md) |
+| **Agent Skills** | Skill packaging, metadata, progressive disclosure, evals | [agent-skills.md](agent-skills.md) |
 
 ## How It Works
 

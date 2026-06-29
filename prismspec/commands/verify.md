@@ -2,7 +2,7 @@
 description: Run command-backed PrismSpec verification and record verify.md
 ---
 
-Use `prismspec/skills/verification/SKILL.md`.
+Use `prismspec/skills/prismspec-verification/SKILL.md`.
 
 Run:
 

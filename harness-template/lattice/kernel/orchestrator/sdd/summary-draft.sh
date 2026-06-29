@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# summary-draft.sh — Generate a closeout summary.md draft from spec, plan, verification, and evidence.
+# summary-draft.sh — Generate a completion summary.md draft from spec, plan, verification, and evidence.
 source "$(dirname "$0")/../../_lib.sh"
 
 usage_line="summary-draft.sh <spec-id|path/to/spec.md> [--eval-json=<file>] [--out=<file>]"
@@ -155,7 +155,7 @@ mkdir -p "$(dirname "$OUT")"
   echo "| Field | Value |"
   echo "|---|---|"
   echo "| Spec | \`$(md_escape "$SPEC_REL")\` |"
-  echo "| Status before closeout | $(md_escape "${STATUS:-unknown}") |"
+  echo "| Status before completion | $(md_escape "${STATUS:-unknown}") |"
   echo "| Execution mode | $(md_escape "${MODE:-unknown}") |"
   echo "| Acceptance Criteria | $(md_escape "${AC_IDS:-none}") |"
   if [[ -n "$EVAL_JSON" ]]; then

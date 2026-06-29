@@ -95,7 +95,7 @@ your-project/
 ## 核心工作流
 
 ```text
-Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Verification
+Intent -> Clarify -> Spec -> Build -> Review -> Verify
 ```
 
 `/prismspec` 是引导入口，不是额外阶段。它根据已有产物自动路由：
@@ -104,13 +104,15 @@ Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Ver
 bash prismspec/bin/guide.sh --json
 ```
 
-| 阶段 | 目标 | 产物 |
-|------|------|------|
-| Specification | 固化上下文依据、范围、AC、风险和执行模式 | `context.md`、`spec.md` |
-| Planning | 将 spec 拆成 AC-traced tasks | `plan.md` |
-| Implementation | 按 Plan Mode 或 TDD Mode 实现 | code、tests、task evidence |
-| Review | 审查实现证据、diff、review package | `review-summary.json` |
-| Verification | 运行独立验证命令或 Lattice pipeline | `verify.md` |
+PrismSpec 的设计重点不是多一层文档，而是让 AI Coding 的关键决策离开对话窗口，进入可恢复的契约链和证据链。对用户呈现为五个产品板块，底层仍由 Agent Skills-compatible skill folders、命令 gates 和 evidence 驱动：
+
+| Block | 目标 | 主要产物 |
+|---|---|---|
+| Clarify | 明确 intent、上下文依据、假设、冲突和阻塞问题 | `context.md` |
+| Spec | 固化 scope、non-goals、AC、risk、mode 和验证计划 | `spec.md` |
+| Build | 拆 plan、执行 plan/TDD 切片、处理调试和任务证据 | `plan.md`、task evidence、TDD/debug evidence |
+| Review | 独立审查实现证据、diff 和质量风险 | `review-summary.json`、review package |
+| Verify | 运行真实命令或 Lattice pipeline 证明完成状态 | `verify.md`、eval run JSON |
 
 `/capture` 是可选后处理，只把 `verify.md` 或 review evidence 中可复用、非敏感、可审计的经验沉淀到知识库。
 
@@ -168,13 +170,14 @@ Lattice 当前已经具备 **repo-local AI Coding harness 的最小可信闭环*
 | 方向 | 已可用能力 |
 |------|------------|
 | 安装与初始化 | `install.sh`、`init.sh`、`doctor.sh` manifest/skillpack contract 检查、smoke test、GitHub Actions eval artifact 模板 |
-| PrismSpec | canonical skills、`new.sh`、`doctor.sh`、`guide.sh`、skillpack/artifact `lint.sh`、多模板、Plan/TDD policy、standalone 与 Lattice-hosted 两种模式 |
+| PrismSpec | Agent Skills-compatible canonical skills、per-skill evals、`new.sh`、`doctor.sh`、`guide.sh`、skillpack/artifact `lint.sh`、多模板、Plan/TDD/debugging policy、standalone 与 Lattice-hosted 两种模式 |
+| Product blocks | `skillpack.yaml` 暴露 Clarify / Spec / Build / Review / Verify，方便 host/installer/UI 读取 |
 | Spec lifecycle | `context.md`、`spec.md`、`plan.md`、review evidence、`verify.md`、状态推进、transition event/history |
-| Implementation evidence | `task-next.sh`、`task-complete.sh`、task brief、review package、review summary、TDD evidence、task evidence lint |
+| Implementation evidence | `task-next.sh`、`task-complete.sh`、task brief、review package、review summary、TDD/debugging evidence、task evidence lint |
 | Verification / Evidence | pipeline、spec lint、AC coverage、drift check、compliance、spec lock、structured eval JSON、Markdown summary/history |
 | Loop 与 outcome | loop state、failure category、escalation draft、outcome link/report、central eval sink、static dashboard、eval query、PR comment dry-run |
 | Context / Learn | context map、external map、knowledge backend、context-lint、context-run、knowledge metadata/governance lint、knowledge review、learn draft promote/discard、summary-to-learn-draft |
-| 示例与适配 | Go/Gin/GORM 可运行示例、Claude Code / Cursor / Aider / Superpowers adapter docs |
+| 示例与适配 | Go/Gin/GORM 可运行示例、Claude Code / Cursor / Aider / Superpowers / Agent Skills adapter docs |
 
 仍在演进：
 
@@ -189,8 +192,9 @@ Lattice 当前已经具备 **repo-local AI Coding harness 的最小可信闭环*
 | 文档 | 内容 |
 |------|------|
 | [设计 Wiki](docs/wiki/) | 系统设计、SDD、Context、Eval、Loop、Roadmap |
+| [五板块工作台](docs/wiki/workflow-blocks.md) | Clarify / Spec / Build / Review / Verify 的产品契约 |
 | [PrismSpec README](prismspec/README.md) | 独立 Spec Coding skill pack |
-| [Agent adapters](docs/adapters/) | Claude Code、Cursor、Aider、Superpowers 等适配说明 |
+| [Agent adapters](docs/adapters/) | Claude Code、Cursor、Aider、Superpowers、Agent Skills 等适配说明 |
 | [示例项目](examples/go-gin-gorm/) | 可运行示例 |
 | [贡献指南](CONTRIBUTING.md) | 开发、测试、贡献规范 |
 

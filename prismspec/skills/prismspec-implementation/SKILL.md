@@ -32,15 +32,37 @@ TDD mode is intentionally strict: write the test first, watch it fail for the ex
 5. Execute according to mode:
    - `plan`: implement the task, add tests for behavior changes or meaningful regression risk.
    - `tdd`: write and run the red test first, confirm the expected failure, implement green, then refactor.
-6. Run focused verification for the task.
-7. Write an implementer report in the task evidence directory with commit range, files changed, tests run, and concerns.
-8. Generate a review package when helpers exist.
-9. Generate review evidence for the review stage. When task-scoped review is requested, use one reviewer that returns both spec-compliance and code-quality verdicts.
-10. In TDD mode, write `tdd-evidence.json` when the helper exists.
-11. In Lattice-hosted mode, mark the task complete with `lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id>`; otherwise update `plan.md` only after evidence exists.
-12. In Lattice-hosted mode, re-run `task-next`; if another task is returned, stop or continue only when the user asked for multi-task execution.
-13. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` after completed implementation tasks are checked.
-14. In Lattice-hosted mode, when all planned tasks are complete, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> implemented --from=planned`.
+6. When subagents are available and tasks are independent, prefer the Subagent Execution Loop below.
+7. Run focused verification for the task.
+8. Write an implementer report in the task evidence directory with commit range, files changed, tests run, and concerns.
+9. Generate a review package when helpers exist.
+10. Generate review evidence for the review stage. When task-scoped review is requested, use one reviewer that returns both spec-compliance and code-quality verdicts.
+11. In TDD mode, write `tdd-evidence.json` when the helper exists.
+12. In Lattice-hosted mode, mark the task complete with `lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id>`; otherwise update `plan.md` only after evidence exists.
+13. Update the progress ledger when available.
+14. In Lattice-hosted mode, re-run `task-next`; if another task is returned, stop or continue only when the user asked for multi-task execution.
+15. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` after completed implementation tasks are checked.
+16. In Lattice-hosted mode, when all planned tasks are complete, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> implemented --from=planned`.
+
+## Subagent Execution Loop
+
+Use this loop when subagents are available and the task can be isolated:
+
+1. Create or read the progress ledger at `.lattice/sdd/<spec-id>/progress.md` or `.prismspec/runs/<spec-id>/progress.md`.
+2. Record the base commit before dispatching the implementer.
+3. Dispatch a fresh implementer with only the task brief, global constraints, relevant interfaces, output report path, and test/evidence contract.
+4. Interpret implementer status:
+   - `DONE`: proceed to review.
+   - `DONE_WITH_CONCERNS`: read concerns and resolve correctness or scope concerns before review.
+   - `NEEDS_CONTEXT`: provide missing context and re-dispatch.
+   - `BLOCKED`: change context, model, task size, or escalate; do not retry unchanged.
+5. Generate the review package from the recorded base commit to current HEAD.
+6. Dispatch a read-only task reviewer with the task brief, implementer report, review package, and binding global constraints.
+7. Fix Critical and Important findings before marking the task complete. Record Minor findings for final triage.
+8. Append one ledger line: `Task <id>: complete (commits <base>..<head>, review <verdict>)`.
+9. After all tasks, run a final whole-branch review before verification when the diff is non-trivial.
+
+Do not paste full prior-task history into later dispatches. File paths and the current task brief are the handoff.
 
 ## TDD Cycle
 
@@ -83,6 +105,7 @@ Task review is a gate, not a rewrite session.
 - Record spec drift before implementing new scope.
 - Prefer simple, boring code until tests prove the behavior.
 - Separate unrelated refactors into follow-up tasks.
+- If a command fails for an unexplained reason, switch to `prismspec-debugging` before fixing.
 
 ## Outputs
 
@@ -90,6 +113,7 @@ Task review is a gate, not a rewrite session.
 - Task evidence under `.prismspec/runs/<spec-id>/<task-id>/` or `.lattice/sdd/<spec-id>/<task-id>/`.
 - For Lattice-hosted TDD tasks: `.lattice/sdd/<spec-id>/<task-id>/tdd-evidence.json`.
 - Updated `plan.md` task status when appropriate.
+- Progress ledger when subagent execution is used.
 
 ## Stop Conditions
 
@@ -118,6 +142,8 @@ Task review is a gate, not a rewrite session.
 - Implementation changes unmentioned contracts without updating `spec.md`.
 - TDD task has green evidence without a captured red failure.
 - Review prompt includes "do not flag", "ignore", "at most minor", or similar pre-judgment.
+- Re-dispatches a blocked subagent without changing context, model, task size, or instructions.
+- Relies on conversation todos alone for multi-task progress.
 
 ## Verification
 
@@ -125,6 +151,7 @@ Task review is a gate, not a rewrite session.
 - [ ] TDD tasks include red and green evidence.
 - [ ] Implementer report and review package exist when review is required.
 - [ ] Task review has both spec-compliance and code-quality verdicts when review is required.
+- [ ] Progress ledger is updated when subagent execution is used.
 - [ ] Lattice task-evidence-lint passes for completed tasks.
 - [ ] Lattice spec-status advances to `implemented` when all planned tasks are complete.
 - [ ] Diff is scoped to the planned task.

@@ -34,6 +34,7 @@ flowchart LR
 | 文档 | 重点 |
 |------|------|
 | [整体设计](overall-design.md) | Lattice 的边界、组件模型、生命周期和可插拔点 |
+| [五板块工作台](workflow-blocks.md) | Clarify / Spec / Build / Review / Verify 的产品契约与 gap |
 | [SDD 设计](sdd.md) | PrismSpec 五阶段链路、Plan/TDD mode、产物契约 |
 | [Context 设计](context.md) | Agent 上下文地图、项目知识、外部知识和 per-spec context |
 | [Eval 设计](eval.md) | Evidence / Eval 的数据模型与未来结构化指标 |

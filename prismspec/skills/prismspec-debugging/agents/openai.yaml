@@ -1,0 +1,4 @@
+interface:
+  display_name: "PrismSpec Debugging"
+  short_description: "Trace failures to root cause before fixing"
+  default_prompt: "Use $prismspec-debugging to investigate this failure before changing code."

@@ -11,6 +11,7 @@ Use Superpowers as the default behavioral reference for workflow discipline:
 - `subagent-driven-development` or `executing-plans` for task execution discipline, file-backed handoffs, task review, and progress tracking.
 - `test-driven-development` for red/green/refactor discipline.
 - `verification-before-completion` for evidence before completion claims.
+- `systematic-debugging` for root-cause investigation before fixes.
 - `requesting-code-review` and `receiving-code-review` for review handling.
 
 PrismSpec owns the artifact contract:
@@ -34,6 +35,7 @@ Do not create a PrismSpec-only behavior when a Superpowers skill already covers 
 | `implementation` | `subagent-driven-development`, `executing-plans`, `test-driven-development` | task status scripts, TDD evidence JSON, Lattice task evidence lint |
 | `review` | Superpowers SDD task reviewer discipline, code review skills | `review-summary.json`, `pass/fail/cannot_verify`, AC/evidence grounding |
 | `verification` | `verification-before-completion` | command-backed `verify.md`, Lattice delivery pipeline, AC coverage and drift gates |
+| optional `debugging` | `systematic-debugging` | root-cause evidence, AC/task mapping, reproducible command, fix evidence |
 | optional `knowledge-capture` | no required Superpowers main stage | durable, reusable, non-secret lessons from `verify.md` or review evidence |
 
 ## Specification Compatibility

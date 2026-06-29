@@ -9,6 +9,8 @@ description: Captures durable project knowledge discovered during PrismSpec work
 
 Promote only durable lessons into knowledge. Keep one-off implementation details in `verify.md` or task evidence.
 
+For process or skill changes, treat knowledge capture like TDD for agent behavior: identify the failure pattern, write the smallest rule that prevents it, and verify the rule would have changed the outcome.
+
 ## Inputs
 
 - `verify.md`
@@ -22,9 +24,10 @@ Promote only durable lessons into knowledge. Keep one-off implementation details
 3. Decide whether the lesson is durable, reusable, and non-secret.
 4. Write one concise knowledge entry per rule or pitfall.
 5. Include trigger context, rule, source, and practical guidance.
-6. If running inside Lattice and promoting a draft, record reviewer evidence when governance is required.
-7. Update the relevant knowledge file or context map.
-8. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
+6. For process knowledge, include at least one pressure scenario: what future agent behavior should change?
+7. If running inside Lattice and promoting a draft, record reviewer evidence when governance is required.
+8. Update the relevant knowledge file or context map.
+9. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
 
 ## Knowledge Entry Shape
 
@@ -43,6 +46,7 @@ expires_at: "YYYY-MM-DD" # optional
 **Source**: <spec id, date, review/verification source>
 **Applies when**: <trigger context>
 **Guidance**: <practical instruction>
+**Pressure scenario**: <optional; future task where this rule prevents failure>
 ```
 
 ## Outputs
@@ -66,6 +70,7 @@ expires_at: "YYYY-MM-DD" # optional
 | "The summary can act as knowledge." | Summary is per-run; knowledge is reusable. |
 | "Draft lessons can skip source." | Unsourced rules become unreviewable folklore. |
 | "Secrets are okay if useful." | Secrets never belong in repo knowledge. |
+| "A process rule is obvious." | If it changes agent behavior, name the failure mode it prevents. |
 
 ## Red Flags
 
@@ -74,11 +79,13 @@ expires_at: "YYYY-MM-DD" # optional
 - Entry describes what changed rather than what should guide future work.
 - Relevant knowledge file or context map is not updated.
 - One file mixes unrelated rules.
+- Process knowledge has no pressure scenario or behavioral trigger.
 
 ## Verification
 
 - [ ] Existing knowledge was checked.
 - [ ] New entry is concise and sourced.
+- [ ] Process knowledge includes the failure pattern or pressure scenario it prevents.
 - [ ] Knowledge metadata has owner, verified_at, and applies_to.
 - [ ] Lattice promotion has reviewer evidence when `--require-review` is used.
 - [ ] Relevant context entry is discoverable from `lattice/context/README.md` or the appropriate knowledge file.

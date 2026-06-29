@@ -13,9 +13,67 @@ compatibility:
     - cursor
     - aider
     - superpowers
+  standards:
+    - agent-skills-packaging
+    - superpowers-workflow-discipline
   host_modes:
     - standalone
     - lattice-hosted
+product_blocks:
+  - id: clarify
+    display_name: Clarify
+    purpose: Resolve intent, context, assumptions, conflicts, and blocking questions before writing the spec.
+    skills:
+      - prismspec/skills/prismspec-specification/SKILL.md
+    artifacts:
+      - context.md
+    gates:
+      - lattice/kernel/context/context-lint.sh
+      - lattice/kernel/context/context-run.sh
+  - id: spec
+    display_name: Spec
+    purpose: Turn clarified intent into scoped, approved, AC-traced, risk-aware specification.
+    skills:
+      - prismspec/skills/prismspec-specification/SKILL.md
+    artifacts:
+      - spec.md
+    gates:
+      - prismspec/bin/lint.sh <spec-dir> spec
+      - lattice/kernel/orchestrator/sdd/spec-state-lint.sh
+  - id: build
+    display_name: Build
+    purpose: Plan and implement one AC-traced slice at a time with task evidence, TDD evidence, and debugging discipline.
+    skills:
+      - prismspec/skills/prismspec-planning/SKILL.md
+      - prismspec/skills/prismspec-implementation/SKILL.md
+      - prismspec/skills/prismspec-debugging/SKILL.md
+    artifacts:
+      - plan.md
+      - task evidence
+      - tdd-evidence.json
+    gates:
+      - lattice/kernel/orchestrator/sdd/plan-lint.sh
+      - lattice/kernel/orchestrator/sdd/task-evidence-lint.sh
+  - id: review
+    display_name: Review
+    purpose: Independently inspect implementation evidence and diff before verification.
+    skills:
+      - prismspec/skills/prismspec-review/SKILL.md
+    artifacts:
+      - review-summary.json
+      - review-package.md
+    gates:
+      - lattice/kernel/orchestrator/sdd/review-summary.sh
+  - id: verify
+    display_name: Verify
+    purpose: Prove completion with fresh command output, pipeline gates, eval evidence, and residual-risk recording.
+    skills:
+      - prismspec/skills/prismspec-verification/SKILL.md
+    artifacts:
+      - verify.md
+      - eval run JSON
+    gates:
+      - lattice/kernel/delivery/pipeline.sh
 entrypoints:
   command: prismspec/commands/prismspec.md
   new: prismspec/bin/new.sh
@@ -42,48 +100,52 @@ skills:
   canonical:
     - id: workflow
       type: controller
-      path: prismspec/skills/workflow/SKILL.md
-      interface: prismspec/skills/workflow/agents/openai.yaml
+      path: prismspec/skills/prismspec-workflow/SKILL.md
+      interface: prismspec/skills/prismspec-workflow/agents/openai.yaml
     - id: specification
       type: stage
-      path: prismspec/skills/specification/SKILL.md
-      interface: prismspec/skills/specification/agents/openai.yaml
+      path: prismspec/skills/prismspec-specification/SKILL.md
+      interface: prismspec/skills/prismspec-specification/agents/openai.yaml
     - id: planning
       type: stage
-      path: prismspec/skills/planning/SKILL.md
-      interface: prismspec/skills/planning/agents/openai.yaml
+      path: prismspec/skills/prismspec-planning/SKILL.md
+      interface: prismspec/skills/prismspec-planning/agents/openai.yaml
     - id: implementation
       type: stage
-      path: prismspec/skills/implementation/SKILL.md
-      interface: prismspec/skills/implementation/agents/openai.yaml
+      path: prismspec/skills/prismspec-implementation/SKILL.md
+      interface: prismspec/skills/prismspec-implementation/agents/openai.yaml
     - id: review
       type: stage
-      path: prismspec/skills/review/SKILL.md
-      interface: prismspec/skills/review/agents/openai.yaml
+      path: prismspec/skills/prismspec-review/SKILL.md
+      interface: prismspec/skills/prismspec-review/agents/openai.yaml
     - id: verification
       type: stage
-      path: prismspec/skills/verification/SKILL.md
-      interface: prismspec/skills/verification/agents/openai.yaml
+      path: prismspec/skills/prismspec-verification/SKILL.md
+      interface: prismspec/skills/prismspec-verification/agents/openai.yaml
     - id: knowledge-capture
       type: support
-      path: prismspec/skills/knowledge-capture/SKILL.md
-      interface: prismspec/skills/knowledge-capture/agents/openai.yaml
+      path: prismspec/skills/prismspec-knowledge-capture/SKILL.md
+      interface: prismspec/skills/prismspec-knowledge-capture/agents/openai.yaml
+    - id: debugging
+      type: support
+      path: prismspec/skills/prismspec-debugging/SKILL.md
+      interface: prismspec/skills/prismspec-debugging/agents/openai.yaml
 workflow:
   stages:
     - id: specification
-      skill: prismspec/skills/specification/SKILL.md
+      skill: prismspec/skills/prismspec-specification/SKILL.md
       outputs:
         - context.md
         - spec.md
     - id: planning
-      skill: prismspec/skills/planning/SKILL.md
+      skill: prismspec/skills/prismspec-planning/SKILL.md
       inputs:
         - context.md
         - spec.md
       outputs:
         - plan.md
     - id: implementation
-      skill: prismspec/skills/implementation/SKILL.md
+      skill: prismspec/skills/prismspec-implementation/SKILL.md
       inputs:
         - spec.md
         - plan.md
@@ -92,7 +154,7 @@ workflow:
         - tests
         - task evidence
     - id: review
-      skill: prismspec/skills/review/SKILL.md
+      skill: prismspec/skills/prismspec-review/SKILL.md
       inputs:
         - spec.md
         - plan.md
@@ -100,7 +162,7 @@ workflow:
       outputs:
         - review-summary.json
     - id: verification
-      skill: prismspec/skills/verification/SKILL.md
+      skill: prismspec/skills/prismspec-verification/SKILL.md
       inputs:
         - spec.md
         - plan.md
@@ -123,6 +185,7 @@ references:
   tdd_evidence: prismspec/references/tdd-evidence-checklist.md
   review_evidence: prismspec/references/review-evidence-checklist.md
   superpowers_alignment: prismspec/references/superpowers-alignment.md
+  agent_skills_alignment: prismspec/references/agent-skills-alignment.md
 reviewers:
   task: prismspec/agents/task-reviewer.md
 contracts:

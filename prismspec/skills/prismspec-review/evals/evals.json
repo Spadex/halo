@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-review",
+  "should_trigger": [
+    {
+      "prompt": "Review the completed PrismSpec task evidence before verification.",
+      "reason": "Review gate before final verification."
+    },
+    {
+      "prompt": "Inspect this review-package.md and return pass/fail/cannot_verify.",
+      "reason": "Task-scoped review package."
+    },
+    {
+      "prompt": "Handle these reviewer findings and decide which ones to accept.",
+      "reason": "Receiving code review discipline."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "Generate the implementation plan from spec.md.",
+      "reason": "Planning stage."
+    },
+    {
+      "prompt": "Run the actual build and test pipeline.",
+      "reason": "Verification stage."
+    },
+    {
+      "prompt": "Capture a durable knowledge lesson after verification.",
+      "reason": "Knowledge capture stage."
+    }
+  ],
+  "assertions": [
+    "Reviews spec compliance and code quality separately.",
+    "Uses cannot_verify when evidence is insufficient.",
+    "Does not blindly implement reviewer feedback without checking code and spec."
+  ]
+}

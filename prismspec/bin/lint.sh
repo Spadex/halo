@@ -53,9 +53,20 @@ check_contains() {
   grep -qE "$pattern" "$file" 2>/dev/null || bad "$label missing in $file"
 }
 
+skill_name_for_stage() {
+  echo "prismspec-$1"
+}
+
+skill_dir_for_stage() {
+  echo "prismspec-$1"
+}
+
 check_skill_file() {
   local root="$1" stage="$2"
-  local skill_file="$root/skills/$stage/SKILL.md"
+  local skill_name skill_dir skill_file
+  skill_name="$(skill_name_for_stage "$stage")"
+  skill_dir="$(skill_dir_for_stage "$stage")"
+  skill_file="$root/skills/$skill_dir/SKILL.md"
   check_file "$skill_file" "$stage skill"
   [[ -f "$skill_file" ]] || return
 
@@ -64,7 +75,7 @@ check_skill_file() {
   [[ "$line_count" -le 500 ]] || bad "$stage skill exceeds 500 lines"
 
   head -1 "$skill_file" | grep -qxF -- '---' || bad "$stage skill frontmatter start missing"
-  check_contains "$skill_file" "^name: prismspec-$stage$" "$stage skill name"
+  check_contains "$skill_file" "^name: $skill_name$" "$stage skill name"
   check_contains "$skill_file" "^description: .+Use (when|after)" "$stage trigger-rich description"
   check_contains "$skill_file" "^## Overview$" "$stage Overview section"
   check_contains "$skill_file" "^## Stop Conditions$" "$stage Stop Conditions section"
@@ -83,14 +94,33 @@ check_skill_file() {
 
 check_skill_interface() {
   local root="$1" stage="$2"
-  local metadata_file="$root/skills/$stage/agents/openai.yaml"
+  local skill_name skill_dir metadata_file
+  skill_name="$(skill_name_for_stage "$stage")"
+  skill_dir="$(skill_dir_for_stage "$stage")"
+  metadata_file="$root/skills/$skill_dir/agents/openai.yaml"
   check_file "$metadata_file" "$stage UI metadata"
   [[ -f "$metadata_file" ]] || return
 
   check_contains "$metadata_file" '^interface:$' "$stage metadata interface root"
   check_contains "$metadata_file" '^[[:space:]]+display_name: "[^"]{3,}"$' "$stage metadata display_name"
   check_contains "$metadata_file" '^[[:space:]]+short_description: "[^"]{25,64}"$' "$stage metadata short_description"
-  check_contains "$metadata_file" '^[[:space:]]+default_prompt: ".*\$prismspec-'"$stage" "$stage metadata default_prompt"
+  check_contains "$metadata_file" '^[[:space:]]+default_prompt: ".*\$'"$skill_name" "$stage metadata default_prompt"
+}
+
+check_skill_evals() {
+  local root="$1" stage="$2"
+  local skill_name skill_dir eval_file
+  skill_name="$(skill_name_for_stage "$stage")"
+  skill_dir="$(skill_dir_for_stage "$stage")"
+  eval_file="$root/skills/$skill_dir/evals/evals.json"
+  check_file "$eval_file" "$stage evals"
+  [[ -f "$eval_file" ]] || return
+
+  check_contains "$eval_file" '"schema_version":[[:space:]]*"prismspec\.skill-evals/v1"' "$stage eval schema"
+  check_contains "$eval_file" '"skill":[[:space:]]*"'"$skill_name"'"' "$stage eval skill name"
+  check_contains "$eval_file" '"should_trigger":[[:space:]]*\[' "$stage should_trigger evals"
+  check_contains "$eval_file" '"should_not_trigger":[[:space:]]*\[' "$stage should_not_trigger evals"
+  check_contains "$eval_file" '"assertions":[[:space:]]*\[' "$stage eval assertions"
 }
 
 check_skillpack() {
@@ -108,6 +138,9 @@ check_skillpack() {
   check_contains "$manifest" '^api_version: prismspec\.lattice\.dev/v1$' "skillpack api_version"
   check_contains "$manifest" '^kind: SkillPack$' "skillpack kind"
   check_contains "$manifest" '^[[:space:]]+name: prismspec$' "skillpack metadata.name"
+  check_contains "$manifest" 'agent-skills-packaging' "skillpack Agent Skills standard"
+  check_contains "$manifest" 'superpowers-workflow-discipline' "skillpack Superpowers standard"
+  check_contains "$manifest" '^product_blocks:$' "skillpack product blocks"
   check_contains "$manifest" '^[[:space:]]+command: prismspec/commands/prismspec\.md$' "skillpack command entrypoint"
   check_contains "$manifest" '^[[:space:]]+new: prismspec/bin/new\.sh$' "skillpack new entrypoint"
   check_contains "$manifest" '^[[:space:]]+router: prismspec/bin/guide\.sh$' "skillpack router entrypoint"
@@ -121,21 +154,32 @@ check_skillpack() {
   for command in prismspec spec plan implement review verify capture; do
     check_file "$root/commands/$command.md" "$command command"
   done
+  local block
+  for block in clarify spec build review verify; do
+    check_contains "$manifest" "^[[:space:]]+- id: $block$" "$block product block"
+  done
+  check_contains "$manifest" 'display_name: Clarify' "Clarify display name"
+  check_contains "$manifest" 'display_name: Verify' "Verify display name"
   check_executable "$root/bin/new.sh" "new"
   check_executable "$root/bin/guide.sh" "guide"
   check_executable "$root/bin/lint.sh" "lint"
   check_executable "$root/bin/doctor.sh" "doctor"
 
   local stage
-  for stage in workflow specification planning implementation review verification knowledge-capture; do
+  for stage in workflow specification planning implementation review verification knowledge-capture debugging; do
+    local skill_dir
+    skill_dir="$(skill_dir_for_stage "$stage")"
     check_skill_file "$root" "$stage"
     check_skill_interface "$root" "$stage"
-    check_contains "$manifest" "path: prismspec/skills/$stage/SKILL\\.md" "$stage canonical skill catalog entry"
-    check_contains "$manifest" "interface: prismspec/skills/$stage/agents/openai\\.yaml" "$stage interface catalog entry"
+    check_skill_evals "$root" "$stage"
+    check_contains "$manifest" "path: prismspec/skills/$skill_dir/SKILL\\.md" "$stage canonical skill catalog entry"
+    check_contains "$manifest" "interface: prismspec/skills/$skill_dir/agents/openai\\.yaml" "$stage interface catalog entry"
   done
 
   for stage in specification planning implementation review verification; do
-    check_contains "$manifest" "skill: prismspec/skills/$stage/SKILL\\.md" "$stage workflow entry"
+    local skill_dir
+    skill_dir="$(skill_dir_for_stage "$stage")"
+    check_contains "$manifest" "skill: prismspec/skills/$skill_dir/SKILL\\.md" "$stage workflow entry"
   done
 
   local template
@@ -144,7 +188,7 @@ check_skillpack() {
   done
 
   local reference
-  for reference in mode-selection.md definition-of-done.md spec-quality-checklist.md tdd-evidence-checklist.md review-evidence-checklist.md superpowers-alignment.md; do
+  for reference in mode-selection.md definition-of-done.md spec-quality-checklist.md tdd-evidence-checklist.md review-evidence-checklist.md superpowers-alignment.md agent-skills-alignment.md; do
     check_file "$root/references/$reference" "reference"
   done
   check_file "$root/agents/task-reviewer.md" "task reviewer"

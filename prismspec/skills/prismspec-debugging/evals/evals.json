@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-debugging",
+  "should_trigger": [
+    {
+      "prompt": "The PrismSpec verification pipeline failed and the root cause is not clear.",
+      "reason": "Unexplained verification failure."
+    },
+    {
+      "prompt": "This test is failing unexpectedly; reproduce and trace before fixing.",
+      "reason": "Systematic debugging request."
+    },
+    {
+      "prompt": "We tried two fixes and the same command still fails.",
+      "reason": "Repeated failed fixes require root-cause investigation."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "Root cause is proven; implement the one-line fix from plan.md.",
+      "reason": "Implementation stage."
+    },
+    {
+      "prompt": "Run final verification after the fix.",
+      "reason": "Verification stage."
+    },
+    {
+      "prompt": "Write the initial spec and acceptance criteria.",
+      "reason": "Specification stage."
+    }
+  ],
+  "assertions": [
+    "Reproduces or documents inability to reproduce before fixing.",
+    "States one root-cause hypothesis with evidence.",
+    "Adds or identifies a failing test when behavior is testable."
+  ]
+}

@@ -2,7 +2,7 @@
 description: Run the PrismSpec AI coding workflow from intent to verified evidence
 ---
 
-Use `prismspec/skills/workflow/SKILL.md`.
+Use `prismspec/skills/prismspec-workflow/SKILL.md`.
 
 ## Behavior
 

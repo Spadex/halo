@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-verification",
+  "should_trigger": [
+    {
+      "prompt": "Implementation and review are complete. Run final verification and write verify.md.",
+      "reason": "Final command-backed verification."
+    },
+    {
+      "prompt": "Rerun the pipeline after the fix and record fresh evidence.",
+      "reason": "Verification after changes."
+    },
+    {
+      "prompt": "Before saying done, prove the tests and gates passed.",
+      "reason": "Completion claim requires fresh evidence."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "The spec still has unclear acceptance criteria.",
+      "reason": "Specification stage."
+    },
+    {
+      "prompt": "The failing command output is unexplained; find the root cause.",
+      "reason": "Debugging stage."
+    },
+    {
+      "prompt": "Split this approved spec into tasks.",
+      "reason": "Planning stage."
+    }
+  ],
+  "assertions": [
+    "Runs fresh commands before claiming completion.",
+    "Records command, result, and residual risk in verify.md.",
+    "Switches to debugging when failures are unexplained."
+  ]
+}

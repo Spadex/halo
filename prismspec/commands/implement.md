@@ -2,7 +2,7 @@
 description: Execute the next PrismSpec implementation slice with evidence
 ---
 
-Use `prismspec/skills/implementation/SKILL.md`.
+Use `prismspec/skills/prismspec-implementation/SKILL.md`.
 
 Run:
 

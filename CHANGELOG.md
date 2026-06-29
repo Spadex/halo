@@ -36,7 +36,7 @@ All notable changes to this project will be documented in this file.
 - `task-next.sh` to resolve the next incomplete plan task as text or JSON for implementation recovery.
 - `task-complete.sh` to mark individual plan tasks complete only after required task evidence exists.
 - `task-evidence-lint.sh` to require brief, review package, and TDD evidence for completed implementation tasks.
-- `summary-draft.sh` to generate `summary.md` closeout drafts from spec, plan, verification, task evidence, and optional eval JSON.
+- `summary-draft.sh` to generate `summary.md` completion drafts from spec, plan, verification, task evidence, and optional eval JSON.
 - `review-summary.sh` and `tdd-evidence.sh` to capture process evidence as structured JSON.
 - GitHub Actions eval artifact workflow template installed by `init.sh --ci=github`.
 - **PrismSpec** standalone spec-coding skill pack with guided `/prismspec`, canonical `SKILL.md` files, templates, references, and workflow scripts.

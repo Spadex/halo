@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-workflow",
+  "should_trigger": [
+    {
+      "prompt": "Run this feature through PrismSpec from requirement to verification.",
+      "reason": "End-to-end PrismSpec routing request."
+    },
+    {
+      "prompt": "Resume the current SDD spec and tell me the next step.",
+      "reason": "Requires artifact-based workflow routing."
+    },
+    {
+      "prompt": "Use /prismspec for checkout-flow and continue from the current files.",
+      "reason": "Explicit PrismSpec controller invocation."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "Write a single unit test for this function.",
+      "reason": "Implementation-only task unless routed through a PrismSpec artifact chain."
+    },
+    {
+      "prompt": "Summarize this README.",
+      "reason": "No SDD workflow or artifact routing requested."
+    },
+    {
+      "prompt": "Run npm test and paste the failures.",
+      "reason": "Verification command request, not workflow orchestration by itself."
+    }
+  ],
+  "assertions": [
+    "Runs prismspec/bin/guide.sh --json before choosing a stage.",
+    "Reads the SKILL.md path returned by the guide before acting.",
+    "Does not claim completion without verification evidence."
+  ]
+}

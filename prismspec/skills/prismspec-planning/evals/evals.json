@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-planning",
+  "should_trigger": [
+    {
+      "prompt": "The PrismSpec spec is approved. Write an AC-traced implementation plan.",
+      "reason": "Approved spec needs plan.md."
+    },
+    {
+      "prompt": "Convert this spec.md into small tasks with verification commands.",
+      "reason": "Planning task decomposition."
+    },
+    {
+      "prompt": "Add TDD red-test tasks for AC-1 and AC-2 before implementation.",
+      "reason": "Planning TDD task structure."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "Clarify the product scope and acceptance criteria.",
+      "reason": "Specification, not planning."
+    },
+    {
+      "prompt": "Implement T1 from the existing plan.",
+      "reason": "Implementation stage."
+    },
+    {
+      "prompt": "Review the diff and task evidence.",
+      "reason": "Review stage."
+    }
+  ],
+  "assertions": [
+    "Every behavior task references at least one AC id.",
+    "Tasks include exact files, commands, expected results, and evidence paths.",
+    "A zero-context implementer can execute one task from its brief."
+  ]
+}

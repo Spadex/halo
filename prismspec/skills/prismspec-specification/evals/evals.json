@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-specification",
+  "should_trigger": [
+    {
+      "prompt": "Draft a PrismSpec spec for adding passwordless login; scope and acceptance criteria are still unclear.",
+      "reason": "New requirement with unclear scope and ACs."
+    },
+    {
+      "prompt": "Turn this vague bug report into context.md and spec.md before implementation.",
+      "reason": "Requires durable specification artifacts."
+    },
+    {
+      "prompt": "The scaffolded spec.md still has placeholders; complete the PrismSpec specification.",
+      "reason": "Scaffolded spec must stay in specification stage."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "The spec is approved; split it into implementation tasks.",
+      "reason": "Planning, not specification."
+    },
+    {
+      "prompt": "Run the final pipeline and record verify.md.",
+      "reason": "Verification stage."
+    },
+    {
+      "prompt": "Fix the failing test; the root cause is already proven.",
+      "reason": "Implementation or verification, not specification."
+    }
+  ],
+  "assertions": [
+    "Asks one material question at a time when critical context is missing.",
+    "Writes context.md and spec.md with testable AC ids.",
+    "Does not advance while scaffolded placeholders remain."
+  ]
+}

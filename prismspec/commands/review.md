@@ -2,7 +2,7 @@
 description: Review PrismSpec implementation evidence before verification
 ---
 
-Use `prismspec/skills/review/SKILL.md`.
+Use `prismspec/skills/prismspec-review/SKILL.md`.
 
 Run:
 

@@ -1,6 +1,6 @@
 # Review Evidence Checklist
 
-Use this reference during implementation review and closeout.
+Use this reference during implementation review and final verification.
 
 ## Review Axes
 

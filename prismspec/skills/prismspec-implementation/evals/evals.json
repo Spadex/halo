@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-implementation",
+  "should_trigger": [
+    {
+      "prompt": "Execute RED-1 and T1 from the PrismSpec plan using TDD evidence.",
+      "reason": "Planned implementation with TDD policy."
+    },
+    {
+      "prompt": "Implement the next incomplete task from plan.md and write task evidence.",
+      "reason": "Implementation stage."
+    },
+    {
+      "prompt": "Dispatch an isolated implementer for T2 and then review the task package.",
+      "reason": "Subagent-driven implementation loop."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "Write an approved spec from this vague idea.",
+      "reason": "Specification stage."
+    },
+    {
+      "prompt": "The pipeline failed but we do not know why.",
+      "reason": "Debugging must prove root cause before fixes."
+    },
+    {
+      "prompt": "Run final verification and summarize evidence.",
+      "reason": "Verification stage."
+    }
+  ],
+  "assertions": [
+    "Implements one planned AC-traced slice at a time.",
+    "In TDD mode captures red and green evidence before completion.",
+    "Stops on scope drift or unexplained failures instead of guessing."
+  ]
+}

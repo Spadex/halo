@@ -1,0 +1,37 @@
+{
+  "schema_version": "prismspec.skill-evals/v1",
+  "skill": "prismspec-knowledge-capture",
+  "should_trigger": [
+    {
+      "prompt": "Promote this verified PrismSpec lesson into reusable project knowledge.",
+      "reason": "Durable knowledge capture."
+    },
+    {
+      "prompt": "verify.md has Knowledge Candidates; turn the reusable ones into drafts.",
+      "reason": "Post-verification knowledge capture."
+    },
+    {
+      "prompt": "Capture this repeated pitfall so future specs avoid it.",
+      "reason": "Reusable pitfall capture."
+    }
+  ],
+  "should_not_trigger": [
+    {
+      "prompt": "Fix this one-off typo in the implementation.",
+      "reason": "Not durable knowledge."
+    },
+    {
+      "prompt": "Store this secret token for future runs.",
+      "reason": "Sensitive data must not be captured."
+    },
+    {
+      "prompt": "Write plan.md for the approved spec.",
+      "reason": "Planning stage."
+    }
+  ],
+  "assertions": [
+    "Captures only durable, sourced, non-secret knowledge.",
+    "Includes owner, verified_at, applies_to, source, and pressure scenario when relevant.",
+    "Leaves one-off implementation details in task evidence or verify.md."
+  ]
+}

@@ -3,9 +3,9 @@ name: lattice
 description: >
   Lattice — repo-local AI Coding harness for teams.
   Use when Codex needs to initialize Lattice in a target project, route PrismSpec workflow work,
-  load project context, run verification gates, record command-backed evidence, or capture learnings.
+  load project context, run verification gates, investigate failures, record command-backed evidence, or capture learnings.
   Triggers include "lattice init", "initialize harness", "prismspec", "PrismSpec", "verify",
-  "run pipeline", "eval", "context", and "capture".
+  "run pipeline", "eval", "context", "debug", "root cause", and "capture".
 ---
 
 # Lattice Skill
@@ -32,9 +32,10 @@ Use current files and command output as the source of truth. Do not route from c
 | spec / draft specification | Write `lattice/specs/<spec-id>/context.md` and `spec.md` |
 | plan | Write AC-traced `plan.md` |
 | implement / tdd | Execute `plan` or `tdd` according to `spec.md` |
+| debug / root cause | Follow `prismspec/skills/prismspec-debugging/SKILL.md` before changing code for an unexplained failure |
 | review | Write or inspect `review-summary.json` evidence |
 | verify / run pipeline | Run `bash lattice/kernel/delivery/pipeline.sh --json-out` when available |
-| capture | Follow `prismspec/skills/knowledge-capture/SKILL.md` for durable knowledge capture |
+| capture | Follow `prismspec/skills/prismspec-knowledge-capture/SKILL.md` for durable knowledge capture |
 
 ## Contracts
 

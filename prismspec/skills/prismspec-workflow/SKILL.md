@@ -17,6 +17,8 @@ This skill is a controller, not an extra phase. Delegate stage work to the stage
 
 Read `prismspec/references/superpowers-alignment.md` when workflow behavior is unclear. PrismSpec should not invent a parallel workflow when a mature Superpowers skill already covers the discipline; preserve PrismSpec artifact locations and Lattice gates as the override.
 
+When a routed `skill` is returned, read that `SKILL.md` before acting. Do not execute from the skill description, command name, or conversation memory alone.
+
 ## Start Here
 
 Run the deterministic guide before choosing a stage:
@@ -56,6 +58,7 @@ When Superpowers is installed or explicitly requested, use its mature workflow s
 | `implementation` | `superpowers:subagent-driven-development`, `superpowers:executing-plans`, `superpowers:test-driven-development` |
 | `review` | Superpowers SDD task reviewer discipline |
 | `verification` | `superpowers:verification-before-completion` |
+| failure/debugging path | `superpowers:systematic-debugging` |
 
 PrismSpec's main workflow ends at command-backed verification; durable lessons move through `/capture`.
 
@@ -73,6 +76,7 @@ Stop and ask the user when:
 - scope, safety, data, permission, or product behavior is materially ambiguous;
 - mode downgrade from `tdd` to `plan` is requested or implied;
 - the worktree has unrelated dirty changes that would be mixed into implementation;
+- verification fails and no root cause has been proven;
 - verification fails and the fix requires product or architecture choice;
 - an irreversible action is required.
 
@@ -91,6 +95,7 @@ Stop and ask the user when:
 - `/prismspec` skips directly from `spec.md` to implementation without `plan.md`.
 - Verification is described but no command output is recorded.
 - Review evidence is missing but the run proceeds to verification.
+- Failure handling jumps to a fix without `prismspec-debugging` or an equivalent root-cause trace.
 
 ## Verification
 

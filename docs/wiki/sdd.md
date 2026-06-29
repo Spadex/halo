@@ -2,7 +2,13 @@
 
 ## 结论
 
-PrismSpec 是 Lattice 中独立出来的渐进式 Spec Coding skill pack。它的目标不是增加流程仪式，而是给 AI Coding 提供一条可恢复、可审查、可验证的最小链路：
+PrismSpec 是 Lattice 中独立出来的 Spec-Driven Development skill pack。对用户呈现为五个产品板块：
+
+```text
+Clarify -> Spec -> Build -> Review -> Verify
+```
+
+内部仍保持一条可恢复、可审查、可验证的最小契约链：
 
 ```text
 Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Verification
@@ -13,6 +19,24 @@ Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Ver
 ```bash
 bash prismspec/bin/guide.sh --json
 ```
+
+## 设计哲学
+
+PrismSpec 的核心判断：
+
+1. AI Coding 的主要风险不是“不会写代码”，而是需求、上下文、验证和记忆都停留在对话里。
+2. SDD 不应该变成长流程；每个阶段都必须产出一个能恢复、能 review、能验证的 durable artifact。
+3. 已经成熟的工作流纪律优先复用：Superpowers 管 workflow discipline，Agent Skills 管 skill packaging，PrismSpec 管 artifact/context/evidence contract。
+
+对应的产物链：
+
+| 层 | 解决的问题 | 产物 |
+|----|------------|------|
+| Contract | 需求、上下文、验收和风险可审查 | `context.md`、`spec.md` |
+| Tasking | 实现任务可分派、可恢复、可 review | `plan.md` |
+| Evidence | 每个实现切片有证据 | task evidence、TDD evidence、review package |
+| Review | 规格符合性与代码质量分离判断 | `review-summary.json` |
+| Verification | 完成声明由真实命令支撑 | `verify.md` |
 
 ## Host 模式
 
@@ -27,13 +51,13 @@ Lattice-hosted 模式会额外使用 manifest、项目 context 地图、verifica
 
 ## 阶段与产物
 
-| 阶段 | 目标 | 持久产物 | 临时证据 |
-|------|------|----------|----------|
-| Specification | 明确 intent、scope、context、AC、risk、mode | `context.md`、`spec.md` | 需求澄清记录可写入 spec |
-| Planning | 将 spec 拆成 AC-traced tasks | `plan.md` | 相关代码边界和任务验证说明 |
-| Implementation | 执行 plan 或 TDD | code / tests | `brief.md`、`review-package.md` |
-| Review | 审查实现证据、diff、review package | `review-summary.json` | `pass` / `fail` / `cannot_verify` |
-| Verification | 用外部命令证明结果 | `verify.md` | pipeline output、test output |
+| Product Block | 内部阶段 | 目标 | 持久产物 | 临时证据 |
+|------|------|------|----------|----------|
+| Clarify | Specification | 明确 intent、context、assumptions、conflicts、blocking questions | `context.md` | context-run |
+| Spec | Specification | 明确 scope、AC、risk、mode、verification plan | `spec.md` | approval/status |
+| Build | Planning + Implementation | 将 spec 拆成任务并执行 plan/TDD 切片 | `plan.md`、code、tests | `brief.md`、TDD/debug evidence |
+| Review | Review | 审查实现证据、diff、review package | `review-summary.json` | `pass` / `fail` / `cannot_verify` |
+| Verify | Verification | 用外部命令证明结果 | `verify.md` | pipeline output、eval run |
 
 产物设计原则：
 
@@ -220,16 +244,17 @@ canonical skills 位于：
 
 ```text
 prismspec/skills/
-├── workflow/SKILL.md
-├── specification/SKILL.md
-├── planning/SKILL.md
-├── implementation/SKILL.md
-├── review/SKILL.md
-├── verification/SKILL.md
-└── knowledge-capture/SKILL.md
+├── prismspec-workflow/SKILL.md
+├── prismspec-specification/SKILL.md
+├── prismspec-planning/SKILL.md
+├── prismspec-implementation/SKILL.md
+├── prismspec-review/SKILL.md
+├── prismspec-verification/SKILL.md
+├── prismspec-knowledge-capture/SKILL.md
+└── prismspec-debugging/SKILL.md
 ```
 
-PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKILL.md`，避免同一流程出现多个事实源。
+PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKILL.md`，避免同一流程出现多个事实源。目录名与 `SKILL.md` frontmatter `name` 保持一致，方便按 Agent Skills 标准分发。
 
 ## 当前实现边界
 
@@ -258,6 +283,7 @@ PrismSpec 不再维护 flat Markdown wrapper。主入口只读取 canonical `SKI
 - context-lint。
 - plan-lint。
 - task-evidence-lint。
+- root-cause debugging support skill。
 - spec-state-lint。
 - spec-status guarded transition helper。
 - spec transition JSON events。

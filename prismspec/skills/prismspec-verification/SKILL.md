@@ -11,6 +11,10 @@ Run actual commands and record evidence. Verification is external proof, not a p
 
 This skill aligns with Superpowers `verification-before-completion`: no completion claim without command-backed evidence. PrismSpec adds durable `verify.md` and Lattice pipeline/eval gates. Verification is the main PrismSpec workflow endpoint; optional knowledge promotion happens through `/capture`.
 
+<HARD-GATE>
+Do not say done, fixed, passing, complete, verified, or equivalent unless the proving command was run in the current verification pass and the result is recorded.
+</HARD-GATE>
+
 ## Inputs
 
 - `spec.md`
@@ -36,9 +40,11 @@ bash lattice/kernel/delivery/pipeline.sh --json-out
    - Go: `go test ./...`.
    - Rust: `cargo test`.
 4. Record exact commands, exit codes, output summaries, AC completion, skipped checks, residual risks, next actions, and knowledge candidates in `verify.md`.
-5. Fix retryable failures within the task scope, then rerun affected commands.
-6. Escalate non-retryable failures with concrete next steps.
-7. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> verified --from=implemented` only after verification passes.
+5. Read the full output and confirm the exit code before making any status claim.
+6. If a failure is not immediately explained by the output, switch to `prismspec-debugging` before changing code.
+7. Fix retryable failures within the task scope, then rerun affected commands.
+8. Escalate non-retryable failures with concrete next steps.
+9. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> verified --from=implemented` only after verification passes.
 
 ## Outputs
 
@@ -58,6 +64,7 @@ bash lattice/kernel/delivery/pipeline.sh --json-out
 | "Focused tests passed, full verification is unnecessary." | Focused tests prove the slice; verification checks regressions. |
 | "This failure is unrelated." | Record it with evidence and rationale, or fix it. |
 | "I can summarize without writing verify.md." | Durable evidence is the completion record and future recovery point. |
+| "I ran this earlier." | Completion claims need fresh evidence from this verification pass. |
 
 ## Red Flags
 
@@ -65,11 +72,13 @@ bash lattice/kernel/delivery/pipeline.sh --json-out
 - `verify.md` says pass while commands failed.
 - TDD evidence is missing for `execution_mode: tdd`.
 - Manual checks are claimed without steps or observations.
+- Success language appears before the command output has been read.
 
 ## Verification
 
 - [ ] `verify.md` exists.
 - [ ] Commands and outcomes are recorded.
+- [ ] Verification evidence is fresh for this completion claim.
 - [ ] AC completion, skipped checks, residual risks, and next actions are recorded.
 - [ ] Failures are fixed or escalated.
 - [ ] Evidence matches the selected execution mode.

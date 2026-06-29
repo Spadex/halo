@@ -94,7 +94,7 @@ your-project/
 ## Core Workflow
 
 ```text
-Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Verification
+Intent -> Clarify -> Spec -> Build -> Review -> Verify
 ```
 
 `/prismspec` is the controller, not an extra phase. It routes from existing artifacts:
@@ -103,13 +103,15 @@ Intent -> Specification -> Planning -> Implementation(plan|tdd) -> Review -> Ver
 bash prismspec/bin/guide.sh --json
 ```
 
-| Stage | Goal | Artifacts |
-|-------|------|-----------|
-| Specification | Capture context basis, scope, ACs, risks, and execution mode. | `context.md`, `spec.md` |
-| Planning | Decompose the spec into AC-traced tasks. | `plan.md` |
-| Implementation | Execute with Plan Mode or TDD Mode. | code, tests, task evidence |
-| Review | Review implementation evidence, diff, and review package. | `review-summary.json` |
-| Verification | Run independent commands or the Lattice pipeline. | `verify.md` |
+PrismSpec is not documentation ceremony. It moves the important AI coding decisions out of chat and into a resumable contract chain and evidence chain. The user-facing product blocks are backed by Agent Skills-compatible skill folders, command gates, and evidence:
+
+| Block | Goal | Primary Artifacts |
+|---|---|---|
+| Clarify | Resolve intent, context basis, assumptions, conflicts, and blocking questions. | `context.md` |
+| Spec | Capture scope, non-goals, ACs, risks, mode, and verification plan. | `spec.md` |
+| Build | Plan and implement AC-traced slices with Plan/TDD/debugging evidence. | `plan.md`, task evidence, TDD/debug evidence |
+| Review | Independently inspect implementation evidence, diff, and quality risk. | `review-summary.json`, review package |
+| Verify | Prove completion with fresh commands or the Lattice pipeline. | `verify.md`, eval run JSON |
 
 `/capture` is an optional post-run command. It promotes only durable, reusable, non-secret lessons from `verify.md` or review evidence.
 
@@ -167,13 +169,14 @@ Lattice currently provides a minimum trusted loop for repo-local AI Coding:
 | Area | Available Capabilities |
 |------|------------------------|
 | Install and init | `install.sh`, `init.sh`, `doctor.sh` manifest/skillpack contract checks, smoke tests, GitHub Actions eval artifact template. |
-| PrismSpec | Canonical skills, `new.sh`, `doctor.sh`, `guide.sh`, skillpack/artifact `lint.sh`, multiple templates, Plan/TDD policy, standalone and Lattice-hosted modes. |
+| PrismSpec | Agent Skills-compatible canonical skills, per-skill evals, `new.sh`, `doctor.sh`, `guide.sh`, skillpack/artifact `lint.sh`, multiple templates, Plan/TDD/debugging policy, standalone and Lattice-hosted modes. |
+| Product blocks | `skillpack.yaml` exposes Clarify / Spec / Build / Review / Verify for hosts, installers, and UIs. |
 | Spec lifecycle | `context.md`, `spec.md`, `plan.md`, review evidence, `verify.md`, status transitions, transition events/history. |
-| Implementation evidence | `task-next.sh`, `task-complete.sh`, task brief, review package, review summary, TDD evidence, task evidence lint. |
+| Implementation evidence | `task-next.sh`, `task-complete.sh`, task brief, review package, review summary, TDD/debugging evidence, task evidence lint. |
 | Verification / Evidence | Pipeline, spec lint, AC coverage, drift check, compliance, spec lock, structured eval JSON, Markdown summary/history. |
 | Loop and outcome | Loop state, failure category, escalation draft, outcome link/report, central eval sink, static dashboard, eval query, PR comment dry run. |
 | Context / Learn | Context map, external map, knowledge backend, context-lint, context-run, knowledge metadata/governance lint, knowledge review, learn draft promote/discard, summary-to-learn-draft. |
-| Examples and adapters | Runnable Go/Gin/GORM example, Claude Code / Cursor / Aider / Superpowers adapter docs. |
+| Examples and adapters | Runnable Go/Gin/GORM example, Claude Code / Cursor / Aider / Superpowers / Agent Skills adapter docs. |
 
 Still evolving:
 
@@ -188,8 +191,9 @@ Still evolving:
 | Document | Purpose |
 |----------|---------|
 | [Design Wiki](docs/wiki/) | System design, SDD, Context, Eval, Loop, Roadmap |
+| [Workflow Blocks](docs/wiki/workflow-blocks.md) | Clarify / Spec / Build / Review / Verify contracts |
 | [PrismSpec README](prismspec/README.md) | Standalone Spec Coding skill pack |
-| [Agent adapters](docs/adapters/) | Claude Code, Cursor, Aider, Superpowers, and generic agents |
+| [Agent adapters](docs/adapters/) | Claude Code, Cursor, Aider, Superpowers, Agent Skills, and generic agents |
 | [Runnable example](examples/go-gin-gorm/) | End-to-end Go/Gin/GORM sample |
 | [Contributing](CONTRIBUTING.md) | Development, testing, and contribution guide |
 

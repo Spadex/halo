@@ -217,14 +217,15 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fi
   done
 
-  if [[ -f "$SANDBOX/prismspec/skills/workflow/SKILL.md" ]] \
+  if [[ -f "$SANDBOX/prismspec/skills/prismspec-workflow/SKILL.md" ]] \
     && [[ -f "$SANDBOX/prismspec/skillpack.yaml" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/specification/SKILL.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/planning/SKILL.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/implementation/SKILL.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/review/SKILL.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/verification/SKILL.md" ]] \
-    && [[ -f "$SANDBOX/prismspec/skills/knowledge-capture/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-specification/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-planning/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-implementation/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-review/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-verification/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-knowledge-capture/SKILL.md" ]] \
+    && [[ -f "$SANDBOX/prismspec/skills/prismspec-debugging/SKILL.md" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/new.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/guide.sh" ]] \
     && [[ -x "$SANDBOX/prismspec/bin/lint.sh" ]] \
@@ -293,7 +294,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   fi
 
   GUIDE_OUTPUT=$(bash "$SANDBOX/prismspec/bin/guide.sh" --json)
-  if echo "$GUIDE_OUTPUT" | grep -q '"stage": "specification"' && echo "$GUIDE_OUTPUT" | grep -q 'prismspec/skills/specification/SKILL.md'; then
+  if echo "$GUIDE_OUTPUT" | grep -q '"stage": "specification"' && echo "$GUIDE_OUTPUT" | grep -q 'prismspec/skills/prismspec-specification/SKILL.md'; then
     pass "PrismSpec guide detects initial specification stage"
   else
     fail "PrismSpec guide did not detect initial specification stage"
@@ -1045,7 +1046,7 @@ if [[ -f "$SANDBOX/lattice/specs/modern-feature/summary.md" ]] \
   && grep -q "Task Evidence" "$SANDBOX/lattice/specs/modern-feature/summary.md" \
   && grep -q "Verification Evidence" "$SANDBOX/lattice/specs/modern-feature/summary.md" \
   && grep -q "Residual Risks And Follow-ups" "$SANDBOX/lattice/specs/modern-feature/summary.md"; then
-  pass "summary-draft generates closeout summary"
+  pass "summary-draft generates completion summary"
 else
   fail "summary-draft did not generate expected summary"
   echo "$SUMMARY_DRAFT_OUTPUT" | tail -20
