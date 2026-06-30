@@ -15,6 +15,7 @@ updated_at: {timestamp}
 ## 0. One-Page Summary
 
 > 好 spec 先降低 review 成本。Reviewer 应该能在三分钟内判断：该不该做、改哪里、主要风险是什么、怎么证明做对。
+> 推荐审查顺序：一屏摘要 -> 关键图 -> 不变量 -> 验收 -> 漂移控制；附录最后看。
 
 | Item | Value |
 |------|-------|
@@ -23,8 +24,10 @@ updated_at: {timestamp}
 | Success criteria | {成功后可观察、可验证的状态} |
 | Scope | {本次明确交付什么} |
 | Non-goals | {本次明确不做什么；AI 不会从省略推断边界} |
+| Primary diagram | context / component / sequence / state / data / rollout / N/A |
 | Risk level | low / medium / high |
 | Execution mode | `{plan|tdd}` |
+| Verification proof | {最关键的测试、命令、gate 或人工验收} |
 | Review focus | intent / boundary / flow / state / data / contract / acceptance / drift |
 | Decision | ready / needs-clarification / blocked |
 
@@ -43,18 +46,26 @@ updated_at: {timestamp}
 ## 2. Key Diagrams
 
 > 图不是装饰，是为了让 review 更便宜。按风险选择 1-3 张关键图；低风险任务可以只保留改动落点图或写 N/A。
+> 不要保留占位图。每张图必须能回答一个 review 问题；没有图时必须写明 N/A 理由。
 
 ### 2.1 Diagram Selection
 
-| Diagram | Required? | Review Question | Evidence |
-|---------|-----------|-----------------|----------|
-| Context / Component | yes / no | 改动落点和上下游是否清楚？ | |
-| Sequence | yes / no | 核心业务链路和异常路径是否清楚？ | |
-| State | yes / no | 状态迁移、不变量和终态是否清楚？ | |
-| ER / Data Flow | yes / no | 数据关系、权限、资产、库存或副作用是否清楚？ | |
-| Deployment / Rollout | yes / no | 上线、灰度、回滚、依赖和容量风险是否清楚？ | |
+| View | Use When | Review Question | Decision |
+|------|----------|-----------------|----------|
+| Context / Component | 改模块、跨边界、影响上下游 | 改动落点和上下游是否清楚？ | include / N/A because... |
+| Sequence | 有多步链路、外部调用、异常路径 | 核心业务链路和异常路径是否清楚？ | include / N/A because... |
+| State | 有状态迁移、审批、订单、任务、重试 | 状态迁移、不变量和终态是否清楚？ | include / N/A because... |
+| ER / Data Flow | 有数据模型、权限、资产、库存或副作用 | 数据关系、读写路径和副作用是否清楚？ | include / N/A because... |
+| Deployment / Rollout | 有上线、灰度、依赖、容量或回滚风险 | 发布路径和回滚边界是否清楚？ | include / N/A because... |
 
-### 2.2 Primary View
+Diagram rules:
+
+- Prefer one primary diagram over many decorative diagrams.
+- Label changed nodes/edges explicitly.
+- Show boundaries, direction, state, data ownership, or rollback points when relevant.
+- Keep details that do not affect review in Appendix.
+
+### 2.2 Primary Review View
 
 ```mermaid
 flowchart LR
@@ -63,7 +74,7 @@ flowchart LR
     Domain --> Store["Store / External Dependency"]
 ```
 
-### 2.3 Critical Flow / State
+### 2.3 Secondary View: Critical Flow / State / Data
 
 ```mermaid
 sequenceDiagram
@@ -79,6 +90,7 @@ sequenceDiagram
 ## 3. Contracts / Invariants
 
 > Spec 不只写“怎么改”，还要写“什么绝不能被破坏”。
+> 未变化的契约写 N/A，并给出依据；不要让 reviewer 猜“没写”是未影响还是漏写。
 
 ### 3.1 Contract Surface
 
@@ -104,6 +116,7 @@ sequenceDiagram
 ### 3.3 Invariants
 
 > 推荐用 EARS 写关键不变量。没有高风险不变量时写 N/A。
+> 不变量要少而硬：被破坏时应导致测试失败、review fail 或 release block。
 
 ```text
 WHEN {trigger}
@@ -130,6 +143,7 @@ THE SYSTEM SHALL {constraint}
 ## 4. Acceptance / Tests
 
 > 每条 AC 都必须绑定测试、样例、命令、gate 或人工检查点。AI 不能验证形容词，只能验证事实、数字、样例和命令结果。
+> 优先一条业务规则一条 AC；不要写只证明实现存在、但不证明业务成立的验收项。
 
 ### 4.1 Functional AC
 
@@ -167,6 +181,7 @@ Scenario: {场景名}
 ## 5. Drift Control
 
 > Spec 写完以后最大的风险是漂移。图、spec、测试、代码必须形成闭环。
+> 如果某类漂移不适用，写 N/A；如果适用，必须写谁负责检查。
 
 | Drift Trigger | Required Update | Check / Owner |
 |---------------|-----------------|---------------|
@@ -205,6 +220,7 @@ Scenario: {场景名}
 ## Appendix A — Technical Details
 
 > 详细方案放附录，避免普通 review 一上来读长文。只有复杂需求、跨系统变更、迁移、性能或高风险链路需要展开。
+> 低风险 `plan` 任务可以把本附录整体写 N/A。
 
 ### A.1 Technical Approach
 
