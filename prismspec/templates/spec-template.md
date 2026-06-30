@@ -13,49 +13,209 @@ updated_at: {timestamp}
 
 # Spec: {Title}
 
-## Part I — Background And Goals
+## 0. One-Page Summary
 
-### 1.1 Intent
+> 好 spec 先降低 review 成本。Reviewer 应该能在三分钟内判断：该不该做、改哪里、主要风险是什么、怎么证明做对。
 
-{用 1-3 句话说明：这个变更要解决什么问题，为什么现在要做，成功后用户/系统会发生什么变化。}
+| Item | Value |
+|------|-------|
+| Problem | {要解决的真实问题，不只写功能名} |
+| Target user / system | {谁受影响，哪个系统行为会改变} |
+| Success criteria | {成功后可观察、可验证的状态} |
+| Scope | {本次明确交付什么} |
+| Non-goals | {本次明确不做什么；AI 不会从省略推断边界} |
+| Risk level | low / medium / high |
+| Execution mode | `{plan|tdd}` |
+| Review focus | intent / boundary / flow / state / data / contract / acceptance / drift |
+| Decision | ready / needs-clarification / blocked |
 
-### 1.2 Scope
+## 1. Context Basis
 
-#### In
-
-- {本次明确要交付的行为、模块、接口或用户可见结果}
-
-#### Out
-
-- {本次明确不做的内容，避免 AI 或 reviewer 自动扩张范围}
-
-### 1.3 Context Basis
-
-> 只放影响 Scope / AC / Risk / Execution Policy 的已采用上下文；不复制完整代码、知识库或聊天记录。没有外部依据时写 N/A。
+> Spec 是 AI 的外挂记忆，只记录会影响 Scope、Views、Contracts、Invariants、Acceptance 或 Execution Policy 的已采用事实；不复制完整代码、知识库或聊天记录。没有外部依据时写 N/A。
 
 | Source | Constraint / Fact | Impact |
 |--------|-------------------|--------|
 | user request | | |
 | code / tests | | |
 | docs / knowledge | | |
+| incidents / metrics / support | | |
 | open questions / conflicts | | |
 
-### 1.4 Naming Conventions
+## 2. Key Diagrams
 
-> 只保留本次会触达的层；不涉及则写 N/A。
+> 图不是装饰，是为了让 review 更便宜。按风险选择 1-3 张关键图；低风险任务可以只保留改动落点图或写 N/A。
 
-| Layer | Style | Example |
-|-------|-------|---------|
-| API JSON field | camelCase | `userId`, `itemName` |
-| Code identifier | Project convention | `UserID`, `ItemID`, `user_id` |
-| Database column | snake_case | `user_id`, `item_name` |
-| Error / result code | Project convention | `ErrNotFound`, `ITEM_NOT_FOUND` |
+### 2.1 Diagram Selection
+
+| Diagram | Required? | Review Question | Evidence |
+|---------|-----------|-----------------|----------|
+| Context / Component | yes / no | 改动落点和上下游是否清楚？ | |
+| Sequence | yes / no | 核心业务链路和异常路径是否清楚？ | |
+| State | yes / no | 状态迁移、不变量和终态是否清楚？ | |
+| ER / Data Flow | yes / no | 数据关系、权限、资产、库存或副作用是否清楚？ | |
+| Deployment / Rollout | yes / no | 上线、灰度、回滚、依赖和容量风险是否清楚？ | |
+
+### 2.2 Primary View
+
+```mermaid
+flowchart LR
+    Actor["User / Caller"] --> Entry["Entry Point"]
+    Entry --> Domain["Domain Logic"]
+    Domain --> Store["Store / External Dependency"]
+```
+
+### 2.3 Critical Flow / State
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant Service
+    participant Dependency
+    Caller->>Service: request
+    Service->>Dependency: read/write
+    Dependency-->>Service: result
+    Service-->>Caller: response
+```
+
+## 3. Contracts / Invariants
+
+> Spec 不只写“怎么改”，还要写“什么绝不能被破坏”。
+
+### 3.1 Contract Surface
+
+| Contract | Change | Compatibility | Owner / Evidence |
+|----------|--------|---------------|------------------|
+| API / route | | backward-compatible / breaking / N/A | |
+| Schema / data | | backward-compatible / migration / N/A | |
+| UI / component | | compatible / changed / N/A | |
+| Config / env | | default-safe / requires rollout / N/A | |
+| Events / jobs | | compatible / changed / N/A | |
+
+### 3.2 Naming And Data Semantics
+
+| Layer | Style / Rule | Example / Note |
+|-------|--------------|----------------|
+| API JSON field | camelCase unless project says otherwise | `userId`, `itemName` |
+| Code identifier | project convention | `UserID`, `ItemID`, `user_id` |
+| Database column | snake_case unless project says otherwise | `user_id`, `item_name` |
+| Error / result code | project convention | `ErrNotFound`, `ITEM_NOT_FOUND` |
 | URL path | kebab-case resource noun | `/api/v1/items` |
 | Config / env | UPPER_SNAKE_CASE | `ITEM_CACHE_TTL` |
 
-## Part II — System Design
+### 3.3 Invariants
 
-### 2.1 Technical Approach
+> 推荐用 EARS 写关键不变量。没有高风险不变量时写 N/A。
+
+```text
+WHEN {trigger}
+THE SYSTEM SHALL {response}
+
+WHILE {state}
+THE SYSTEM SHALL {constraint}
+```
+
+| Invariant | Why It Must Hold | Verification |
+|-----------|------------------|--------------|
+| idempotency / permission / data consistency / concurrency / regression | | |
+| asset / billing / inventory / critical side effect | | |
+| rollout / rollback / migration | | |
+
+### 3.4 Three-Tier Boundaries
+
+| Tier | Boundary |
+|------|----------|
+| Always do | {无需再问，必须遵守的规则} |
+| Ask first | {高影响动作，需要用户确认} |
+| Never | {硬停止，绝不能做；例如提交密钥、扩大范围、破坏兼容性} |
+
+## 4. Acceptance / Tests
+
+> 每条 AC 都必须绑定测试、样例、命令、gate 或人工检查点。AI 不能验证形容词，只能验证事实、数字、样例和命令结果。
+
+### 4.1 Functional AC
+
+```gherkin
+Scenario: {场景名}
+  Given {前置条件}
+  When {触发动作}
+  Then {可观察结果}
+```
+
+| # | Given | When | Then | Verification |
+|---|-------|------|------|--------------|
+| AC-1 | | | | unit / integration / e2e / manual / gate |
+
+### 4.2 Examples
+
+| ID | Input | Precondition | Expected Output | Side Effect | AC |
+|----|-------|--------------|-----------------|-------------|----|
+| EX-1 | | | | | AC-1 |
+
+### 4.3 Failure / Boundary / Regression
+
+| # | Fault / Condition | Expected State | Error / Result | Verification |
+|---|-------------------|----------------|----------------|--------------|
+| AC-2 | | | | |
+
+### 4.4 Non-Functional Fit Criteria
+
+| # | Dimension / Command | Threshold / Expected Result |
+|---|---------------------|-----------------------------|
+| AC-n | build / lint / type-check | zero error |
+| AC-n | performance / latency | concrete threshold or N/A |
+| AC-n | observability / alert | signal exists or N/A |
+
+## 5. Drift Control
+
+> Spec 写完以后最大的风险是漂移。图、spec、测试、代码必须形成闭环。
+
+| Drift Trigger | Required Update | Check / Owner |
+|---------------|-----------------|---------------|
+| API / field / message changes | update Contract Surface and related AC | |
+| state machine / workflow changes | update State / Sequence view and invariants | |
+| data model / migration changes | update Data Model and rollback plan | |
+| permission / tenancy / privacy changes | update boundaries and security AC | |
+| test behavior changes | update Acceptance Binding | |
+| rollout / deployment changes | update Release / Rollback checklist | |
+
+## 6. Execution Policy
+
+- Mode: `{plan|tdd}`
+- Reason: {为什么选这个模式；高风险、回归、权限、状态机、数据迁移、并发、幂等等应优先 `tdd`}
+- Source: `model-selected | project-default | user-override`
+- Escalation: `plan -> tdd` allowed if new risk is discovered; `tdd -> plan` requires explicit user override.
+
+## 7. Verification Plan
+
+| Gate / Test | Required? | Evidence |
+|-------------|-----------|----------|
+| build | yes / no | |
+| lint / type-check | yes / no | |
+| unit test | yes / no | |
+| AC coverage | yes / no | |
+| integration / e2e | conditional | |
+| drift / contract check | conditional | |
+| release smoke / manual check | conditional | |
+
+## 8. Approval
+
+| Item | Value |
+|------|-------|
+| Status | explicit / inferred / skipped-with-reason |
+| Source | user message / project default / reason |
+| Notes | |
+
+## 9. Open Questions
+
+> 只保留会阻塞 Scope、Views、Contracts、Invariants、Acceptance 或 Execution Policy 的问题。
+
+- [ ] {question}
+
+## Appendix A — Technical Details
+
+> 详细方案放附录，避免普通 review 一上来读长文。只有复杂需求、跨系统变更、迁移、性能或高风险链路需要展开。
+
+### A.1 Technical Approach
 
 | Item | Choice | Reason / Constraint |
 |------|--------|---------------------|
@@ -64,40 +224,13 @@ updated_at: {timestamp}
 | Deployment / runtime | | |
 | Compatibility boundary | | |
 
-### 2.2 Architecture / Flow
-
-> 用最小图表达模块依赖、核心流程、事务边界、锁/幂等 key 或外部调用；低风险任务可写 N/A。
-
-```mermaid
-flowchart LR
-    User["User / Caller"] --> Entry["Entry Point"]
-    Entry --> Domain["Domain Logic"]
-    Domain --> Store["Store / External Dependency"]
-```
-
-### 2.3 Contract Surface
-
-> 只列本次会改变或依赖的外部契约。没有则写 N/A。
-
-| Contract | Change | Compatibility | Owner / Evidence |
-|----------|--------|---------------|------------------|
-| API / route | | | |
-| Schema / data | | | |
-| UI / component | | | |
-| Config / env | | | |
-| Events / jobs | | | |
-
-### 2.4 API / Message Protocol
-
-> 没有协议变更时写 N/A。JSON 示例必须是合法 JSON，不使用 `//` 注释。
+### A.2 API / Message Protocol
 
 | API / Message | Method / Type | Path / Topic | Auth | Request | Response / Event | Error Codes |
 |---------------|---------------|--------------|------|---------|------------------|-------------|
 | | | | | | | |
 
-### 2.5 Data Model / Migration
-
-> DDL、schema、配置或数据迁移必须说明兼容性、索引、回滚；无数据影响写 N/A。
+### A.3 Data Model / Migration
 
 ```sql
 -- Include only changed or newly introduced tables / columns.
@@ -108,98 +241,13 @@ flowchart LR
 |--------|--------------------|---------|-------------------|
 | | | | |
 
-### 2.6 Design Decisions
-
-> 只记录需要人审、不可轻易回滚、或会影响后续演进的决策。
+### A.4 Design Decisions
 
 | # | Decision | Rationale | Alternatives | Reversible? |
 |---|----------|-----------|--------------|-------------|
 | D-1 | | | | yes / no |
 
-## Part III — Quality Bar
-
-### 3.1 Acceptance Criteria
-
-> AC 是 spec 的核心。每条 AC 都应该能被测试、人工验收或 gate 证明。
-
-#### Happy Path
-
-| # | Given | When | Then | Verification |
-|---|-------|------|------|--------------|
-| AC-1 | | | | unit / integration / e2e / manual / gate |
-
-#### Validation / Permission / Policy
-
-| # | Given | When / Condition | Then | Error / Result | Verification |
-|---|-------|------------------|------|----------------|--------------|
-| AC-2 | | | | | |
-
-#### Failure / Compensation / Side Effects
-
-| # | Fault / Condition | Expected State | Data / Side Effect | Verification |
-|---|-------------------|----------------|--------------------|--------------|
-| AC-3 | | | | |
-
-#### Non-Functional Requirements
-
-| # | Requirement / Command | Expected Result |
-|---|-----------------------|-----------------|
-| AC-n | build / lint / type-check | zero error |
-| AC-n | focused tests | pass |
-
-### 3.2 Risks And Invariants
-
-> 高风险项必须明确不变量。低风险任务可以只写 N/A。
-
-| Risk / Invariant | Mitigation | Verification |
-|------------------|------------|--------------|
-| idempotency / permission / data consistency / concurrency / regression | | |
-| asset / billing / critical side effect | | |
-| rollout / rollback / migration | | |
-
-### 3.3 Review Checklist
-
-> AI 先填写 Status 和 Evidence；reviewer 只需要验证是否评估过、引用是否准确。
-
-| Category | Check | Status | Evidence / Design Basis |
-|----------|-------|--------|-------------------------|
-| Contract | API / schema / UI compatibility | todo / pass / n/a | |
-| State | idempotency, transaction, retry, compensation | todo / pass / n/a | |
-| Security | auth, permission, tenancy, privacy | todo / pass / n/a | |
-| Data | migration, index, backfill, dangerous DML | todo / pass / n/a | |
-| Reliability | timeout, fallback, cache, queue, scheduled job | todo / pass / n/a | |
-| Release | rollout, rollback, observability, smoke | todo / pass / n/a | |
-
-### 3.4 Test Strategy
-
-| Test Layer | Scope | AC / Risk Covered | Command / Evidence |
-|------------|-------|-------------------|--------------------|
-| unit | | | |
-| integration / contract | | | |
-| e2e / manual | | | |
-| concurrency / migration / rollback | | | |
-
-## Part IV — Execution And Release
-
-### 4.1 Execution Policy
-
-- Mode: `{plan|tdd}`
-- Reason: {为什么选这个模式}
-- Source: `model-selected | project-default | user-override`
-- Escalation: `plan -> tdd` allowed if new risk is discovered; `tdd -> plan` requires explicit user override.
-
-### 4.2 Verification Plan
-
-| Gate / Test | Required? | Evidence |
-|-------------|-----------|----------|
-| build | yes / no | |
-| lint / type-check | yes / no | |
-| unit test | yes / no | |
-| AC coverage | yes / no | |
-| integration / e2e | conditional | |
-| drift / contract check | conditional | |
-
-### 4.3 Release / Rollback Checklist
+### A.5 Release / Rollback Checklist
 
 | Item | Plan | Owner / Evidence |
 |------|------|------------------|
@@ -209,17 +257,3 @@ flowchart LR
 | rollout | | |
 | rollback | | |
 | smoke / post-check | | |
-
-### 4.4 Approval
-
-| Item | Value |
-|------|-------|
-| Status | explicit / inferred / skipped-with-reason |
-| Source | user message / project default / reason |
-| Notes | |
-
-### 4.5 Open Questions
-
-> 只保留会阻塞 Scope、AC、Risk 或 Execution Policy 的问题。
-
-- [ ] {question}
