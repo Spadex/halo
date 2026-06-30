@@ -6,7 +6,9 @@
 
 Lattice 的本地工程闭环已经达到 **commercially credible preview / pilot** 标准：安装、PrismSpec contract、spec/plan/review/verify artifact、delivery gates、eval evidence、Go 示例和 release check 都有可运行证据。
 
-但当前还不应以 **commercial-grade stable** 口径发布。唯一 P0 阻断是公开分发入口：README 默认 remote install URL 在匿名环境下仍返回 `404`。在这个问题解决前，外部用户第一步安装会失败。
+当前公开分发入口已经可用：GitHub 仓库为 public，README 默认 remote install URL 可以匿名下载，`LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` 已通过。
+
+但当前仍不建议直接以 **commercial-grade stable** 口径发布。stable 口径还需要 tag/release 版本化、公开安装 CI、兼容性矩阵、安全披露渠道和支持承诺。
 
 ## 发布分级
 
@@ -27,26 +29,19 @@ Lattice 的本地工程闭环已经达到 **commercially credible preview / pilo
 | Go 示例 | `bash examples/go-gin-gorm/try-it.sh` | PASS，spec lint、AC coverage、drift check、review evidence、pipeline eval、eval summary/history 均通过 |
 | Release check | `bash tests/release-check.sh` | PASS，remote install 默认跳过 |
 | Whitespace | `git diff --check` | PASS |
-| Remote install | `curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh` | **FAIL：匿名访问 404** |
+| Remote install | `curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh` | PASS |
+| Remote release check | `LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` | PASS |
 
 ## P0 发布阻断
 
-### 公开安装入口不可用
+当前无 P0 阻断。
 
-README 推荐的安装命令依赖：
+已完成：
 
-```bash
-https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh
-```
-
-当前匿名访问返回 `404`。这通常意味着仓库不是 public，或 raw URL 不在公开分发路径上。
-
-发布前必须完成：
-
-- 确认 GitHub 仓库为 public，或创建公开 release/tag 分发地址。
-- 在无凭证环境复测 GitHub 页面、raw install、fresh clone 和示例运行。
-- 将 README 默认安装路径切到稳定 tag URL；`main` 只保留为开发版入口。
-- 设置 `LATTICE_CHECK_REMOTE_INSTALL=1` 跑完整 release check。
+- GitHub 仓库可匿名访问；
+- `main` 分支包含 `install.sh`；
+- raw install URL 可匿名下载；
+- 远端安装、非交互初始化、doctor 和 PrismSpec routing 已通过 release check。
 
 ## P1 商业化可信度
 

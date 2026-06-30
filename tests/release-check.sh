@@ -38,7 +38,8 @@ if [[ "${LATTICE_CHECK_REMOTE_INSTALL:-0}" == "1" ]]; then
   mkdir -p "$tmp/target"
   (
     cd "$tmp/target"
-    bash "$tmp/install.sh" --init
+    bash "$tmp/install.sh"
+    bash .lattice/framework/init.sh --non-interactive --name=target --lang=unknown --framework=none --orm=none --db=none --ci=none
     bash lattice/kernel/doctor.sh
     bash prismspec/bin/doctor.sh
     bash prismspec/bin/guide.sh --json >/dev/null
