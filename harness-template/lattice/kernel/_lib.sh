@@ -76,10 +76,10 @@ require_layer() {
 
 _PASS=0; _FAIL=0; _WARN=0; _SKIP=0
 
-pass() { ((_PASS++)) || true; printf "  ✅ %s\n" "$*"; }
-fail() { ((_FAIL++)) || true; printf "  ❌ %s\n" "$*"; }
-warn() { ((_WARN++)) || true; printf "  ⚠️  %s\n" "$*"; }
-skip() { ((_SKIP++)) || true; printf "  ⏭️  %s\n" "$*"; }
+pass() { _PASS=$((_PASS + 1)); printf "  ✅ %s\n" "$*"; }
+fail() { _FAIL=$((_FAIL + 1)); printf "  ❌ %s\n" "$*"; }
+warn() { _WARN=$((_WARN + 1)); printf "  ⚠️  %s\n" "$*"; }
+skip() { _SKIP=$((_SKIP + 1)); printf "  ⏭️  %s\n" "$*"; }
 
 # ══════════════════════════════════
 # YAML queries (yq wrapper)

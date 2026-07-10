@@ -92,7 +92,7 @@ ask_choice() {
     local marker=""
     [[ "$c" == "$default" ]] && marker=" (default)"
     printf "  %d) %s%s\n" "$i" "$c" "$marker"
-    ((i++))
+    i=$((i + 1))
   done
   printf "Choose [%s]: " "$default"
   read -r answer

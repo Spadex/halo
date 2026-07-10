@@ -96,13 +96,13 @@ if grep -qiE '^## +.*(Context|Context Basis|上下文依据)' "$SPEC"; then
     record_finding "context_structure" "pass" "structured decision sections found"
   else
     echo "  ⚠️  Context Basis is present but lacks source, constraint, gap, or N/A markers"
-    ((WARNINGS++)) || true
+    WARNINGS=$((WARNINGS + 1))
     record_finding "context_structure" "warning" "Context Basis lacks traceable structure"
   fi
 else
   echo "  ⚠️  Missing Context Basis section in spec.md"
   echo "     Expected Specification to persist selected facts, constraints, conflicts, or explicit N/A in spec.md."
-  ((WARNINGS++)) || true
+  WARNINGS=$((WARNINGS + 1))
   record_finding "context_basis" "warning" "missing Context Basis section"
 fi
 
@@ -114,7 +114,7 @@ SEARCH_FILES=("$SPEC")
 
 while IFS= read -r kb_file; do
   [[ -z "$kb_file" ]] && continue
-  ((TOTAL_KB++)) || true
+  TOTAL_KB=$((TOTAL_KB + 1))
 done <<< "$KNOWLEDGE_FILES"
 
 if [[ "$TOTAL_KB" -gt 0 ]] && grep -qiE 'lattice/context/knowledge|knowledge/' "${SEARCH_FILES[@]}" 2>/dev/null; then
@@ -124,7 +124,7 @@ elif [[ "$TOTAL_KB" -gt 0 ]]; then
   echo "  ⚠️  Spec does not reference project knowledge paths"
   echo "     Found $TOTAL_KB entries under lattice/context/knowledge."
   echo "     This is acceptable only when the current change does not depend on durable project knowledge."
-  ((WARNINGS++)) || true
+  WARNINGS=$((WARNINGS + 1))
   record_finding "knowledge_reference" "warning" "spec does not reference project knowledge paths"
 elif [[ "$TOTAL_KB" -eq 0 ]]; then
   echo "  ⏭️  Context knowledge is empty, skipping"
@@ -138,7 +138,7 @@ if grep -qiE '\| *(user|code|test|schema|contract|knowledge|external) *\|' "${SE
   record_finding "source_trace" "pass" "context basis records source categories"
 else
   echo "  ⚠️  Context basis does not clearly record source categories"
-  ((WARNINGS++)) || true
+  WARNINGS=$((WARNINGS + 1))
   record_finding "source_trace" "warning" "context basis does not clearly record source categories"
 fi
 
@@ -149,7 +149,7 @@ if grep -qiE 'Open Questions|Context Gaps|Conflicts|Ambiguities|None|N/A' "${SEA
   record_finding "ambiguity_tracking" "pass" "context basis records ambiguities or marks none"
 else
   echo "  ⚠️  No ambiguity or gap records found in context basis"
-  ((WARNINGS++)) || true
+  WARNINGS=$((WARNINGS + 1))
   record_finding "ambiguity_tracking" "warning" "no ambiguity or gap records found"
 fi
 

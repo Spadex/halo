@@ -154,25 +154,25 @@ collect_process_evidence() {
   while IFS= read -r file; do
     [[ -f "$file" ]] || continue
     process_review_files+=("$file")
-    ((METRIC_REVIEW_TOTAL++)) || true
+    METRIC_REVIEW_TOTAL=$((METRIC_REVIEW_TOTAL + 1))
     verdict="$(yq -r '.verdict // ""' "$file" 2>/dev/null || true)"
     verdict="${verdict//-/_}"
     case "$verdict" in
-      pass) ((METRIC_REVIEW_PASSED++)) || true ;;
-      fail) ((METRIC_REVIEW_FAILED++)) || true ;;
-      cannot_verify) ((METRIC_REVIEW_CANNOT_VERIFY++)) || true ;;
+      pass) METRIC_REVIEW_PASSED=$((METRIC_REVIEW_PASSED + 1)) ;;
+      fail) METRIC_REVIEW_FAILED=$((METRIC_REVIEW_FAILED + 1)) ;;
+      cannot_verify) METRIC_REVIEW_CANNOT_VERIFY=$((METRIC_REVIEW_CANNOT_VERIFY + 1)) ;;
     esac
   done < <(find "$evidence_dir" -type f -name 'review-summary.json' -print 2>/dev/null | sort)
 
   while IFS= read -r file; do
     [[ -f "$file" ]] || continue
     process_tdd_files+=("$file")
-    ((METRIC_TDD_TOTAL++)) || true
+    METRIC_TDD_TOTAL=$((METRIC_TDD_TOTAL + 1))
     status="$(yq -r '.status // ""' "$file" 2>/dev/null || true)"
     if [[ "$status" == "pass" ]]; then
-      ((METRIC_TDD_COMPLETE++)) || true
+      METRIC_TDD_COMPLETE=$((METRIC_TDD_COMPLETE + 1))
     else
-      ((METRIC_TDD_INVALID++)) || true
+      METRIC_TDD_INVALID=$((METRIC_TDD_INVALID + 1))
     fi
   done < <(find "$evidence_dir" -type f -name 'tdd-evidence.json' -print 2>/dev/null | sort)
 }
@@ -332,7 +332,7 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
   skip_when=$(yq -r ".pipeline.steps[$i].skip_when // \"never\"" "$MANIFEST")
 
   [[ -z "$name" || "$name" == "null" ]] && continue
-  ((STEP_NUM++)) || true
+  STEP_NUM=$((STEP_NUM + 1))
 
   if [[ -n "$ONLY_STEP" ]] && [[ "$name" != "$ONLY_STEP" ]]; then
     continue
@@ -340,7 +340,7 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
 
   if should_skip "$skip_when"; then
     printf "⏭️  [%d] %-20s SKIP (%s)\n" "$STEP_NUM" "$name" "$skip_when"
-    ((STEP_SKIP++)) || true
+    STEP_SKIP=$((STEP_SKIP + 1))
     record_step "$name" "skip" "$run" "0" "0" "$skip_when"
     continue
   fi
@@ -369,7 +369,7 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
     step_duration_ms=$(( ($(date +%s) - step_started_sec) * 1000 ))
     [[ -n "$output" ]] && printf '%s\n' "$output" | tail -20
     printf "✅ [%d] %-20s PASS\n\n" "$STEP_NUM" "$name"
-    ((STEP_PASS++)) || true
+    STEP_PASS=$((STEP_PASS + 1))
     record_step "$name" "pass" "$run" "0" "$step_duration_ms" "$(printf '%s\n' "$output" | tail -20)"
     [[ -n "$gate_json_file" ]] && collect_gate_json "$name" "$gate_json_file"
   else
@@ -377,7 +377,7 @@ for i in $(seq 0 $((STEP_COUNT - 1))); do
     step_duration_ms=$(( ($(date +%s) - step_started_sec) * 1000 ))
     printf '%s\n' "$output"
     printf "❌ [%d] %-20s FAIL\n\n" "$STEP_NUM" "$name"
-    ((STEP_FAIL++)) || true
+    STEP_FAIL=$((STEP_FAIL + 1))
     record_step "$name" "fail" "$run" "$step_exit" "$step_duration_ms" "$(printf '%s\n' "$output" | tail -40)"
     FAILED_STEP="$name"
     FAILED_EXIT_CODE="$step_exit"

@@ -52,7 +52,7 @@ record_finding() {
     "$(json_escape "$message")")")
 }
 
-drift() { ((DRIFT++)) || true; printf "  🔴 %s\n" "$*"; record_finding "${DRIFT_CATEGORY:-general}" "drift" "$*"; }
+drift() { DRIFT=$((DRIFT + 1)); printf "  🔴 %s\n" "$*"; record_finding "${DRIFT_CATEGORY:-general}" "drift" "$*"; }
 ok()    { printf "  ✅ %s\n" "$*"; record_finding "${DRIFT_CATEGORY:-general}" "pass" "$*"; }
 gate_skip() { skip "$*"; record_finding "${DRIFT_CATEGORY:-general}" "skip" "$*"; }
 
@@ -283,7 +283,7 @@ if [[ "$PLUGIN_COUNT" -gt 0 ]]; then
       record_finding "plugin" "pass" "$plugin_name: no drift"
     else
       echo "  ❌ $plugin_name: drift detected"
-      ((DRIFT++)) || true
+      DRIFT=$((DRIFT + 1))
       record_finding "plugin" "drift" "$plugin_name: drift detected"
     fi
   done

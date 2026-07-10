@@ -72,7 +72,7 @@ case "$ACTION" in
       else
         cp "$f" "$local_file"
         echo "  ✅ Added: $rel"
-        ((SYNCED++)) || true
+        SYNCED=$((SYNCED + 1))
       fi
     done < <(find "$REMOTE_DIR" -path "$REMOTE_DIR/.git" -prune -o -type f -name "*.md" -print0 2>/dev/null)
 

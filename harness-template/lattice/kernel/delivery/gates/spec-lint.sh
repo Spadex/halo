@@ -166,7 +166,7 @@ IN_JSON=0
 JSON_COMMENT_LINES=""
 LINE_NUM=0
 while IFS= read -r line; do
-  ((LINE_NUM++)) || true
+  LINE_NUM=$((LINE_NUM + 1))
   if [[ "$line" =~ ^\`\`\`json ]]; then IN_JSON=1
   elif [[ "$line" =~ ^\`\`\` ]] && [[ $IN_JSON -eq 1 ]]; then IN_JSON=0
   elif [[ $IN_JSON -eq 1 ]] && echo "$line" | grep -qE '^\s*//' ; then
