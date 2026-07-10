@@ -31,4 +31,4 @@ PrismSpec 的改良点只放在工程契约层：
 - 固定 Context Basis 在 `spec.md` 内，而不是新增必需 `context.md`；
 - 固定 `plan` / `tdd` 两种风险档位；
 - 固定机器侧证据是 sidecar，不包装成新的用户阶段；
-- 允许 Lattice 托管后接入 context、gates、evidence/eval、loop/learn。
+- 允许 Halo 托管后接入 context、gates、evidence/eval、loop/learn。

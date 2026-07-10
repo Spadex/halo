@@ -1,6 +1,6 @@
 ---
 name: prismspec-verification
-description: Runs independent command-backed verification for a PrismSpec run and records durable verify.md evidence. Use when implementation and review are complete, after fixing failures, when Lattice pipeline gates should run, or whenever /prismspec routes to verification.
+description: Runs independent command-backed verification for a PrismSpec run and records durable verify.md evidence. Use when implementation and review are complete, after fixing failures, when Halo pipeline gates should run, or whenever /prismspec routes to verification.
 ---
 
 # PrismSpec Verification
@@ -9,7 +9,7 @@ description: Runs independent command-backed verification for a PrismSpec run an
 
 Run actual commands and record evidence. Verification is external proof, not a prose assertion.
 
-This skill aligns with Superpowers `verification-before-completion`: no completion claim without command-backed evidence. PrismSpec adds durable `verify.md` and Lattice pipeline/eval gates. Verification is the main PrismSpec workflow endpoint; optional knowledge promotion happens through `/capture`.
+This skill aligns with Superpowers `verification-before-completion`: no completion claim without command-backed evidence. PrismSpec adds durable `verify.md` and Halo pipeline/eval gates. Verification is the main PrismSpec workflow endpoint; optional knowledge promotion happens through `/capture`.
 
 <HARD-GATE>
 Do not say done, fixed, passing, complete, verified, or equivalent unless the proving command was run in the current verification pass and the result is recorded.
@@ -21,17 +21,17 @@ Do not say done, fixed, passing, complete, verified, or equivalent unless the pr
 - `plan.md`
 - `review.md` when review evidence is required.
 - Current code and tests.
-- Lattice pipeline when installed.
+- Halo pipeline when installed.
 - `prismspec/references/superpowers-alignment.md` when completion discipline is unclear.
 - `prismspec/references/definition-of-done.md`
 
 ## Workflow
 
 1. Resolve verification command from `prismspec/bin/guide.sh --json`.
-2. In Lattice-hosted mode, run:
+2. In Halo-hosted mode, run:
 
 ```bash
-bash lattice/kernel/delivery/pipeline.sh --json-out
+bash halo/kernel/delivery/pipeline.sh --json-out
 ```
 
 3. In standalone mode, detect and run the smallest meaningful set:
@@ -44,7 +44,7 @@ bash lattice/kernel/delivery/pipeline.sh --json-out
 6. If a failure is not immediately explained by the output, switch to `prismspec-debugging` before changing code.
 7. Fix retryable failures within the task scope, then rerun affected commands.
 8. Escalate non-retryable failures with concrete next steps.
-9. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> verified --from=implemented` only after verification passes.
+9. In Halo-hosted mode, advance status with `halo/kernel/orchestrator/sdd/spec-status.sh <spec-id> verified --from=implemented` only after verification passes.
 
 ## Outputs
 
@@ -82,4 +82,4 @@ bash lattice/kernel/delivery/pipeline.sh --json-out
 - [ ] AC completion, skipped checks, residual risks, and next actions are recorded.
 - [ ] Failures are fixed or escalated.
 - [ ] Evidence matches the selected execution mode.
-- [ ] Lattice spec-status advances to `verified` only after passing evidence exists.
+- [ ] Halo spec-status advances to `verified` only after passing evidence exists.

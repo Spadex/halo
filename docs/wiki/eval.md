@@ -2,7 +2,7 @@
 
 ## 定位
 
-Lattice 的 Evidence / Eval 层不是“多跑几条测试”，也不是主观给 Agent 打分。它负责把一次 AI Coding 交付的关键证据结构化，回答三个问题：
+Halo 的 Evidence / Eval 层不是“多跑几条测试”，也不是主观给 Agent 打分。它负责把一次 AI Coding 交付的关键证据结构化，回答三个问题：
 
 1. 本次交付是否满足 Spec？
 2. Agent 的过程是否可审查、可恢复、可追责？
@@ -15,7 +15,7 @@ Verification 和 Eval 的边界必须分清：
 | Verification | 运行外部命令，判断本次交付是否通过。 | pipeline output、gate JSON、`verify.md` |
 | Evidence / Eval | 保存、汇总和分析验证结果、过程证据和交付后 outcome。 | `eval-runs/*.json`、summary/history、outcome report、central sink、dashboard |
 
-因此，Lattice 不把 Eval 设计成另一个测试框架，而是把测试、drift、review、TDD、loop 和 outcome 收敛成统一的质量观察面。
+因此，Halo 不把 Eval 设计成另一个测试框架，而是把测试、drift、review、TDD、loop 和 outcome 收敛成统一的质量观察面。
 
 ## 设计原则
 
@@ -57,7 +57,7 @@ flowchart TB
 | `tdd-evidence.sh` | TDD red/green JSON | TDD task 是否有红灯、绿灯和 AC trace。 |
 | `pipeline.sh --json-out` | eval run JSON | 汇总 gate、process 和 loop evidence。 |
 | `spec-status.sh` / `spec-history.sh` | transition JSON、history Markdown | spec lifecycle 是否按状态推进。 |
-| `loop state` | `lattice/state/loops/*.json` | 失败步骤、retry、failure category、next action。 |
+| `loop state` | `halo/state/loops/*.json` | 失败步骤、retry、failure category、next action。 |
 | `knowledge-review.sh` / `learn-draft.sh` | review event、promotion/discard event | learn draft 是否经过治理。 |
 | `outcome-link.sh` / `outcome-report.sh` | outcome event、attribution report | 交付后真实反馈如何关联回 eval run。 |
 | `eval-summary.sh` / `eval-history.sh` | Markdown summary/history | 人可读的单次结果和趋势。 |
@@ -69,15 +69,15 @@ flowchart TB
 一次 pipeline 可以写出：
 
 ```text
-lattice/state/eval-runs/
+halo/state/eval-runs/
 ├── <run-id>.json        # structured eval run
 ├── <run-id>.md          # human-readable summary
 └── <run-id>.gates/      # per-gate JSON evidence
 
-lattice/state/loops/
+halo/state/loops/
 └── <run-id>.json        # retry/escalation state
 
-lattice/state/outcomes/
+halo/state/outcomes/
 └── <outcome-id>.json    # post-delivery outcome link
 ```
 
@@ -101,10 +101,10 @@ eval run 的核心字段：
 
 Verification 只能证明“当时的命令通过了”。团队真正关心的是：通过之后有没有 review finding、返工、逃逸缺陷、事故或成功信号。
 
-Lattice 用 outcome link 把这些结果关联回 eval run：
+Halo 用 outcome link 把这些结果关联回 eval run：
 
 ```bash
-bash lattice/kernel/delivery/outcome-link.sh record \
+bash halo/kernel/delivery/outcome-link.sh record \
   --eval=<run-id|eval.json> \
   --type=review_finding \
   --severity=medium \
@@ -127,13 +127,13 @@ bash lattice/kernel/delivery/outcome-link.sh record \
 单项目 evidence 先落在 repo 内。需要多项目视图时，再发布到本地 central sink：
 
 ```bash
-bash lattice/kernel/delivery/eval-sink.sh publish --sink-dir=lattice/state/eval-sink
+bash halo/kernel/delivery/eval-sink.sh publish --sink-dir=halo/state/eval-sink
 ```
 
 目录形态：
 
 ```text
-lattice/state/eval-sink/
+halo/state/eval-sink/
 ├── index.md
 └── projects/<project>/
     ├── manifest.json
@@ -149,17 +149,17 @@ lattice/state/eval-sink/
 静态 dashboard：
 
 ```bash
-bash lattice/kernel/delivery/eval-dashboard.sh \
-  --sink-dir=lattice/state/eval-sink \
-  --out=lattice/state/eval-sink/dashboard.html
+bash halo/kernel/delivery/eval-dashboard.sh \
+  --sink-dir=halo/state/eval-sink \
+  --out=halo/state/eval-sink/dashboard.html
 ```
 
 查询 central sink：
 
 ```bash
-bash lattice/kernel/delivery/eval-query.sh summary --sink-dir=lattice/state/eval-sink
-bash lattice/kernel/delivery/eval-query.sh runs --sink-dir=lattice/state/eval-sink --project=<project> --format=json
-bash lattice/kernel/delivery/eval-query.sh outcomes --sink-dir=lattice/state/eval-sink --type=review_finding --format=json
+bash halo/kernel/delivery/eval-query.sh summary --sink-dir=halo/state/eval-sink
+bash halo/kernel/delivery/eval-query.sh runs --sink-dir=halo/state/eval-sink --project=<project> --format=json
+bash halo/kernel/delivery/eval-query.sh outcomes --sink-dir=halo/state/eval-sink --type=review_finding --format=json
 ```
 
 `eval-query.sh` 保持文件协议，不启动服务端。它适合做周报、质量巡检、跨项目风险筛选，也可以作为后续 dashboard 的数据源。
@@ -204,11 +204,11 @@ CI 是 Evidence / Eval 的天然执行环境：
 1. PR 触发 `pipeline.sh --json-out`。
 2. pipeline 产生 eval run JSON 和 gate JSON。
 3. `eval-summary.sh` 生成 Markdown summary。
-4. CI 写入 GitHub Step Summary，并上传 `lattice-eval-<run-id>` artifact。
-5. PR 事件中，`pr-comment.sh` best-effort 创建或更新带 marker 的 Lattice comment。
+4. CI 写入 GitHub Step Summary，并上传 `halo-eval-<run-id>` artifact。
+5. PR 事件中，`pr-comment.sh` best-effort 创建或更新带 marker 的 Halo comment。
 6. 后续任务可用 `eval-history.sh`、`eval-sink.sh`、`eval-dashboard.sh` 和 `eval-query.sh` 做趋势、汇总和查询。
 
-`harness-template/.github/workflows/lattice-eval.yml` 提供 GitHub Actions 模板。`init.sh --ci=github` 会安装到目标项目。PR comment 使用 `continue-on-error`，避免 fork PR 或 token 权限限制影响验证结论。
+`harness-template/.github/workflows/halo-eval.yml` 提供 GitHub Actions 模板。`init.sh --ci=github` 会安装到目标项目。PR comment 使用 `continue-on-error`，避免 fork PR 或 token 权限限制影响验证结论。
 
 ## 当前 Gap
 

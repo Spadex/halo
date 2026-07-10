@@ -21,7 +21,7 @@ review -> verification
 
 This skill is a controller, not an extra phase. Delegate stage work to the stage skills. Do not merge review and verification evidence: review writes `review.md`; verification writes `verify.md`.
 
-Read `prismspec/references/superpowers-alignment.md` when workflow behavior is unclear. PrismSpec should not invent a parallel workflow when a mature Superpowers skill already covers the discipline; preserve PrismSpec artifact locations and Lattice gates as the override.
+Read `prismspec/references/superpowers-alignment.md` when workflow behavior is unclear. PrismSpec should not invent a parallel workflow when a mature Superpowers skill already covers the discipline; preserve PrismSpec artifact locations and Halo gates as the override.
 
 When a routed `skill` is returned, read that `SKILL.md` before acting. Do not execute from the skill description, command name, or conversation memory alone.
 
@@ -79,11 +79,11 @@ Support skills are risk-loaded, not new stages:
 | `prismspec-doubt-review` | High-risk assumptions need adversarial checks |
 | `prismspec-interface-design` | API, schema, event, state, error, or module boundary contracts change |
 
-Do not copy Superpowers output paths blindly. For PrismSpec/Lattice work, write `spec.md`, `plan.md`, task evidence, `review.md`, and `verify.md` in the routed PrismSpec locations. Context Basis belongs inside `spec.md`.
+Do not copy Superpowers output paths blindly. For PrismSpec/Halo work, write `spec.md`, `plan.md`, task evidence, `review.md`, and `verify.md` in the routed PrismSpec locations. Context Basis belongs inside `spec.md`.
 
 ## Host Modes
 
-- Lattice-hosted: `lattice/manifest.yaml` exists; specs live under `lattice/specs/`, evidence under `.lattice/sdd/`, verification uses the Lattice pipeline.
+- Halo-hosted: `halo/manifest.yaml` exists; specs live under `halo/specs/`, evidence under `.halo/sdd/`, verification uses the Halo pipeline.
 - Standalone: specs live under `prismspec/specs/`, evidence under `.prismspec/runs/`, verification uses detected local commands.
 
 ## Stop Conditions

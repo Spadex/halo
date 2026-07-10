@@ -14,7 +14,7 @@ Context output belongs in `spec.md#Context Basis` or the task brief. Do not crea
 ## Inputs
 
 - User requirement, current `spec.md`, or task brief.
-- `lattice/context/README.md` and related project knowledge when running in Lattice-hosted mode.
+- `halo/context/README.md` and related project knowledge when running in Halo-hosted mode.
 - Relevant code, tests, schemas, contracts, prior specs, and docs.
 - External references only when local facts are insufficient or time-sensitive.
 

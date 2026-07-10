@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # doctor.sh - PrismSpec standalone health check.
-# Checks the skill pack contract and guide protocol without requiring Lattice.
+# Checks the skill pack contract and guide protocol without requiring Halo.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -47,7 +47,7 @@ check_command() {
 echo "══════════════════════════════════"
 echo "PrismSpec — Doctor"
 echo "Root: $PRISMSPEC_ROOT"
-echo "Host: $([[ -f "$PROJECT_ROOT/lattice/manifest.yaml" ]] && echo "lattice-hosted" || echo "standalone")"
+echo "Host: $([[ -f "$PROJECT_ROOT/halo/manifest.yaml" ]] && echo "halo-hosted" || echo "standalone")"
 echo "══════════════════════════════════"
 echo ""
 
@@ -64,11 +64,11 @@ else
   warn "git not found; PrismSpec can run, but review and changed-file checks are weaker"
 fi
 
-if [[ -f "$PROJECT_ROOT/lattice/manifest.yaml" ]]; then
+if [[ -f "$PROJECT_ROOT/halo/manifest.yaml" ]]; then
   if command -v yq >/dev/null 2>&1; then
-    pass "yq for Lattice-hosted mode"
+    pass "yq for Halo-hosted mode"
   else
-    fail "Missing yq for Lattice-hosted mode"
+    fail "Missing yq for Halo-hosted mode"
   fi
 elif ! command -v yq >/dev/null 2>&1; then
   warn "yq not found; standalone PrismSpec still works"
@@ -102,9 +102,9 @@ fi
 echo ""
 
 echo "── Host artifacts ──"
-if [[ -f "$PROJECT_ROOT/lattice/manifest.yaml" ]]; then
-  check_file "$PROJECT_ROOT/lattice/manifest.yaml" "Lattice manifest"
-  [[ -d "$PROJECT_ROOT/lattice/specs" ]] && pass "Lattice spec root" || info "Lattice spec root not created yet; create the first spec with new.sh"
+if [[ -f "$PROJECT_ROOT/halo/manifest.yaml" ]]; then
+  check_file "$PROJECT_ROOT/halo/manifest.yaml" "Halo manifest"
+  [[ -d "$PROJECT_ROOT/halo/specs" ]] && pass "Halo spec root" || info "Halo spec root not created yet; create the first spec with new.sh"
 else
   [[ -d "$PRISMSPEC_ROOT/specs" ]] && pass "standalone spec root" || info "standalone spec root not created yet; create the first spec with new.sh"
 fi

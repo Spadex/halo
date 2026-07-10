@@ -9,7 +9,7 @@ Use this reviewer for normal task-level PrismSpec work. Add `test-reviewer.md` o
 
 ## Inputs
 
-- Task brief: `.lattice/sdd/<spec-id>/<task-id>/brief.md` or `.prismspec/runs/<spec-id>/<task-id>/brief.md`
+- Task brief: `.halo/sdd/<spec-id>/<task-id>/brief.md` or `.prismspec/runs/<spec-id>/<task-id>/brief.md`
 - Implementer report: `report.md`
 - Review package: `review-package.md`
 - `spec.md` and `plan.md` when needed for AC and global constraints

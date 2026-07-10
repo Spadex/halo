@@ -14,7 +14,7 @@ Choose the lowest ceremony mode that still protects correctness.
 ## Override Order
 
 1. User single-run override: record `Source: user-override`.
-2. Project default in `lattice/manifest.yaml`: record `Source: project-default`.
+2. Project default in `halo/manifest.yaml`: record `Source: project-default`.
 3. Model risk choice: record `Source: model-selected`.
 
 ## Escalation

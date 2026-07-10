@@ -1,10 +1,10 @@
-# Lattice Agent Guide
+# Halo Agent Guide
 
 ## Role
 
-This is the Lattice source repository. It builds a repo-local AI Coding harness that users install into their own projects.
+This is the Halo source repository. It builds a repo-local AI Coding harness that users install into their own projects.
 
-Do not treat this repository as a target project already using Lattice. The installable artifact is `harness-template/` plus `prismspec/`.
+Do not treat this repository as a target project already using Halo. The installable artifact is `harness-template/` plus `prismspec/`.
 
 ## Product Direction
 
@@ -12,7 +12,7 @@ Optimize for a Chinese-first, AI-friendly, commercially credible developer tool:
 
 - Chinese docs are the primary public entry; English docs are secondary but should not contradict Chinese docs.
 - PrismSpec is the standalone Spec Coding skill pack.
-- Lattice is the repo-local harness that adds context, verification, evidence, loop, and learn.
+- Halo is the repo-local harness that adds context, verification, evidence, loop, and learn.
 - Claims must be grounded in current files, commands, examples, or test output.
 - Prefer fewer concepts with stronger contracts over broad platform language.
 
@@ -25,11 +25,11 @@ Optimize for a Chinese-first, AI-friendly, commercially credible developer tool:
 | PrismSpec workflow | `prismspec/skills/*/SKILL.md` |
 | PrismSpec package contract | `prismspec/skillpack.yaml` |
 | PrismSpec templates | `prismspec/templates/` |
-| Lattice install template | `harness-template/` |
-| CI artifact/comment workflow template | `harness-template/.github/workflows/lattice-eval.yml` |
-| Delivery pipeline, doctor, gates, and eval summary | `harness-template/lattice/kernel/`, `harness-template/lattice/kernel/delivery/` |
-| Context layer | `harness-template/lattice/context/`, `harness-template/lattice/kernel/context/` |
-| Target-project Claude import | `harness-template/CLAUDE.lattice.md` |
+| Halo install template | `harness-template/` |
+| CI artifact/comment workflow template | `harness-template/.github/workflows/halo-eval.yml` |
+| Delivery pipeline, doctor, gates, and eval summary | `harness-template/halo/kernel/`, `harness-template/halo/kernel/delivery/` |
+| Context layer | `harness-template/halo/context/`, `harness-template/halo/kernel/context/` |
+| Target-project Claude import | `harness-template/CLAUDE.halo.md` |
 
 ## Architecture Vocabulary
 
@@ -49,13 +49,13 @@ Do not use `Eval` as a synonym for running tests. Verification runs commands; Ev
 ## Design Rules
 
 - Keep the public product experience Chinese-first; keep English docs as secondary entry points.
-- Keep PrismSpec independent. Do not duplicate SDD workflow logic under `harness-template/lattice/skills/`.
-- Use directory specs as the only default shape: `lattice/specs/<spec-id>/spec.md`, `plan.md`, `review.md`, and `verify.md`.
+- Keep PrismSpec independent. Do not duplicate SDD workflow logic under `harness-template/halo/skills/`.
+- Use directory specs as the only default shape: `halo/specs/<spec-id>/spec.md`, `plan.md`, `review.md`, and `verify.md`.
 - Preserve the install boundary: `kernel/` is framework code; `manifest.yaml`, `context/`, and `specs/` are user assets.
 - Do not overwrite project-owned files on upgrade unless the user explicitly asks.
 - Prefer small shell contracts for install, routing, and gates. Move only genuinely complex parsing into separate tools.
 - Keep docs current with implementation. Do not leave obsolete names, legacy paths, or one-off planning notes in public docs.
-- Context is not a bulk loader. Treat `lattice/context/README.md` as the agent-readable map; treat scripts as optional helpers.
+- Context is not a bulk loader. Treat `halo/context/README.md` as the agent-readable map; treat scripts as optional helpers.
 - Learn is governed. New durable knowledge should have source, review, and promotion evidence when the harness provides it.
 - Shell is appropriate for install, CI, gates, deterministic lint, sync, and evidence generation. Semantic context selection and architectural judgment belong to the Agent and the spec skills.
 
@@ -68,8 +68,8 @@ Do not use `Eval` as a synonym for running tests. Verification runs commands; Ev
 | Spec workflow behavior | `prismspec/skills/*/SKILL.md`, `prismspec/bin/guide.sh`, `prismspec/bin/lint.sh` |
 | Spec templates | `prismspec/templates/` |
 | Install/init behavior | `install.sh`, `init.sh`, `harness-template/` |
-| Pipeline behavior | `harness-template/lattice/kernel/delivery/` |
-| Context behavior | `harness-template/lattice/context/`, `harness-template/lattice/kernel/context/` |
+| Pipeline behavior | `harness-template/halo/kernel/delivery/` |
+| Context behavior | `harness-template/halo/context/`, `harness-template/halo/kernel/context/` |
 | Runnable examples | `examples/` |
 
 ## AI-Friendly Maintenance Checklist
@@ -98,7 +98,7 @@ For docs-only changes, at least run:
 
 ```bash
 git diff --check
-rg -n "\\bscaffold\\b|scaffold-template|create-item-api\\.md|test-feature\\.md|Eval Evidence|lattice/skills/sdd|kernel/knowledge/loader\\.sh" README.md README.en.md docs prismspec harness-template examples SKILL.md -S
+rg -n "\\bscaffold\\b|scaffold-template|create-item-api\\.md|test-feature\\.md|Eval Evidence|halo/skills/sdd|kernel/knowledge/loader\\.sh" README.md README.en.md docs prismspec harness-template examples SKILL.md -S
 ```
 
 ## Release Hygiene
@@ -107,4 +107,4 @@ rg -n "\\bscaffold\\b|scaffold-template|create-item-api\\.md|test-feature\\.md|E
 - `README.en.md` is the English entry.
 - Avoid extra redirect-only README files.
 - Keep `CLAUDE.md` small; long-lived repo instructions belong here.
-- Keep target-project instructions in `harness-template/CLAUDE.lattice.md`.
+- Keep target-project instructions in `harness-template/CLAUDE.halo.md`.

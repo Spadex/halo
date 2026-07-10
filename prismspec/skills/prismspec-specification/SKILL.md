@@ -18,7 +18,7 @@ Do not plan, implement, scaffold, or modify production code until a non-scaffold
 ## Inputs
 
 - User requirement or continuation request.
-- `lattice/manifest.yaml` when present.
+- `halo/manifest.yaml` when present.
 - Relevant code, tests, schemas, contracts, docs, and matched context knowledge only when they affect scope, AC, risk, or mode.
 - Template from `prismspec/templates/`.
 
@@ -50,9 +50,9 @@ Use support skills only when the risk shape calls for them:
 9. If `spec.md` has `status: clarifying`, continue specification from the resolved questions and only advance it to `status: drafted` after scope, non-goals, ACs, execution mode, verification plan, and approval are concrete. If a blocking decision remains, return to `prismspec-grilling`.
 10. If `spec.md` contains `scaffolded: true`, treat it as an unfinished template. Replace placeholders and set `scaffolded: false` only after scope, Context Basis, ACs, risk, and mode are concrete enough for planning.
 11. Perform Context Discovery inside `spec.md`'s Context Basis section. Load only context that changes scope, AC, risk, interface, compatibility, or verification.
-   - In Lattice-hosted mode, read `lattice/context/README.md` when present.
+   - In Halo-hosted mode, read `halo/context/README.md` when present.
    - Follow the context map to relevant project knowledge, external references, historical specs, code, tests, schemas, and contracts.
-   - Use `lattice/kernel/context/backends/knowledge.sh <keywords>` only as an optional curated-knowledge backend.
+   - Use `halo/kernel/context/backends/knowledge.sh <keywords>` only as an optional curated-knowledge backend.
    - Write selected facts, constraints, conflicts, exclusions, source categories, and open questions to Context Basis.
 12. Surface assumptions before writing irreversible decisions.
 13. Present the selected design in readable sections scaled to complexity: intent, scope, approach, contract surface, risks, execution mode, and verification.
@@ -62,7 +62,7 @@ Use support skills only when the risk shape calls for them:
 17. Set front matter to `status: drafted` and `scaffolded: false` only after the formal spec contract is complete.
 18. Self-review `spec.md` for placeholders, contradictions, ambiguity, scope creep, untestable ACs, missing Context Basis, missing mode, and missing verification.
 19. If approval was not explicit, ask the user to review the written `spec.md` before planning.
-20. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>` before leaving specification.
+20. In Halo-hosted mode, run `halo/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>` before leaving specification.
 
 ## Outputs
 
@@ -106,7 +106,7 @@ Use support skills only when the risk shape calls for them:
 - [ ] `spec.md` has a Context Basis section with selected facts, constraints, conflicts/open questions, or explicit N/A.
 - [ ] Design approval is explicit or recorded with reason.
 - [ ] Non-trivial approach tradeoffs are captured or intentionally skipped as low-risk.
-- [ ] Lattice spec-state-lint passes when running in Lattice-hosted mode.
+- [ ] Halo spec-state-lint passes when running in Halo-hosted mode.
 - [ ] AC identifiers are stable and testable.
 - [ ] Execution policy is recorded.
 - [ ] Verification plan names concrete commands or gates.

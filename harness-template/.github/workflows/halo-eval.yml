@@ -1,0 +1,84 @@
+name: Halo Eval
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Ensure Halo scripts are executable
+        run: |
+          chmod +x halo/kernel/*.sh halo/kernel/context/*.sh halo/kernel/context/backends/*.sh halo/kernel/delivery/*.sh halo/kernel/delivery/gates/*.sh prismspec/bin/*.sh 2>/dev/null || true
+
+      - name: Halo doctor
+        run: bash halo/kernel/doctor.sh
+
+      - name: Run Halo pipeline
+        id: halo
+        shell: bash
+        run: |
+          set +e
+          mkdir -p halo/state/eval-runs
+          eval_json="halo/state/eval-runs/ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          bash halo/kernel/delivery/pipeline.sh --json-out="$eval_json"
+          exit_code=$?
+          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+          echo "eval_json=$eval_json" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Write Halo eval summary
+        if: always()
+        shell: bash
+        run: |
+          eval_json="${{ steps.halo.outputs.eval_json }}"
+          eval_md="${eval_json%.json}.md"
+          bash halo/kernel/delivery/eval-summary.sh "$eval_json" --out="$eval_md"
+          cat "$eval_md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish Halo PR comment
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          eval_json="${{ steps.halo.outputs.eval_json }}"
+          eval_md="${eval_json%.json}.md"
+          bash halo/kernel/delivery/pr-comment.sh "$eval_md" --pr="$PR_NUMBER" --repo="$GITHUB_REPOSITORY"
+
+      - name: Upload Halo eval artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: halo-eval-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            halo/state/eval-runs/*.json
+            halo/state/eval-runs/*.md
+            halo/state/eval-runs/*.gates/*.json
+          if-no-files-found: error
+
+      - name: Fail on Halo pipeline failure
+        if: steps.halo.outputs.exit_code != '0'
+        run: |
+          echo "Halo pipeline failed with exit code ${{ steps.halo.outputs.exit_code }}"
+          echo "Eval JSON: ${{ steps.halo.outputs.eval_json }}"
+          exit "${{ steps.halo.outputs.exit_code }}"

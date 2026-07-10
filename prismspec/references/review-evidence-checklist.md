@@ -37,10 +37,10 @@ Use exactly one verdict:
 PrismSpec review should write a human-readable artifact to:
 
 ```text
-lattice/specs/<spec-id>/review.md
+halo/specs/<spec-id>/review.md
 ```
 
-`review.md` should use Chinese user-facing headings and include verdicts for all axes, concrete findings, disposition, and evidence checked. Task-scoped reviews use `.lattice/sdd/<spec-id>/<task-id>/review.md` when reviewing a task slice. Lattice-hosted projects generate `review-summary.json` as a machine sidecar for pipeline/eval collection.
+`review.md` should use Chinese user-facing headings and include verdicts for all axes, concrete findings, disposition, and evidence checked. Task-scoped reviews use `.halo/sdd/<spec-id>/<task-id>/review.md` when reviewing a task slice. Halo-hosted projects generate `review-summary.json` as a machine sidecar for pipeline/eval collection.
 
 Recommended `review.md` sections:
 
@@ -55,7 +55,7 @@ Recommended `review.md` sections:
 Recommended helper:
 
 ```bash
-bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> <task-id> \
+bash halo/kernel/orchestrator/sdd/review-summary.sh <spec-id> <task-id> \
   --spec-compliance=pass \
   --code-quality=pass \
   --test-coverage=pass \
@@ -69,7 +69,7 @@ The helper writes `review.md` and `review-summary.json`. The pipeline collects t
 
 ```json
 {
-  "schema_version": "lattice.review-summary.v1",
+  "schema_version": "halo.review-summary.v1",
   "kind": "review-summary",
   "verdict": "pass",
   "axes": {

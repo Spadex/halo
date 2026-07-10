@@ -2,7 +2,7 @@
 
 > 中文版: [README.md](README.md)
 
-PrismSpec is a risk-adaptive Spec Coding workflow and a standalone Agent Skills pack that can also be hosted by Lattice. It uses the minimum necessary contract to compress ambiguous intent into executable, reviewable, and verifiable engineering constraints, with two implementation modes: `plan` and `tdd`.
+PrismSpec is a risk-adaptive Spec Coding workflow and a standalone Agent Skills pack that can also be hosted by Halo. It uses the minimum necessary contract to compress ambiguous intent into executable, reviewable, and verifiable engineering constraints, with two implementation modes: `plan` and `tdd`.
 
 PrismSpec does not replace the coding agent, and it is not one rigid workflow for every task. It turns an AI coding task into a stable, resumable artifact chain:
 
@@ -30,14 +30,14 @@ The primary human-readable artifact contract is only `spec.md`, `plan.md`, `revi
 
 ## Positioning
 
-PrismSpec can run standalone or in Lattice-hosted mode.
+PrismSpec can run standalone or in Halo-hosted mode.
 
-| Mode | Best For | What You Get | Requires Lattice |
+| Mode | Best For | What You Get | Requires Halo |
 |------|----------|--------------|------------------|
 | Standalone | Users who only want Spec Coding skills | Persistent specs, plans, review evidence, verification notes, and Plan/TDD execution discipline | No |
-| Lattice-hosted | Teams that need a project-level harness | PrismSpec plus manifest, project context, verification gates, AC coverage, drift checks, Evidence / Eval, Loop / Learn | Yes |
+| Halo-hosted | Teams that need a project-level harness | PrismSpec plus manifest, project context, verification gates, AC coverage, drift checks, Evidence / Eval, Loop / Learn | Yes |
 
-PrismSpec does not depend on Lattice. Lattice embeds PrismSpec as its default Spec Coding workflow.
+PrismSpec does not depend on Halo. Halo embeds PrismSpec as its default Spec Coding workflow.
 
 ## Skill Pack Layout
 
@@ -94,16 +94,16 @@ prismspec/specs/<spec-id>/
     └── review-package.md
 ```
 
-Lattice-hosted artifacts:
+Halo-hosted artifacts:
 
 ```text
-lattice/specs/<spec-id>/
+halo/specs/<spec-id>/
 ├── spec.md
 ├── plan.md
 ├── review.md
 └── verify.md
 
-.lattice/sdd/<spec-id>/<task-id>/
+.halo/sdd/<spec-id>/<task-id>/
 ```
 
 ## Entry Point
@@ -152,7 +152,7 @@ Commands have two layers:
 
 | Field | Meaning |
 |-------|---------|
-| `host` | `standalone` or `lattice` |
+| `host` | `standalone` or `halo` |
 | `spec_id` | Current spec id |
 | `scaffolded` | Whether the spec is still an unfilled `new.sh` scaffold |
 | `stage` | Next stage: `specification`, `planning`, `implementation`, `review`, `verification`, or `done` |
@@ -187,7 +187,7 @@ PrismSpec aligns with two mature practices:
 | Superpowers | Reuse proven coding workflow discipline: brainstorming, writing plans, TDD, task review, systematic debugging, and verification before completion. |
 | Agent Skills | Follow distributable skill packaging: folder name = skill name, trigger-rich description, progressive disclosure, `agents/openai.yaml`, and `evals/evals.json`. |
 
-PrismSpec does not reinvent brainstorming, TDD, or verification discipline. It anchors those disciplines in durable artifacts, project context, evidence, and Lattice gates.
+PrismSpec does not reinvent brainstorming, TDD, or verification discipline. It anchors those disciplines in durable artifacts, project context, evidence, and Halo gates.
 
 ## Templates
 
@@ -248,10 +248,10 @@ Run before completion:
 bash prismspec/bin/doctor.sh
 bash prismspec/bin/lint.sh prismspec skillpack
 bash prismspec/bin/lint.sh prismspec/specs/checkout-flow
-bash prismspec/bin/lint.sh lattice/specs/checkout-flow
+bash prismspec/bin/lint.sh halo/specs/checkout-flow
 ```
 
-`doctor` checks whether PrismSpec is usable in standalone or Lattice-hosted mode, including the skillpack contract, guide JSON protocol, and host environment.
+`doctor` checks whether PrismSpec is usable in standalone or Halo-hosted mode, including the skillpack contract, guide JSON protocol, and host environment.
 
 `skillpack` checks the PrismSpec distribution itself:
 

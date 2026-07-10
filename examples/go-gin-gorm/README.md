@@ -1,14 +1,14 @@
 # Go + Gin + GORM Example
 
-A minimal runnable example demonstrating Lattice with a Go API project.
+A minimal runnable example demonstrating Halo with a Go API project.
 
 ## What's Included
 
 ```
 examples/go-gin-gorm/
-├── manifest.yaml                      # Lattice project config
+├── manifest.yaml                      # Halo project config
 ├── go.mod                             # Go module (mock, not buildable)
-├── lattice/
+├── halo/
 │   ├── specs/
 │   │   └── create-item-api/
 │   │       ├── spec.md                # Sample spec with Context Basis and AC-1 through AC-4
@@ -33,11 +33,11 @@ examples/go-gin-gorm/
 cd examples/go-gin-gorm
 
 # Run individual gates:
-bash ../../harness-template/lattice/kernel/delivery/gates/spec-lint.sh lattice/specs/create-item-api/spec.md
-bash ../../prismspec/bin/lint.sh lattice/specs/create-item-api spec
-bash ../../harness-template/lattice/kernel/delivery/gates/ac-coverage.sh lattice/specs/create-item-api/spec.md .
-bash ../../harness-template/lattice/kernel/delivery/gates/drift-check.sh lattice/specs/create-item-api/spec.md .
-bash ../../harness-template/lattice/kernel/context/backends/knowledge.sh naming
+bash ../../harness-template/halo/kernel/delivery/gates/spec-lint.sh halo/specs/create-item-api/spec.md
+bash ../../prismspec/bin/lint.sh halo/specs/create-item-api spec
+bash ../../harness-template/halo/kernel/delivery/gates/ac-coverage.sh halo/specs/create-item-api/spec.md .
+bash ../../harness-template/halo/kernel/delivery/gates/drift-check.sh halo/specs/create-item-api/spec.md .
+bash ../../harness-template/halo/kernel/context/backends/knowledge.sh naming
 ```
 
 ## What You'll See

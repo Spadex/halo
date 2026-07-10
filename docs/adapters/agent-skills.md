@@ -12,11 +12,11 @@ PrismSpec uses Agent Skills as a packaging and quality standard. It does not tre
 | UI metadata | `agents/openai.yaml` |
 | Progressive disclosure | concise `SKILL.md` plus shared `prismspec/references/` |
 | Skill evals | `evals/evals.json` with should-trigger, should-not-trigger, and assertions |
-| Deterministic helpers | `prismspec/bin/` and Lattice kernel scripts |
+| Deterministic helpers | `prismspec/bin/` and Halo kernel scripts |
 
 ## Product Blocks
 
-Lattice presents the workflow as four primary product blocks while keeping Agent Skills-compatible folders underneath:
+Halo presents the workflow as four primary product blocks while keeping Agent Skills-compatible folders underneath:
 
 | Product Block | Primary Skill Folder | Durable Contract |
 |---|---|---|

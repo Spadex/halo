@@ -1,4 +1,4 @@
-# Contributing to Lattice
+# Contributing to Halo
 
 Thanks for your interest in contributing.
 
@@ -9,7 +9,7 @@ git clone https://github.com/Spadex/halo.git
 cd halo
 ```
 
-No build step is required. Lattice is a repository-delivered framework built from Bash, Markdown, and YAML.
+No build step is required. Halo is a repository-delivered framework built from Bash, Markdown, and YAML.
 
 ## Testing
 
@@ -31,9 +31,9 @@ bash tests/release-check.sh
 For a target-project install test:
 
 ```bash
-mkdir /tmp/lattice-test-project && cd /tmp/lattice-test-project && git init
-bash /path/to/lattice/install.sh --init
-bash lattice/kernel/delivery/pipeline.sh
+mkdir /tmp/halo-test-project && cd /tmp/halo-test-project && git init
+bash /path/to/halo/install.sh --init
+bash halo/kernel/delivery/pipeline.sh
 ```
 
 ## Pull Requests
@@ -54,16 +54,16 @@ bash lattice/kernel/delivery/pipeline.sh
 
 ## Adding a Delivery Gate
 
-1. Create `harness-template/lattice/kernel/delivery/gates/your-gate.sh`.
+1. Create `harness-template/halo/kernel/delivery/gates/your-gate.sh`.
 2. Source the shared library from the target-project layout.
 3. Use exit code `0` for pass, `1` for retryable failure, and `2` for escalation.
-4. Add the gate to `harness-template/lattice/manifest.template.yaml` when it should be enabled by default.
+4. Add the gate to `harness-template/halo/manifest.template.yaml` when it should be enabled by default.
 5. Document the gate in the README or design wiki.
 
 ## Adding Language Support
 
 1. Add detection logic in `init.sh`.
-2. Add command defaults to `harness-template/lattice/manifest.template.yaml`.
+2. Add command defaults to `harness-template/halo/manifest.template.yaml`.
 3. Add drift or contract checks only when they provide meaningful evidence.
 4. Update the language support matrix in the README.
 

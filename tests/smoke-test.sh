@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# smoke-test.sh — End-to-end smoke test for Lattice
+# smoke-test.sh — End-to-end smoke test for Halo
 # Creates a temp Go project, runs init + pipeline, verifies exit codes.
 # Usage: bash tests/smoke-test.sh
 set -euo pipefail
@@ -34,7 +34,7 @@ done
 
 SANDBOX=$(mktemp -d)
 echo "══════════════════════════════════"
-echo "Lattice Smoke Test"
+echo "Halo Smoke Test"
 echo "Sandbox: $SANDBOX"
 echo "══════════════════════════════════"
 echo ""
@@ -59,7 +59,7 @@ cd "$SANDBOX"
 git init --quiet
 
 if bash "$REPO_DIR/install.sh" "$SANDBOX" 2>&1 | tail -3; then
-  if [[ -d "$SANDBOX/.lattice/framework/harness-template" ]]; then
+  if [[ -d "$SANDBOX/.halo/framework/harness-template" ]]; then
     pass "install.sh completed, harness-template exists"
   else
     fail "install.sh ran but harness-template not found"
@@ -69,16 +69,16 @@ else
 fi
 echo ""
 
-if bash "$REPO_DIR/install.sh" "$SANDBOX" --dry-run --init >/tmp/lattice-install-dry-run.out 2>&1 \
-  && grep -q "Lattice install dry run" /tmp/lattice-install-dry-run.out \
-  && grep -q "auto_init: true" /tmp/lattice-install-dry-run.out; then
+if bash "$REPO_DIR/install.sh" "$SANDBOX" --dry-run --init >/tmp/halo-install-dry-run.out 2>&1 \
+  && grep -q "Halo install dry run" /tmp/halo-install-dry-run.out \
+  && grep -q "auto_init: true" /tmp/halo-install-dry-run.out; then
   pass "install.sh dry-run reports planned install"
 else
   fail "install.sh dry-run failed"
 fi
 
-if bash "$REPO_DIR/install.sh" --version >/tmp/lattice-install-version.out 2>&1 \
-  && grep -q "kernel_version:" /tmp/lattice-install-version.out; then
+if bash "$REPO_DIR/install.sh" --version >/tmp/halo-install-version.out 2>&1 \
+  && grep -q "kernel_version:" /tmp/halo-install-version.out; then
   pass "install.sh --version reports metadata"
 else
   fail "install.sh --version failed"
@@ -97,25 +97,25 @@ require github.com/gin-gonic/gin v1.9.1
 require gorm.io/gorm v1.25.0
 EOF
 
-if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name=testapp --ci=github 2>&1 | tail -5; then
-  if [[ -f "$SANDBOX/lattice/manifest.yaml" ]]; then
+if bash "$SANDBOX/.halo/framework/init.sh" --non-interactive --lang=go --name=testapp --ci=github 2>&1 | tail -5; then
+  if [[ -f "$SANDBOX/halo/manifest.yaml" ]]; then
     pass "manifest.yaml generated"
   else
     fail "manifest.yaml not found after init"
   fi
 
-  DEFAULT_MODE=$(yq -r '.specs.default_execution_mode // ""' "$SANDBOX/lattice/manifest.yaml")
-  ALLOW_MODE_OVERRIDE=$(yq -r '.specs.allow_execution_mode_override // ""' "$SANDBOX/lattice/manifest.yaml")
-  CI_PLATFORM=$(yq -r '.deploy.ci.platform // ""' "$SANDBOX/lattice/manifest.yaml")
-  EVAL_SINK_DIR=$(yq -r '.eval.sink.dir // ""' "$SANDBOX/lattice/manifest.yaml")
-  MANIFEST_SCHEMA=$(yq -r '.schema_version // ""' "$SANDBOX/lattice/manifest.yaml")
-  MANIFEST_KIND=$(yq -r '.kind // ""' "$SANDBOX/lattice/manifest.yaml")
-  KERNEL_ORCHESTRATOR=$(yq -r '.kernel.layers.orchestrator // ""' "$SANDBOX/lattice/manifest.yaml")
-  KERNEL_CONTEXT=$(yq -r '.kernel.layers.context // ""' "$SANDBOX/lattice/manifest.yaml")
-  KERNEL_DELIVERY=$(yq -r '.kernel.layers.delivery // ""' "$SANDBOX/lattice/manifest.yaml")
-  CONTEXT_MAP=$(yq -r '.context.map_file // ""' "$SANDBOX/lattice/manifest.yaml")
-  PIPELINE_FAILURE_CATEGORIES=$(yq -r '.pipeline.failure_categories_file // ""' "$SANDBOX/lattice/manifest.yaml")
-  if [[ "$MANIFEST_SCHEMA" == "lattice.manifest.v1" ]] && [[ "$MANIFEST_KIND" == "LatticeManifest" ]]; then
+  DEFAULT_MODE=$(yq -r '.specs.default_execution_mode // ""' "$SANDBOX/halo/manifest.yaml")
+  ALLOW_MODE_OVERRIDE=$(yq -r '.specs.allow_execution_mode_override // ""' "$SANDBOX/halo/manifest.yaml")
+  CI_PLATFORM=$(yq -r '.deploy.ci.platform // ""' "$SANDBOX/halo/manifest.yaml")
+  EVAL_SINK_DIR=$(yq -r '.eval.sink.dir // ""' "$SANDBOX/halo/manifest.yaml")
+  MANIFEST_SCHEMA=$(yq -r '.schema_version // ""' "$SANDBOX/halo/manifest.yaml")
+  MANIFEST_KIND=$(yq -r '.kind // ""' "$SANDBOX/halo/manifest.yaml")
+  KERNEL_ORCHESTRATOR=$(yq -r '.kernel.layers.orchestrator // ""' "$SANDBOX/halo/manifest.yaml")
+  KERNEL_CONTEXT=$(yq -r '.kernel.layers.context // ""' "$SANDBOX/halo/manifest.yaml")
+  KERNEL_DELIVERY=$(yq -r '.kernel.layers.delivery // ""' "$SANDBOX/halo/manifest.yaml")
+  CONTEXT_MAP=$(yq -r '.context.map_file // ""' "$SANDBOX/halo/manifest.yaml")
+  PIPELINE_FAILURE_CATEGORIES=$(yq -r '.pipeline.failure_categories_file // ""' "$SANDBOX/halo/manifest.yaml")
+  if [[ "$MANIFEST_SCHEMA" == "halo.manifest.v1" ]] && [[ "$MANIFEST_KIND" == "HaloManifest" ]]; then
     pass "manifest contract metadata configured"
   else
     fail "manifest contract metadata missing"
@@ -127,8 +127,8 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "manifest kernel capabilities missing"
   fi
 
-  if [[ "$CONTEXT_MAP" == "lattice/context/README.md" ]] \
-    && [[ "$PIPELINE_FAILURE_CATEGORIES" == "lattice/config/failure-categories.yaml" ]]; then
+  if [[ "$CONTEXT_MAP" == "halo/context/README.md" ]] \
+    && [[ "$PIPELINE_FAILURE_CATEGORIES" == "halo/config/failure-categories.yaml" ]]; then
     pass "manifest context and verification paths configured"
   else
     fail "manifest context or verification paths missing"
@@ -146,43 +146,43 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "CI platform not configured"
   fi
 
-  if [[ "$EVAL_SINK_DIR" == "lattice/state/eval-sink" ]]; then
+  if [[ "$EVAL_SINK_DIR" == "halo/state/eval-sink" ]]; then
     pass "eval sink configured"
   else
     fail "eval sink not configured"
   fi
 
-  if [[ -f "$SANDBOX/lattice/kernel/_lib.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/capabilities.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-history.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-sink.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-dashboard.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/eval-query.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/outcome-report.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-next.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-evidence-lint.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-history.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/summary-draft.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/context/learn-draft.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-review.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" ]] \
-    && [[ -f "$SANDBOX/lattice/config/failure-categories.yaml" ]]; then
+  if [[ -f "$SANDBOX/halo/kernel/_lib.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/capabilities.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/eval-summary.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/eval-history.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/eval-sink.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/eval-dashboard.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/eval-query.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/outcome-link.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/outcome-report.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/pr-comment.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/delivery/failure-category-lint.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-evidence-lint.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/spec-state-lint.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/spec-history.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/summary-draft.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/context/summary-learn-draft.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/context/learn-draft.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/context/knowledge-review.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/context/knowledge-lint.sh" ]] \
+    && [[ -f "$SANDBOX/halo/config/failure-categories.yaml" ]]; then
     pass "kernel files installed"
   else
     fail "kernel files not installed"
   fi
 
-  if bash "$SANDBOX/lattice/kernel/capabilities.sh" --json > "$SANDBOX/capabilities.json" \
-    && yq -e '.schema_version == "lattice.capabilities.v1"' "$SANDBOX/capabilities.json" >/dev/null 2>&1 \
+  if bash "$SANDBOX/halo/kernel/capabilities.sh" --json > "$SANDBOX/capabilities.json" \
+    && yq -e '.schema_version == "halo.capabilities.v1"' "$SANDBOX/capabilities.json" >/dev/null 2>&1 \
     && yq -e '.tools[] | select(.id == "guide")' "$SANDBOX/capabilities.json" >/dev/null 2>&1 \
     && yq -e '.metrics[] | select(.id == "ac_coverage")' "$SANDBOX/capabilities.json" >/dev/null 2>&1; then
     pass "runtime capabilities contract available"
@@ -190,16 +190,16 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "runtime capabilities contract missing or invalid"
   fi
 
-  if [[ -x "$SANDBOX/lattice/kernel/doctor.sh" ]]; then
-    pass "lattice doctor installed"
+  if [[ -x "$SANDBOX/halo/kernel/doctor.sh" ]]; then
+    pass "halo doctor installed"
   else
-    fail "lattice doctor missing or not executable"
+    fail "halo doctor missing or not executable"
   fi
 
-  if [[ -f "$SANDBOX/lattice/kernel/context/backends/knowledge.sh" ]] \
-    && [[ -f "$SANDBOX/lattice/context/README.md" ]] \
-    && [[ -f "$SANDBOX/lattice/context/sources.yaml" ]] \
-    && [[ -f "$SANDBOX/lattice/context/knowledge/rules.md" ]]; then
+  if [[ -f "$SANDBOX/halo/kernel/context/backends/knowledge.sh" ]] \
+    && [[ -f "$SANDBOX/halo/context/README.md" ]] \
+    && [[ -f "$SANDBOX/halo/context/sources.yaml" ]] \
+    && [[ -f "$SANDBOX/halo/context/knowledge/rules.md" ]]; then
     pass "context layer installed"
   else
     fail "context layer files missing"
@@ -211,23 +211,23 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "CLAUDE.md not created"
   fi
 
-  if grep -q '@import lattice/kernel/orchestrator/rules.md' "$SANDBOX/CLAUDE.md" \
-    && grep -q 'pipeline.sh --json-out' "$SANDBOX/lattice/kernel/orchestrator/rules.md" \
-    && ! grep -qE 'lattice/kernel/knowledge|lattice/knowledge|kernel/knowledge/loader\.sh|delivery gates|lattice/context/knowledge/drafts' "$SANDBOX/lattice/kernel/orchestrator/rules.md"; then
+  if grep -q '@import halo/kernel/orchestrator/rules.md' "$SANDBOX/CLAUDE.md" \
+    && grep -q 'pipeline.sh --json-out' "$SANDBOX/halo/kernel/orchestrator/rules.md" \
+    && ! grep -qE 'halo/kernel/knowledge|halo/knowledge|kernel/knowledge/loader\.sh|delivery gates|halo/context/knowledge/drafts' "$SANDBOX/halo/kernel/orchestrator/rules.md"; then
     pass "target Agent rules are current"
   else
     fail "target Agent rules are stale or missing"
   fi
 
-  if [[ -f "$SANDBOX/lattice/skills/init.md" ]]; then
-    pass "Lattice init skill installed"
+  if [[ -f "$SANDBOX/halo/skills/init.md" ]]; then
+    pass "Halo init skill installed"
   else
-    fail "Lattice init skill missing"
+    fail "Halo init skill missing"
   fi
 
-  if [[ -f "$SANDBOX/.github/workflows/lattice-eval.yml" ]] \
-    && yq -e '.permissions.issues == "write" and .permissions."pull-requests" == "read"' "$SANDBOX/.github/workflows/lattice-eval.yml" >/dev/null 2>&1 \
-    && yq -e '.jobs.eval.steps[] | select(.name == "Publish Lattice PR comment")' "$SANDBOX/.github/workflows/lattice-eval.yml" >/dev/null 2>&1; then
+  if [[ -f "$SANDBOX/.github/workflows/halo-eval.yml" ]] \
+    && yq -e '.permissions.issues == "write" and .permissions."pull-requests" == "read"' "$SANDBOX/.github/workflows/halo-eval.yml" >/dev/null 2>&1 \
+    && yq -e '.jobs.eval.steps[] | select(.name == "Publish Halo PR comment")' "$SANDBOX/.github/workflows/halo-eval.yml" >/dev/null 2>&1; then
     pass "GitHub Actions eval workflow installed"
   else
     fail "GitHub Actions eval workflow missing or invalid"
@@ -280,11 +280,11 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   fi
 
   PRISMSPEC_NEW_JSON=$(bash "$SANDBOX/prismspec/bin/new.sh" smoke-new-spec --title="Smoke New Spec" --template=lite --mode=plan --json)
-  if echo "$PRISMSPEC_NEW_JSON" | yq -e '.host == "lattice" and .spec_id == "smoke-new-spec" and .template == "lite" and .mode == "plan"' >/dev/null 2>&1 \
-    && [[ -f "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" ]] \
-    && grep -q "id: smoke-new-spec" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" \
-    && grep -q "execution_mode: plan" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md" \
-    && grep -q "scaffolded: true" "$SANDBOX/lattice/specs/smoke-new-spec/spec.md"; then
+  if echo "$PRISMSPEC_NEW_JSON" | yq -e '.host == "halo" and .spec_id == "smoke-new-spec" and .template == "lite" and .mode == "plan"' >/dev/null 2>&1 \
+    && [[ -f "$SANDBOX/halo/specs/smoke-new-spec/spec.md" ]] \
+    && grep -q "id: smoke-new-spec" "$SANDBOX/halo/specs/smoke-new-spec/spec.md" \
+    && grep -q "execution_mode: plan" "$SANDBOX/halo/specs/smoke-new-spec/spec.md" \
+    && grep -q "scaffolded: true" "$SANDBOX/halo/specs/smoke-new-spec/spec.md"; then
     pass "PrismSpec new creates routed spec artifacts"
   else
     fail "PrismSpec new did not create routed spec artifacts"
@@ -298,7 +298,7 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "PrismSpec guide advanced a scaffolded spec"
     echo "$PRISMSPEC_NEW_GUIDE_JSON"
   fi
-  rm -rf "$SANDBOX/lattice/specs/smoke-new-spec"
+  rm -rf "$SANDBOX/halo/specs/smoke-new-spec"
 
   PRISMSPEC_DOCTOR_EXIT=0
   PRISMSPEC_DOCTOR_OUTPUT=$(bash "$SANDBOX/prismspec/bin/doctor.sh" 2>&1) || PRISMSPEC_DOCTOR_EXIT=$?
@@ -328,8 +328,8 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   fi
 
   FLAT_SKILL_COUNT=$(find "$SANDBOX/prismspec/skills" -maxdepth 1 -type f -name '*.md' -not -name 'README.md' | wc -l | tr -d ' ')
-  LATTICE_SDD_SKILL_COUNT=$(find "$SANDBOX/lattice/skills" -maxdepth 1 -type f \( -name 'prismspec.md' -o -name 'clarify.md' -o -name 'spec.md' -o -name 'plan.md' -o -name 'implement.md' -o -name 'review.md' -o -name 'verify.md' -o -name 'capture.md' \) | wc -l | tr -d ' ')
-  if [[ "$FLAT_SKILL_COUNT" == "0" ]] && [[ "$LATTICE_SDD_SKILL_COUNT" == "0" ]]; then
+  HALO_SDD_SKILL_COUNT=$(find "$SANDBOX/halo/skills" -maxdepth 1 -type f \( -name 'prismspec.md' -o -name 'clarify.md' -o -name 'spec.md' -o -name 'plan.md' -o -name 'implement.md' -o -name 'review.md' -o -name 'verify.md' -o -name 'capture.md' \) | wc -l | tr -d ' ')
+  if [[ "$FLAT_SKILL_COUNT" == "0" ]] && [[ "$HALO_SDD_SKILL_COUNT" == "0" ]]; then
     pass "SDD workflow has a single canonical skill source"
   else
     fail "Duplicate SDD skill files found"
@@ -349,24 +349,24 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
     fail "PrismSpec guide did not accept short arguments"
   fi
 
-  if [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-next.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/task-evidence-lint.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/review-summary.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-history.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/summary-draft.sh" ]] \
-    && [[ -x "$SANDBOX/lattice/kernel/orchestrator/sdd/tdd-evidence.sh" ]]; then
+  if [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-brief.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/task-evidence-lint.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/review-package.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/review-summary.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/spec-history.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/summary-draft.sh" ]] \
+    && [[ -x "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" ]]; then
     pass "SDD helper scripts installed"
   else
     fail "SDD helper scripts missing"
   fi
 
-  if grep -qxF ".lattice/sdd/" "$SANDBOX/.gitignore"; then
-    pass ".lattice/sdd ignored"
+  if grep -qxF ".halo/sdd/" "$SANDBOX/.gitignore"; then
+    pass ".halo/sdd ignored"
   else
-    fail ".lattice/sdd not ignored"
+    fail ".halo/sdd not ignored"
   fi
 
   if grep -qxF ".prismspec/runs/" "$SANDBOX/.gitignore"; then
@@ -376,14 +376,14 @@ if bash "$SANDBOX/.lattice/framework/init.sh" --non-interactive --lang=go --name
   fi
 
   DOCTOR_EXIT=0
-  DOCTOR_OUTPUT=$(bash "$SANDBOX/lattice/kernel/doctor.sh" 2>&1) || DOCTOR_EXIT=$?
+  DOCTOR_OUTPUT=$(bash "$SANDBOX/halo/kernel/doctor.sh" 2>&1) || DOCTOR_EXIT=$?
   if [[ $DOCTOR_EXIT -eq 0 ]] \
     && echo "$DOCTOR_OUTPUT" | grep -q "PASS" \
     && echo "$DOCTOR_OUTPUT" | grep -q "manifest schema_version" \
     && echo "$DOCTOR_OUTPUT" | grep -q "PrismSpec skillpack contract lint"; then
-    pass "lattice doctor passes installed project"
+    pass "halo doctor passes installed project"
   else
-    fail "lattice doctor failed"
+    fail "halo doctor failed"
     echo "$DOCTOR_OUTPUT" | tail -20
   fi
 else
@@ -391,7 +391,7 @@ else
 fi
 
 # Clean up examples inside harness to avoid false positives in search
-rm -rf "$SANDBOX/.lattice/framework/examples" "$SANDBOX/.lattice/framework/tests"
+rm -rf "$SANDBOX/.halo/framework/examples" "$SANDBOX/.halo/framework/tests"
 echo ""
 
 # ── 4. Install --init targets the requested directory ──
@@ -399,25 +399,25 @@ echo "── 4. Install --init target directory ──"
 TARGET_INIT_SANDBOX=$(mktemp -d)
 printf 'module github.com/example/targetinit\n\ngo 1.22\n' > "$TARGET_INIT_SANDBOX/go.mod"
 
-if printf '\n\n\n\n\n\n' | bash "$REPO_DIR/install.sh" "$TARGET_INIT_SANDBOX" --init >/tmp/lattice-target-init.log 2>&1; then
-  if [[ -f "$TARGET_INIT_SANDBOX/lattice/manifest.yaml" ]]; then
+if printf '\n\n\n\n\n\n' | bash "$REPO_DIR/install.sh" "$TARGET_INIT_SANDBOX" --init >/tmp/halo-target-init.log 2>&1; then
+  if [[ -f "$TARGET_INIT_SANDBOX/halo/manifest.yaml" ]]; then
     pass "install.sh --init writes manifest to target directory"
   else
     fail "install.sh --init did not write manifest to target directory"
-    tail -10 /tmp/lattice-target-init.log
+    tail -10 /tmp/halo-target-init.log
   fi
 else
   fail "install.sh --init exited non-zero"
-  tail -10 /tmp/lattice-target-init.log
+  tail -10 /tmp/halo-target-init.log
 fi
-rm -rf "$TARGET_INIT_SANDBOX" /tmp/lattice-target-init.log
+rm -rf "$TARGET_INIT_SANDBOX" /tmp/halo-target-init.log
 echo ""
 
 # ── 5. Pipeline (no code, no spec — should pass with all skips) ──
 echo "── 5. Pipeline (no code, no spec) ──"
 cd "$SANDBOX"
 PIPELINE_EXIT=0
-PIPELINE_OUTPUT=$(bash lattice/kernel/delivery/pipeline.sh --skip-spec --skip-integration 2>&1) || PIPELINE_EXIT=$?
+PIPELINE_OUTPUT=$(bash halo/kernel/delivery/pipeline.sh --skip-spec --skip-integration 2>&1) || PIPELINE_EXIT=$?
 
 if echo "$PIPELINE_OUTPUT" | grep -q "ALL PASS\|PASS"; then
   pass "Pipeline completes (bootstrap-only)"
@@ -434,8 +434,8 @@ else
 fi
 
 PIPELINE_JSON_EXIT=0
-PIPELINE_JSON_OUTPUT=$(bash lattice/kernel/delivery/pipeline.sh --skip-spec --skip-integration --json-out 2>&1) || PIPELINE_JSON_EXIT=$?
-LATEST_EVAL_JSON=$(find "$SANDBOX/lattice/state/eval-runs" -name '*.json' -type f -print 2>/dev/null | sort | tail -1)
+PIPELINE_JSON_OUTPUT=$(bash halo/kernel/delivery/pipeline.sh --skip-spec --skip-integration --json-out 2>&1) || PIPELINE_JSON_EXIT=$?
+LATEST_EVAL_JSON=$(find "$SANDBOX/halo/state/eval-runs" -name '*.json' -type f -print 2>/dev/null | sort | tail -1)
 if [[ -n "$LATEST_EVAL_JSON" ]] \
   && grep -q '"run_id"' "$LATEST_EVAL_JSON" \
   && grep -q '"pipeline"' "$LATEST_EVAL_JSON" \
@@ -451,8 +451,8 @@ echo ""
 
 # ── 6. Spec-lint on directory spec layout ──
 echo "── 6. Spec-lint modern layout ──"
-mkdir -p "$SANDBOX/lattice/specs/modern-feature"
-cat > "$SANDBOX/lattice/specs/modern-feature/spec.md" << 'SPEC'
+mkdir -p "$SANDBOX/halo/specs/modern-feature"
+cat > "$SANDBOX/halo/specs/modern-feature/spec.md" << 'SPEC'
 ---
 id: modern-feature
 status: drafted
@@ -537,7 +537,7 @@ Use the existing handler boundary. No new subsystem is required for this fixture
 SPEC
 
 MODERN_LINT_EXIT=0
-MODERN_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/gates/spec-lint.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" 2>&1) || MODERN_LINT_EXIT=$?
+MODERN_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/spec-lint.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" 2>&1) || MODERN_LINT_EXIT=$?
 
 if [[ $MODERN_LINT_EXIT -eq 0 ]]; then
   pass "spec-lint passes on modern persistent spec"
@@ -547,7 +547,7 @@ else
 fi
 
 PRISMSPEC_SPEC_LINT_EXIT=0
-PRISMSPEC_SPEC_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" spec 2>&1) || PRISMSPEC_SPEC_LINT_EXIT=$?
+PRISMSPEC_SPEC_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" spec 2>&1) || PRISMSPEC_SPEC_LINT_EXIT=$?
 if [[ $PRISMSPEC_SPEC_LINT_EXIT -eq 0 ]]; then
   pass "PrismSpec lint passes spec contract"
 else
@@ -556,7 +556,7 @@ else
 fi
 
 SPEC_STATE_LINT_EXIT=0
-SPEC_STATE_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" modern-feature 2>&1) || SPEC_STATE_LINT_EXIT=$?
+SPEC_STATE_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-state-lint.sh" modern-feature 2>&1) || SPEC_STATE_LINT_EXIT=$?
 if [[ $SPEC_STATE_LINT_EXIT -eq 0 ]]; then
   pass "spec-state-lint passes drafted spec state"
 else
@@ -564,8 +564,8 @@ else
   echo "$SPEC_STATE_LINT_OUTPUT" | tail -20
 fi
 
-mkdir -p "$SANDBOX/lattice/specs/clarify-draft"
-cat > "$SANDBOX/lattice/specs/clarify-draft/spec.md" << 'CLARIFY_SPEC'
+mkdir -p "$SANDBOX/halo/specs/clarify-draft"
+cat > "$SANDBOX/halo/specs/clarify-draft/spec.md" << 'CLARIFY_SPEC'
 ---
 id: clarify-draft
 title: Clarify Draft
@@ -589,7 +589,7 @@ Clarify engineering boundaries before formal specification.
 | open questions / conflicts | Which contract changes are in scope? | Blocks drafted spec |
 CLARIFY_SPEC
 CLARIFY_STATE_LINT_EXIT=0
-CLARIFY_STATE_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" clarify-draft 2>&1) || CLARIFY_STATE_LINT_EXIT=$?
+CLARIFY_STATE_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-state-lint.sh" clarify-draft 2>&1) || CLARIFY_STATE_LINT_EXIT=$?
 CLARIFY_GUIDE_JSON=$(bash "$SANDBOX/prismspec/bin/guide.sh" --spec=clarify-draft --json)
 if [[ $CLARIFY_STATE_LINT_EXIT -eq 0 ]] \
   && echo "$CLARIFY_GUIDE_JSON" | yq -e '.status == "clarifying" and .stage == "specification" and .route_reason == "clarifying_spec"' >/dev/null 2>&1; then
@@ -600,8 +600,8 @@ else
   echo "$CLARIFY_GUIDE_JSON"
 fi
 
-mkdir -p "$SANDBOX/lattice/specs/bad-state"
-cat > "$SANDBOX/lattice/specs/bad-state/spec.md" << 'BAD_STATE_SPEC'
+mkdir -p "$SANDBOX/halo/specs/bad-state"
+cat > "$SANDBOX/halo/specs/bad-state/spec.md" << 'BAD_STATE_SPEC'
 ---
 id: bad-state
 status: planned
@@ -620,26 +620,26 @@ updated_at: 2026-06-26T00:00:00Z
 Bad state fixture.
 BAD_STATE_SPEC
 BAD_STATE_LINT_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-state-lint.sh" bad-state >/tmp/lattice-spec-state-lint-bad.log 2>&1 || BAD_STATE_LINT_EXIT=$?
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-state-lint.sh" bad-state >/tmp/halo-spec-state-lint-bad.log 2>&1 || BAD_STATE_LINT_EXIT=$?
 if [[ $BAD_STATE_LINT_EXIT -ne 0 ]] \
-  && grep -q "execution_mode must be resolved" /tmp/lattice-spec-state-lint-bad.log \
-  && grep -q "plan.md required" /tmp/lattice-spec-state-lint-bad.log; then
+  && grep -q "execution_mode must be resolved" /tmp/halo-spec-state-lint-bad.log \
+  && grep -q "plan.md required" /tmp/halo-spec-state-lint-bad.log; then
   pass "spec-state-lint rejects invalid state metadata"
 else
   fail "spec-state-lint accepted invalid state metadata"
-  tail -30 /tmp/lattice-spec-state-lint-bad.log
+  tail -30 /tmp/halo-spec-state-lint-bad.log
 fi
 
 echo ""
 
 # ── 6c. SDD helper scripts ──
 echo "── 6c. SDD helper scripts ──"
-cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
+cat > "$SANDBOX/halo/specs/modern-feature/plan.md" << 'PLAN'
 # Plan: Modern Feature
 
 ## Source
 
-- Spec: `lattice/specs/modern-feature/spec.md`
+- Spec: `halo/specs/modern-feature/spec.md`
 - Execution mode: tdd
 
 ## Implementation Notes
@@ -661,7 +661,7 @@ cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
   - Test file: `internal/handler/item_test.go`
   - Verification: `go test ./internal/handler -run TestAC1_CreateItem`
   - Done when:
-    - [ ] Expected failure is captured in `.lattice/sdd/modern-feature/T1/tdd-evidence.json`
+    - [ ] Expected failure is captured in `.halo/sdd/modern-feature/T1/tdd-evidence.json`
 
 - [ ] RED-2: Add failing test for AC-2
   - Ref: AC-2
@@ -669,7 +669,7 @@ cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
   - Test file: `internal/handler/item_test.go`
   - Verification: `go test ./internal/handler -run TestAC2_GetItem`
   - Done when:
-    - [ ] Expected failure is captured in `.lattice/sdd/modern-feature/T2/tdd-evidence.json`
+    - [ ] Expected failure is captured in `.halo/sdd/modern-feature/T2/tdd-evidence.json`
 
 - [ ] T1: Add create behavior
   - Ref: AC-1
@@ -682,8 +682,8 @@ cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
   - Files: `internal/handler/item.go`
   - Verification: `TestAC1_CreateItem`
   - Evidence:
-    - Brief: `.lattice/sdd/modern-feature/T1/brief.md`
-    - Review package: `.lattice/sdd/modern-feature/T1/review-package.md`
+    - Brief: `.halo/sdd/modern-feature/T1/brief.md`
+    - Review package: `.halo/sdd/modern-feature/T1/review-package.md`
   - Done when:
     - [ ] AC-1 passes focused verification and evidence exists.
 
@@ -698,13 +698,13 @@ cat > "$SANDBOX/lattice/specs/modern-feature/plan.md" << 'PLAN'
   - Files: `internal/handler/item.go`
   - Verification: `TestAC2_GetItem`
   - Evidence:
-    - Brief: `.lattice/sdd/modern-feature/T2/brief.md`
-    - Review package: `.lattice/sdd/modern-feature/T2/review-package.md`
+    - Brief: `.halo/sdd/modern-feature/T2/brief.md`
+    - Review package: `.halo/sdd/modern-feature/T2/review-package.md`
   - Done when:
     - [ ] AC-2 passes focused verification and evidence exists.
 PLAN
 
-TASK_NEXT_JSON=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-next.sh" modern-feature --json)
+TASK_NEXT_JSON=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" modern-feature --json)
 if echo "$TASK_NEXT_JSON" | yq -e '.kind == "task-next" and .status == "next" and .task_id == "RED-1" and .task_kind == "red-test" and .mode == "tdd" and (.ac_refs | length == 1 and .ac_refs[0] == "AC-1")' >/dev/null 2>&1; then
   pass "task-next resolves first red-test task"
 else
@@ -713,7 +713,7 @@ else
 fi
 
 PRISMSPEC_PLAN_LINT_EXIT=0
-PRISMSPEC_PLAN_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/lattice/specs/modern-feature" plan 2>&1) || PRISMSPEC_PLAN_LINT_EXIT=$?
+PRISMSPEC_PLAN_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/halo/specs/modern-feature" plan 2>&1) || PRISMSPEC_PLAN_LINT_EXIT=$?
 if [[ $PRISMSPEC_PLAN_LINT_EXIT -eq 0 ]]; then
   pass "PrismSpec lint passes plan contract"
 else
@@ -722,7 +722,7 @@ else
 fi
 
 PLAN_LINT_EXIT=0
-PLAN_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" modern-feature 2>&1) || PLAN_LINT_EXIT=$?
+PLAN_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" modern-feature 2>&1) || PLAN_LINT_EXIT=$?
 if [[ $PLAN_LINT_EXIT -eq 0 ]]; then
   pass "plan-lint passes AC-traced plan"
 else
@@ -731,10 +731,10 @@ else
 fi
 
 SPEC_STATUS_PLANNED_EXIT=0
-SPEC_STATUS_PLANNED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature planned --from=drafted 2>&1) || SPEC_STATUS_PLANNED_EXIT=$?
+SPEC_STATUS_PLANNED_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" modern-feature planned --from=drafted 2>&1) || SPEC_STATUS_PLANNED_EXIT=$?
 GUIDE_STATUS_JSON=$(cd "$SANDBOX" && bash prismspec/bin/guide.sh --spec=modern-feature --json)
 if [[ $SPEC_STATUS_PLANNED_EXIT -eq 0 ]] \
-  && grep -q '^status: planned$' "$SANDBOX/lattice/specs/modern-feature/spec.md" \
+  && grep -q '^status: planned$' "$SANDBOX/halo/specs/modern-feature/spec.md" \
   && echo "$GUIDE_STATUS_JSON" | yq -e '.status == "planned"' >/dev/null 2>&1; then
   pass "spec-status advances drafted spec to planned"
 else
@@ -742,7 +742,7 @@ else
   echo "$SPEC_STATUS_PLANNED_OUTPUT" | tail -20
 fi
 PLANNED_TRANSITION_EVENT="$(
-  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+  find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
         yq -e '.kind == "spec-transition" and .from_status == "drafted" and .to_status == "planned"' "$file" >/dev/null 2>&1 && echo "$file"
       done \
@@ -755,62 +755,62 @@ else
   fail "spec-status planned transition event invalid"
   [[ -f "$PLANNED_TRANSITION_EVENT" ]] && cat "$PLANNED_TRANSITION_EVENT"
 fi
-TRANSITION_COUNT_AFTER_PLANNED=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
+TRANSITION_COUNT_AFTER_PLANNED=$(find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
 
 SPEC_STATUS_INCOMPLETE_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned >/tmp/lattice-spec-status-incomplete.log 2>&1 || SPEC_STATUS_INCOMPLETE_EXIT=$?
-if [[ $SPEC_STATUS_INCOMPLETE_EXIT -ne 0 ]] && grep -q "incomplete tasks" /tmp/lattice-spec-status-incomplete.log; then
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned >/tmp/halo-spec-status-incomplete.log 2>&1 || SPEC_STATUS_INCOMPLETE_EXIT=$?
+if [[ $SPEC_STATUS_INCOMPLETE_EXIT -ne 0 ]] && grep -q "incomplete tasks" /tmp/halo-spec-status-incomplete.log; then
   pass "spec-status blocks implemented state with incomplete tasks"
 else
   fail "spec-status accepted incomplete implemented state"
-  tail -20 /tmp/lattice-spec-status-incomplete.log
+  tail -20 /tmp/halo-spec-status-incomplete.log
 fi
 
 TASK_COMPLETE_MISSING_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" modern-feature T1 >/tmp/lattice-task-complete-missing.log 2>&1 || TASK_COMPLETE_MISSING_EXIT=$?
-if [[ $TASK_COMPLETE_MISSING_EXIT -ne 0 ]] && grep -q "T1 missing brief.md" /tmp/lattice-task-complete-missing.log; then
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" modern-feature T1 >/tmp/halo-task-complete-missing.log 2>&1 || TASK_COMPLETE_MISSING_EXIT=$?
+if [[ $TASK_COMPLETE_MISSING_EXIT -ne 0 ]] && grep -q "T1 missing brief.md" /tmp/halo-task-complete-missing.log; then
   pass "task-complete rejects task without evidence"
 else
   fail "task-complete accepted task without evidence"
-  tail -20 /tmp/lattice-task-complete-missing.log
+  tail -20 /tmp/halo-task-complete-missing.log
 fi
 
-mkdir -p "$SANDBOX/lattice/specs/missing-evidence"
-cp "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX/lattice/specs/missing-evidence/spec.md"
-cp "$SANDBOX/lattice/specs/modern-feature/plan.md" "$SANDBOX/lattice/specs/missing-evidence/plan.md"
-perl -0pi -e 's/id: modern-feature/id: missing-evidence/; s/- \[ \] T1:/- [x] T1:/g; s/- \[ \] T2:/- [x] T2:/g; s/- \[ \] RED-1:/- [x] RED-1:/g; s/- \[ \] RED-2:/- [x] RED-2:/g' "$SANDBOX/lattice/specs/missing-evidence/spec.md" "$SANDBOX/lattice/specs/missing-evidence/plan.md"
+mkdir -p "$SANDBOX/halo/specs/missing-evidence"
+cp "$SANDBOX/halo/specs/modern-feature/spec.md" "$SANDBOX/halo/specs/missing-evidence/spec.md"
+cp "$SANDBOX/halo/specs/modern-feature/plan.md" "$SANDBOX/halo/specs/missing-evidence/plan.md"
+perl -0pi -e 's/id: modern-feature/id: missing-evidence/; s/- \[ \] T1:/- [x] T1:/g; s/- \[ \] T2:/- [x] T2:/g; s/- \[ \] RED-1:/- [x] RED-1:/g; s/- \[ \] RED-2:/- [x] RED-2:/g' "$SANDBOX/halo/specs/missing-evidence/spec.md" "$SANDBOX/halo/specs/missing-evidence/plan.md"
 SPEC_STATUS_NO_EVIDENCE_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" missing-evidence implemented --from=planned >/tmp/lattice-spec-status-no-evidence.log 2>&1 || SPEC_STATUS_NO_EVIDENCE_EXIT=$?
-if [[ $SPEC_STATUS_NO_EVIDENCE_EXIT -ne 0 ]] && grep -q "missing brief.md" /tmp/lattice-spec-status-no-evidence.log; then
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" missing-evidence implemented --from=planned >/tmp/halo-spec-status-no-evidence.log 2>&1 || SPEC_STATUS_NO_EVIDENCE_EXIT=$?
+if [[ $SPEC_STATUS_NO_EVIDENCE_EXIT -ne 0 ]] && grep -q "missing brief.md" /tmp/halo-spec-status-no-evidence.log; then
   pass "spec-status blocks completed tasks without evidence"
 else
   fail "spec-status accepted completed tasks without evidence"
-  tail -20 /tmp/lattice-spec-status-no-evidence.log
+  tail -20 /tmp/halo-spec-status-no-evidence.log
 fi
-TRANSITION_COUNT_AFTER_FAILED=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
+TRANSITION_COUNT_AFTER_FAILED=$(find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$TRANSITION_COUNT_AFTER_FAILED" == "$TRANSITION_COUNT_AFTER_PLANNED" ]]; then
   pass "spec-status does not record failed transition attempts"
 else
   fail "spec-status recorded failed transition attempts"
 fi
 
-BRIEF_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" modern-feature T1 2>&1)
-if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/brief.md" ]] && grep -q "全局约束" "$SANDBOX/.lattice/sdd/modern-feature/T1/brief.md"; then
+BRIEF_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-brief.sh" modern-feature T1 2>&1)
+if [[ -f "$SANDBOX/.halo/sdd/modern-feature/T1/brief.md" ]] && grep -q "全局约束" "$SANDBOX/.halo/sdd/modern-feature/T1/brief.md"; then
   pass "task-brief generates task evidence"
 else
   fail "task-brief did not generate expected evidence"
   echo "$BRIEF_OUTPUT" | tail -10
 fi
 
-REVIEW_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" modern-feature T1 2>&1)
-if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/review-package.md" ]] && grep -q "cannot_verify" "$SANDBOX/.lattice/sdd/modern-feature/T1/review-package.md"; then
+REVIEW_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/review-package.sh" modern-feature T1 2>&1)
+if [[ -f "$SANDBOX/.halo/sdd/modern-feature/T1/review-package.md" ]] && grep -q "cannot_verify" "$SANDBOX/.halo/sdd/modern-feature/T1/review-package.md"; then
   pass "review-package generates read-only review package"
 else
   fail "review-package did not generate expected package"
   echo "$REVIEW_OUTPUT" | tail -10
 fi
 
-TDD_EVIDENCE_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/tdd-evidence.sh" modern-feature T1 \
+TDD_EVIDENCE_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" modern-feature T1 \
   --ac=AC-1 \
   --test=TestAC1_CreateItem \
   --test-file=internal/handler/item_test.go \
@@ -821,30 +821,30 @@ TDD_EVIDENCE_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/tdd-evidenc
   --green-exit=0 \
   --green-summary="focused AC test passes" \
   --refactor=none 2>&1)
-if yq -e '.kind == "tdd-evidence" and .status == "pass" and .red.exit_code == 1 and .green.exit_code == 0 and (.ac_ids | length == 1)' "$SANDBOX/.lattice/sdd/modern-feature/T1/tdd-evidence.json" >/dev/null 2>&1; then
+if yq -e '.kind == "tdd-evidence" and .status == "pass" and .red.exit_code == 1 and .green.exit_code == 0 and (.ac_ids | length == 1)' "$SANDBOX/.halo/sdd/modern-feature/T1/tdd-evidence.json" >/dev/null 2>&1; then
   pass "tdd-evidence writes structured red/green JSON"
 else
   fail "tdd-evidence JSON invalid"
   echo "$TDD_EVIDENCE_OUTPUT" | tail -10
 fi
 
-BRIEF_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-brief.sh" modern-feature T2 2>&1)
-if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T2/brief.md" ]] && grep -q "全局约束" "$SANDBOX/.lattice/sdd/modern-feature/T2/brief.md"; then
+BRIEF_OUTPUT_T2=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-brief.sh" modern-feature T2 2>&1)
+if [[ -f "$SANDBOX/.halo/sdd/modern-feature/T2/brief.md" ]] && grep -q "全局约束" "$SANDBOX/.halo/sdd/modern-feature/T2/brief.md"; then
   pass "task-brief generates second task evidence"
 else
   fail "task-brief did not generate second task evidence"
   echo "$BRIEF_OUTPUT_T2" | tail -10
 fi
 
-REVIEW_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/review-package.sh" modern-feature T2 2>&1)
-if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T2/review-package.md" ]] && grep -q "cannot_verify" "$SANDBOX/.lattice/sdd/modern-feature/T2/review-package.md"; then
+REVIEW_OUTPUT_T2=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/review-package.sh" modern-feature T2 2>&1)
+if [[ -f "$SANDBOX/.halo/sdd/modern-feature/T2/review-package.md" ]] && grep -q "cannot_verify" "$SANDBOX/.halo/sdd/modern-feature/T2/review-package.md"; then
   pass "review-package generates second read-only review package"
 else
   fail "review-package did not generate second package"
   echo "$REVIEW_OUTPUT_T2" | tail -10
 fi
 
-TDD_EVIDENCE_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/tdd-evidence.sh" modern-feature T2 \
+TDD_EVIDENCE_OUTPUT_T2=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" modern-feature T2 \
   --ac=AC-2 \
   --test=TestAC2_GetItem \
   --test-file=internal/handler/item_test.go \
@@ -855,7 +855,7 @@ TDD_EVIDENCE_OUTPUT_T2=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/tdd-evid
   --green-exit=0 \
   --green-summary="focused AC test passes" \
   --refactor=none 2>&1)
-if yq -e '.kind == "tdd-evidence" and .status == "pass" and .red.exit_code == 1 and .green.exit_code == 0 and (.ac_ids | length == 1)' "$SANDBOX/.lattice/sdd/modern-feature/T2/tdd-evidence.json" >/dev/null 2>&1; then
+if yq -e '.kind == "tdd-evidence" and .status == "pass" and .red.exit_code == 1 and .green.exit_code == 0 and (.ac_ids | length == 1)' "$SANDBOX/.halo/sdd/modern-feature/T2/tdd-evidence.json" >/dev/null 2>&1; then
   pass "tdd-evidence writes second structured red/green JSON"
 else
   fail "second tdd-evidence JSON invalid"
@@ -864,11 +864,11 @@ fi
 
 for task_id in RED-1 RED-2 T1 T2; do
   TASK_COMPLETE_EXIT=0
-  TASK_COMPLETE_JSON=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-complete.sh" modern-feature "$task_id" --json 2>&1) || TASK_COMPLETE_EXIT=$?
+  TASK_COMPLETE_JSON=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" modern-feature "$task_id" --json 2>&1) || TASK_COMPLETE_EXIT=$?
   if [[ $TASK_COMPLETE_EXIT -eq 0 ]] \
     && echo "$TASK_COMPLETE_JSON" | yq -e '.kind == "task-complete" and .status == "completed"' >/dev/null 2>&1 \
     && echo "$TASK_COMPLETE_JSON" | grep -q "\"task_id\": \"$task_id\"" \
-    && grep -qE "^- \\[x\\] ${task_id}:" "$SANDBOX/lattice/specs/modern-feature/plan.md"; then
+    && grep -qE "^- \\[x\\] ${task_id}:" "$SANDBOX/halo/specs/modern-feature/plan.md"; then
     pass "task-complete marks $task_id complete"
   else
     fail "task-complete failed for $task_id"
@@ -877,7 +877,7 @@ for task_id in RED-1 RED-2 T1 T2; do
 done
 
 TASK_EVIDENCE_LINT_EXIT=0
-TASK_EVIDENCE_LINT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-evidence-lint.sh" modern-feature 2>&1) || TASK_EVIDENCE_LINT_EXIT=$?
+TASK_EVIDENCE_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-evidence-lint.sh" modern-feature 2>&1) || TASK_EVIDENCE_LINT_EXIT=$?
 if [[ $TASK_EVIDENCE_LINT_EXIT -eq 0 ]]; then
   pass "task-evidence-lint passes completed task evidence"
 else
@@ -885,7 +885,7 @@ else
   echo "$TASK_EVIDENCE_LINT_OUTPUT" | tail -20
 fi
 
-TASK_NEXT_COMPLETE_JSON=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/task-next.sh" modern-feature --json)
+TASK_NEXT_COMPLETE_JSON=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" modern-feature --json)
 if echo "$TASK_NEXT_COMPLETE_JSON" | yq -e '.kind == "task-next" and .status == "complete" and .next_task == null' >/dev/null 2>&1; then
   pass "task-next reports complete plan"
 else
@@ -894,15 +894,15 @@ else
 fi
 
 SPEC_STATUS_IMPLEMENTED_EXIT=0
-SPEC_STATUS_IMPLEMENTED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned 2>&1) || SPEC_STATUS_IMPLEMENTED_EXIT=$?
-if [[ $SPEC_STATUS_IMPLEMENTED_EXIT -eq 0 ]] && grep -q '^status: implemented$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then
+SPEC_STATUS_IMPLEMENTED_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" modern-feature implemented --from=planned 2>&1) || SPEC_STATUS_IMPLEMENTED_EXIT=$?
+if [[ $SPEC_STATUS_IMPLEMENTED_EXIT -eq 0 ]] && grep -q '^status: implemented$' "$SANDBOX/halo/specs/modern-feature/spec.md"; then
   pass "spec-status advances completed plan to implemented"
 else
   fail "spec-status failed to advance completed plan to implemented"
   echo "$SPEC_STATUS_IMPLEMENTED_OUTPUT" | tail -20
 fi
 IMPLEMENTED_TRANSITION_EVENT="$(
-  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+  find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
         yq -e '.kind == "spec-transition" and .from_status == "planned" and .to_status == "implemented"' "$file" >/dev/null 2>&1 && echo "$file"
       done \
@@ -916,8 +916,8 @@ else
   [[ -f "$IMPLEMENTED_TRANSITION_EVENT" ]] && cat "$IMPLEMENTED_TRANSITION_EVENT"
 fi
 
-mkdir -p "$SANDBOX/lattice/specs/bad-plan"
-cat > "$SANDBOX/lattice/specs/bad-plan/spec.md" << 'BAD_SPEC'
+mkdir -p "$SANDBOX/halo/specs/bad-plan"
+cat > "$SANDBOX/halo/specs/bad-plan/spec.md" << 'BAD_SPEC'
 ---
 id: bad-plan
 execution_mode: plan
@@ -931,7 +931,7 @@ execution_mode: plan
 |---|------|------|--------------|
 | AC-1 | Something happens | It works | Test |
 BAD_SPEC
-cat > "$SANDBOX/lattice/specs/bad-plan/plan.md" << 'BAD_PLAN'
+cat > "$SANDBOX/halo/specs/bad-plan/plan.md" << 'BAD_PLAN'
 # Plan: Bad Plan
 
 ## Tasks
@@ -940,16 +940,16 @@ cat > "$SANDBOX/lattice/specs/bad-plan/plan.md" << 'BAD_PLAN'
 - TODO verify later
 BAD_PLAN
 BAD_PLAN_LINT_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" bad-plan >/tmp/lattice-plan-lint-bad.log 2>&1 || BAD_PLAN_LINT_EXIT=$?
-if [[ $BAD_PLAN_LINT_EXIT -ne 0 ]] && grep -q "No stable task ids" /tmp/lattice-plan-lint-bad.log; then
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" bad-plan >/tmp/halo-plan-lint-bad.log 2>&1 || BAD_PLAN_LINT_EXIT=$?
+if [[ $BAD_PLAN_LINT_EXIT -ne 0 ]] && grep -q "No stable task ids" /tmp/halo-plan-lint-bad.log; then
   pass "plan-lint rejects untraceable plan"
 else
   fail "plan-lint accepted untraceable plan"
-  tail -20 /tmp/lattice-plan-lint-bad.log
+  tail -20 /tmp/halo-plan-lint-bad.log
 fi
 
-mkdir -p "$SANDBOX/lattice/specs/bad-plan-schema"
-cat > "$SANDBOX/lattice/specs/bad-plan-schema/spec.md" << 'BAD_SCHEMA_SPEC'
+mkdir -p "$SANDBOX/halo/specs/bad-plan-schema"
+cat > "$SANDBOX/halo/specs/bad-plan-schema/spec.md" << 'BAD_SCHEMA_SPEC'
 ---
 id: bad-plan-schema
 execution_mode: plan
@@ -963,12 +963,12 @@ execution_mode: plan
 |---|------|------|--------------|
 | AC-1 | Something happens | It works | Test |
 BAD_SCHEMA_SPEC
-cat > "$SANDBOX/lattice/specs/bad-plan-schema/plan.md" << 'BAD_SCHEMA_PLAN'
+cat > "$SANDBOX/halo/specs/bad-plan-schema/plan.md" << 'BAD_SCHEMA_PLAN'
 # Plan: Bad Plan Schema
 
 ## Source
 
-- Spec: `lattice/specs/bad-plan-schema/spec.md`
+- Spec: `halo/specs/bad-plan-schema/spec.md`
 - Execution mode: plan
 
 ## Global Constraints
@@ -983,18 +983,18 @@ cat > "$SANDBOX/lattice/specs/bad-plan-schema/plan.md" << 'BAD_SCHEMA_PLAN'
   - Verification: `go test ./...`
 BAD_SCHEMA_PLAN
 BAD_PLAN_SCHEMA_EXIT=0
-bash "$SANDBOX/lattice/kernel/orchestrator/sdd/plan-lint.sh" bad-plan-schema >/tmp/lattice-plan-lint-bad-schema.log 2>&1 || BAD_PLAN_SCHEMA_EXIT=$?
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" bad-plan-schema >/tmp/halo-plan-lint-bad-schema.log 2>&1 || BAD_PLAN_SCHEMA_EXIT=$?
 if [[ $BAD_PLAN_SCHEMA_EXIT -ne 0 ]] \
-  && grep -q "T1 missing Mode" /tmp/lattice-plan-lint-bad-schema.log \
-  && grep -q "T1 missing Evidence" /tmp/lattice-plan-lint-bad-schema.log \
-  && grep -q "T1 missing Done when" /tmp/lattice-plan-lint-bad-schema.log; then
+  && grep -q "T1 missing Mode" /tmp/halo-plan-lint-bad-schema.log \
+  && grep -q "T1 missing Evidence" /tmp/halo-plan-lint-bad-schema.log \
+  && grep -q "T1 missing Done when" /tmp/halo-plan-lint-bad-schema.log; then
   pass "plan-lint rejects incomplete task schema"
 else
   fail "plan-lint accepted incomplete task schema"
-  tail -30 /tmp/lattice-plan-lint-bad-schema.log
+  tail -30 /tmp/halo-plan-lint-bad-schema.log
 fi
 
-cat > "$SANDBOX/lattice/specs/modern-feature/verify.md" << 'VERIFY'
+cat > "$SANDBOX/halo/specs/modern-feature/verify.md" << 'VERIFY'
 # Verify: Modern Feature
 
 - Command: `go test ./...`
@@ -1003,7 +1003,7 @@ cat > "$SANDBOX/lattice/specs/modern-feature/verify.md" << 'VERIFY'
 VERIFY
 
 PRISMSPEC_ALL_LINT_EXIT=0
-PRISMSPEC_ALL_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/lattice/specs/modern-feature" all 2>&1) || PRISMSPEC_ALL_LINT_EXIT=$?
+PRISMSPEC_ALL_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/halo/specs/modern-feature" all 2>&1) || PRISMSPEC_ALL_LINT_EXIT=$?
 if [[ $PRISMSPEC_ALL_LINT_EXIT -eq 0 ]]; then
   pass "PrismSpec lint passes full artifact contract"
 else
@@ -1012,44 +1012,44 @@ else
 fi
 
 SPEC_STATUS_VERIFIED_EXIT=0
-SPEC_STATUS_VERIFIED_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-status.sh" modern-feature verified --from=implemented 2>&1) || SPEC_STATUS_VERIFIED_EXIT=$?
-if [[ $SPEC_STATUS_VERIFIED_EXIT -eq 0 ]] && grep -q '^status: verified$' "$SANDBOX/lattice/specs/modern-feature/spec.md"; then
+SPEC_STATUS_VERIFIED_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" modern-feature verified --from=implemented 2>&1) || SPEC_STATUS_VERIFIED_EXIT=$?
+if [[ $SPEC_STATUS_VERIFIED_EXIT -eq 0 ]] && grep -q '^status: verified$' "$SANDBOX/halo/specs/modern-feature/spec.md"; then
   pass "spec-status advances implemented spec to verified"
 else
   fail "spec-status failed to advance implemented spec to verified"
   echo "$SPEC_STATUS_VERIFIED_OUTPUT" | tail -20
 fi
 
-SUMMARY_DRAFT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/summary-draft.sh" modern-feature 2>&1)
-if [[ -f "$SANDBOX/lattice/specs/modern-feature/summary.md" ]] \
-  && grep -q "Evidence Closeout" "$SANDBOX/lattice/specs/modern-feature/summary.md" \
-  && grep -q "Task Evidence" "$SANDBOX/lattice/specs/modern-feature/summary.md" \
-  && grep -q "Verification Evidence" "$SANDBOX/lattice/specs/modern-feature/summary.md" \
-  && grep -q "Residual Risks And Follow-ups" "$SANDBOX/lattice/specs/modern-feature/summary.md"; then
+SUMMARY_DRAFT_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/summary-draft.sh" modern-feature 2>&1)
+if [[ -f "$SANDBOX/halo/specs/modern-feature/summary.md" ]] \
+  && grep -q "Evidence Closeout" "$SANDBOX/halo/specs/modern-feature/summary.md" \
+  && grep -q "Task Evidence" "$SANDBOX/halo/specs/modern-feature/summary.md" \
+  && grep -q "Verification Evidence" "$SANDBOX/halo/specs/modern-feature/summary.md" \
+  && grep -q "Residual Risks And Follow-ups" "$SANDBOX/halo/specs/modern-feature/summary.md"; then
   pass "summary-draft generates completion summary"
 else
   fail "summary-draft did not generate expected summary"
   echo "$SUMMARY_DRAFT_OUTPUT" | tail -20
-  [[ -f "$SANDBOX/lattice/specs/modern-feature/summary.md" ]] && tail -40 "$SANDBOX/lattice/specs/modern-feature/summary.md"
+  [[ -f "$SANDBOX/halo/specs/modern-feature/summary.md" ]] && tail -40 "$SANDBOX/halo/specs/modern-feature/summary.md"
 fi
 
 SUMMARY_LEARN_EMPTY_EXIT=0
-bash "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" modern-feature >/tmp/lattice-summary-learn-empty.log 2>&1 || SUMMARY_LEARN_EMPTY_EXIT=$?
-if [[ $SUMMARY_LEARN_EMPTY_EXIT -ne 0 ]] && grep -q "No durable knowledge candidates" /tmp/lattice-summary-learn-empty.log; then
+bash "$SANDBOX/halo/kernel/context/summary-learn-draft.sh" modern-feature >/tmp/halo-summary-learn-empty.log 2>&1 || SUMMARY_LEARN_EMPTY_EXIT=$?
+if [[ $SUMMARY_LEARN_EMPTY_EXIT -ne 0 ]] && grep -q "No durable knowledge candidates" /tmp/halo-summary-learn-empty.log; then
   pass "summary-learn-draft rejects empty knowledge candidates"
 else
   fail "summary-learn-draft accepted empty knowledge candidates"
-  tail -20 /tmp/lattice-summary-learn-empty.log
+  tail -20 /tmp/halo-summary-learn-empty.log
 fi
 
-cat >> "$SANDBOX/lattice/specs/modern-feature/verify.md" << 'SUMMARY_LEARN_CANDIDATE'
+cat >> "$SANDBOX/halo/specs/modern-feature/verify.md" << 'SUMMARY_LEARN_CANDIDATE'
 
 ## Knowledge Candidates
 
 - Keep task completion gated by task evidence before advancing spec status.
 SUMMARY_LEARN_CANDIDATE
-SUMMARY_LEARN_DRAFT="$SANDBOX/lattice/context/drafts/knowledge-modern-feature-smoke.md"
-SUMMARY_LEARN_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/summary-learn-draft.sh" modern-feature --out="$SUMMARY_LEARN_DRAFT" 2>&1)
+SUMMARY_LEARN_DRAFT="$SANDBOX/halo/context/drafts/knowledge-modern-feature-smoke.md"
+SUMMARY_LEARN_OUTPUT=$(bash "$SANDBOX/halo/kernel/context/summary-learn-draft.sh" modern-feature --out="$SUMMARY_LEARN_DRAFT" 2>&1)
 if [[ -f "$SUMMARY_LEARN_DRAFT" ]] \
   && grep -q "Knowledge Draft: Verification Candidates" "$SUMMARY_LEARN_DRAFT" \
   && grep -q "Keep task completion gated by task evidence" "$SUMMARY_LEARN_DRAFT" \
@@ -1061,9 +1061,9 @@ else
   [[ -f "$SUMMARY_LEARN_DRAFT" ]] && cat "$SUMMARY_LEARN_DRAFT"
 fi
 
-TRANSITION_COUNT_FINAL=$(find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
+TRANSITION_COUNT_FINAL=$(find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
 VERIFIED_TRANSITION_EVENT="$(
-  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+  find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
         yq -e '.kind == "spec-transition" and .from_status == "implemented" and .to_status == "verified"' "$file" >/dev/null 2>&1 && echo "$file"
       done \
@@ -1075,12 +1075,12 @@ if [[ "$TRANSITION_COUNT_FINAL" == "3" ]] \
   pass "spec-status records complete transition audit trail"
 else
   fail "spec-status transition audit trail invalid"
-  find "$SANDBOX/lattice/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null
+  find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null
 fi
-SPEC_HISTORY_MD="$SANDBOX/lattice/state/spec-history-smoke.md"
-SPEC_HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/spec-history.sh" --out="$SPEC_HISTORY_MD" --limit=10 2>&1)
+SPEC_HISTORY_MD="$SANDBOX/halo/state/spec-history-smoke.md"
+SPEC_HISTORY_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-history.sh" --out="$SPEC_HISTORY_MD" --limit=10 2>&1)
 if [[ -f "$SPEC_HISTORY_MD" ]] \
-  && grep -q "Lattice Spec History" "$SPEC_HISTORY_MD" \
+  && grep -q "Halo Spec History" "$SPEC_HISTORY_MD" \
   && grep -q "modern-feature" "$SPEC_HISTORY_MD" \
   && grep -q "verified" "$SPEC_HISTORY_MD" \
   && grep -q "plan=true, task=true, state=true" "$SPEC_HISTORY_MD"; then
@@ -1091,27 +1091,27 @@ else
   [[ -f "$SPEC_HISTORY_MD" ]] && tail -40 "$SPEC_HISTORY_MD"
 fi
 
-REVIEW_SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/review-summary.sh" modern-feature T1 \
+REVIEW_SUMMARY_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/review-summary.sh" modern-feature T1 \
   --spec-compliance=pass \
   --code-quality=pass \
   --test-coverage=cannot_verify \
   --risk=pass \
   --finding="medium|internal/handler/item_test.go|missing regression test evidence" \
   --evidence="review-package.md" 2>&1)
-if yq -e '.kind == "review-summary" and .verdict == "cannot_verify" and .axes.test_coverage == "cannot_verify" and (.findings | length == 1)' "$SANDBOX/.lattice/sdd/modern-feature/T1/review-summary.json" >/dev/null 2>&1; then
+if yq -e '.kind == "review-summary" and .verdict == "cannot_verify" and .axes.test_coverage == "cannot_verify" and (.findings | length == 1)' "$SANDBOX/.halo/sdd/modern-feature/T1/review-summary.json" >/dev/null 2>&1; then
   pass "review-summary writes structured verdict JSON"
 else
   fail "review-summary JSON invalid"
   echo "$REVIEW_SUMMARY_OUTPUT" | tail -10
 fi
 
-if [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md" ]] \
-  && grep -q 'verdict: "cannot_verify"' "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md" \
-  && grep -q "missing regression test evidence" "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md"; then
+if [[ -f "$SANDBOX/.halo/sdd/modern-feature/T1/review.md" ]] \
+  && grep -q 'verdict: "cannot_verify"' "$SANDBOX/.halo/sdd/modern-feature/T1/review.md" \
+  && grep -q "missing regression test evidence" "$SANDBOX/.halo/sdd/modern-feature/T1/review.md"; then
   pass "review-summary writes canonical review.md"
 else
   fail "review.md artifact invalid"
-  [[ -f "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md" ]] && sed -n '1,80p' "$SANDBOX/.lattice/sdd/modern-feature/T1/review.md"
+  [[ -f "$SANDBOX/.halo/sdd/modern-feature/T1/review.md" ]] && sed -n '1,80p' "$SANDBOX/.halo/sdd/modern-feature/T1/review.md"
 fi
 
 echo ""
@@ -1119,7 +1119,7 @@ echo ""
 # ── 7. AC-coverage (no tests — should report uncovered) ──
 echo "── 7. AC-coverage gate ──"
 AC_EXIT=0
-AC_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/gates/ac-coverage.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX" 2>&1) || AC_EXIT=$?
+AC_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/ac-coverage.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" "$SANDBOX" 2>&1) || AC_EXIT=$?
 
 if [[ $AC_EXIT -eq 1 ]] && echo "$AC_OUTPUT" | grep -qi "uncovered"; then
   pass "ac-coverage correctly reports uncovered ACs"
@@ -1129,46 +1129,46 @@ else
   pass "ac-coverage ran (exit=$AC_EXIT)"
 fi
 
-AC_JSON="$SANDBOX/lattice/state/ac-coverage-smoke.json"
+AC_JSON="$SANDBOX/halo/state/ac-coverage-smoke.json"
 AC_JSON_EXIT=0
-bash "$SANDBOX/lattice/kernel/delivery/gates/ac-coverage.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$AC_JSON" >/tmp/lattice-ac-json.log 2>&1 || AC_JSON_EXIT=$?
+bash "$SANDBOX/halo/kernel/delivery/gates/ac-coverage.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$AC_JSON" >/tmp/halo-ac-json.log 2>&1 || AC_JSON_EXIT=$?
 if [[ $AC_JSON_EXIT -eq 1 ]] && yq -e '.gate == "ac-coverage" and .metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.findings | length == 2)' "$AC_JSON" >/dev/null 2>&1; then
   pass "ac-coverage writes structured gate JSON"
 else
   fail "ac-coverage gate JSON invalid"
-  cat /tmp/lattice-ac-json.log | tail -20
+  cat /tmp/halo-ac-json.log | tail -20
 fi
 
-DRIFT_JSON="$SANDBOX/lattice/state/drift-smoke.json"
-bash "$SANDBOX/lattice/kernel/delivery/gates/drift-check.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$DRIFT_JSON" >/tmp/lattice-drift-json.log 2>&1 || true
+DRIFT_JSON="$SANDBOX/halo/state/drift-smoke.json"
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$DRIFT_JSON" >/tmp/halo-drift-json.log 2>&1 || true
 if yq -e '.gate == "drift-check" and .metrics.drift_count == 0 and (.findings | length > 0)' "$DRIFT_JSON" >/dev/null 2>&1; then
   pass "drift-check writes structured gate JSON"
 else
   fail "drift-check gate JSON invalid"
-  cat /tmp/lattice-drift-json.log | tail -20
+  cat /tmp/halo-drift-json.log | tail -20
 fi
 
-COMPLIANCE_JSON="$SANDBOX/lattice/state/compliance-smoke.json"
-bash "$SANDBOX/lattice/kernel/delivery/gates/compliance.sh" "$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$COMPLIANCE_JSON" >/tmp/lattice-compliance-json.log 2>&1 || true
+COMPLIANCE_JSON="$SANDBOX/halo/state/compliance-smoke.json"
+bash "$SANDBOX/halo/kernel/delivery/gates/compliance.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" --json-out="$COMPLIANCE_JSON" >/tmp/halo-compliance-json.log 2>&1 || true
 if yq -e '.gate == "compliance" and .metrics.warnings >= 0 and (.findings | length > 0)' "$COMPLIANCE_JSON" >/dev/null 2>&1; then
   pass "compliance writes structured gate JSON"
 else
   fail "compliance gate JSON invalid"
-  cat /tmp/lattice-compliance-json.log | tail -20
+  cat /tmp/halo-compliance-json.log | tail -20
 fi
 
-PIPELINE_GATE_JSON="$SANDBOX/lattice/state/pipeline-ac-smoke.json"
+PIPELINE_GATE_JSON="$SANDBOX/halo/state/pipeline-ac-smoke.json"
 PIPELINE_GATE_EXIT=0
-bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_GATE_JSON" >/tmp/lattice-pipeline-gate-json.log 2>&1 || PIPELINE_GATE_EXIT=$?
+bash "$SANDBOX/halo/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/halo/specs/modern-feature/spec.md" --json-out="$PIPELINE_GATE_JSON" >/tmp/halo-pipeline-gate-json.log 2>&1 || PIPELINE_GATE_EXIT=$?
 if [[ $PIPELINE_GATE_EXIT -eq 1 ]] && yq -e '.metrics.ac_total == 2 and .metrics.ac_uncovered == 2 and (.gates | length == 1) and .gates[0].gate == "ac-coverage" and .metrics.review_total == 1 and .metrics.review_cannot_verify == 1 and .metrics.tdd_total == 2 and .metrics.tdd_complete == 2 and .process_evidence.review_summaries[0].kind == "review-summary" and .process_evidence.tdd_evidence[0].kind == "tdd-evidence" and .loop_state.kind == "loop-state" and .loop_state.next_action == "retry" and .loop_state.failed_step == "ac-coverage" and .loop_state.failure_category == "ac_gap" and .loop_state.default_action == "add_or_map_tests"' "$PIPELINE_GATE_JSON" >/dev/null 2>&1; then
   pass "pipeline embeds structured gate JSON in eval run"
 else
   fail "pipeline gate JSON embedding invalid"
-  cat /tmp/lattice-pipeline-gate-json.log | tail -20
+  cat /tmp/halo-pipeline-gate-json.log | tail -20
 fi
 
-SUMMARY_WITH_EVAL="$SANDBOX/lattice/specs/modern-feature/summary-with-eval.md"
-SUMMARY_WITH_EVAL_OUTPUT=$(bash "$SANDBOX/lattice/kernel/orchestrator/sdd/summary-draft.sh" modern-feature --eval-json="$PIPELINE_GATE_JSON" --out="$SUMMARY_WITH_EVAL" 2>&1)
+SUMMARY_WITH_EVAL="$SANDBOX/halo/specs/modern-feature/summary-with-eval.md"
+SUMMARY_WITH_EVAL_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/summary-draft.sh" modern-feature --eval-json="$PIPELINE_GATE_JSON" --out="$SUMMARY_WITH_EVAL" 2>&1)
 if [[ -f "$SUMMARY_WITH_EVAL" ]] \
   && grep -q "Eval Metrics" "$SUMMARY_WITH_EVAL" \
   && grep -q "0 / 2 covered, 2 uncovered" "$SUMMARY_WITH_EVAL" \
@@ -1181,22 +1181,22 @@ else
 fi
 
 LOOP_RUN_ID=$(yq -r '.run_id' "$PIPELINE_GATE_JSON")
-LOOP_STATE_JSON="$SANDBOX/lattice/state/loops/${LOOP_RUN_ID}.json"
+LOOP_STATE_JSON="$SANDBOX/halo/state/loops/${LOOP_RUN_ID}.json"
 if [[ -f "$LOOP_STATE_JSON" ]] && yq -e '.kind == "loop-state" and .next_action == "retry" and .failed_step == "ac-coverage" and .failure_category == "ac_gap" and .default_action == "add_or_map_tests" and .retry_count == 0' "$LOOP_STATE_JSON" >/dev/null 2>&1; then
   pass "pipeline writes loop state JSON"
 else
   fail "pipeline loop state JSON invalid"
-  cat /tmp/lattice-pipeline-gate-json.log | tail -20
+  cat /tmp/halo-pipeline-gate-json.log | tail -20
 fi
 
-PIPELINE_ESCALATION_JSON="$SANDBOX/lattice/state/pipeline-escalation-smoke.json"
+PIPELINE_ESCALATION_JSON="$SANDBOX/halo/state/pipeline-escalation-smoke.json"
 PIPELINE_ESCALATION_EXIT=0
-SH_RETRY_COUNT=3 SH_RETRY_MAX=3 bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_ESCALATION_JSON" >/tmp/lattice-pipeline-escalation.log 2>&1 || PIPELINE_ESCALATION_EXIT=$?
+SH_RETRY_COUNT=3 SH_RETRY_MAX=3 bash "$SANDBOX/halo/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/halo/specs/modern-feature/spec.md" --json-out="$PIPELINE_ESCALATION_JSON" >/tmp/halo-pipeline-escalation.log 2>&1 || PIPELINE_ESCALATION_EXIT=$?
 ESCALATION_RUN_ID=""
 ESCALATION_LEARN_DRAFT=""
 if [[ -f "$PIPELINE_ESCALATION_JSON" ]]; then
   ESCALATION_RUN_ID=$(yq -r '.run_id' "$PIPELINE_ESCALATION_JSON")
-  ESCALATION_LEARN_DRAFT="$SANDBOX/lattice/context/drafts/escalation-${ESCALATION_RUN_ID}.md"
+  ESCALATION_LEARN_DRAFT="$SANDBOX/halo/context/drafts/escalation-${ESCALATION_RUN_ID}.md"
 fi
 if [[ $PIPELINE_ESCALATION_EXIT -eq 2 ]] \
   && [[ -f "$ESCALATION_LEARN_DRAFT" ]] \
@@ -1206,23 +1206,23 @@ if [[ $PIPELINE_ESCALATION_EXIT -eq 2 ]] \
   pass "pipeline writes escalation learn draft"
 else
   fail "pipeline escalation learn draft invalid"
-  cat /tmp/lattice-pipeline-escalation.log | tail -20
+  cat /tmp/halo-pipeline-escalation.log | tail -20
 fi
 
-PROMOTE_TARGET="$SANDBOX/lattice/context/knowledge/pitfalls.md"
+PROMOTE_TARGET="$SANDBOX/halo/context/knowledge/pitfalls.md"
 REQUIRE_REVIEW_EXIT=0
-bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/lattice-learn-require-review.log 2>&1 || REQUIRE_REVIEW_EXIT=$?
-if [[ $REQUIRE_REVIEW_EXIT -ne 0 ]] && grep -q "requires an approved knowledge review" /tmp/lattice-learn-require-review.log; then
+bash "$SANDBOX/halo/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/halo-learn-require-review.log 2>&1 || REQUIRE_REVIEW_EXIT=$?
+if [[ $REQUIRE_REVIEW_EXIT -ne 0 ]] && grep -q "requires an approved knowledge review" /tmp/halo-learn-require-review.log; then
   pass "learn-draft require-review blocks unreviewed promotion"
 else
   fail "learn-draft require-review should block unreviewed promotion"
-  cat /tmp/lattice-learn-require-review.log | tail -20
+  cat /tmp/halo-learn-require-review.log | tail -20
 fi
 
-KNOWLEDGE_REVIEW_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/knowledge-review.sh" approve "$ESCALATION_LEARN_DRAFT" --reviewer="smoke-reviewer" --reason="durable lesson candidate checked" --risk=medium --conflicts-checked 2>&1)
-KNOWLEDGE_REVIEW_EVENT=$(find "$SANDBOX/lattice/state/knowledge-reviews" -type f -name '*.json' -print | head -1)
+KNOWLEDGE_REVIEW_OUTPUT=$(bash "$SANDBOX/halo/kernel/context/knowledge-review.sh" approve "$ESCALATION_LEARN_DRAFT" --reviewer="smoke-reviewer" --reason="durable lesson candidate checked" --risk=medium --conflicts-checked 2>&1)
+KNOWLEDGE_REVIEW_EVENT=$(find "$SANDBOX/halo/state/knowledge-reviews" -type f -name '*.json' -print | head -1)
 if [[ -n "$KNOWLEDGE_REVIEW_EVENT" ]] \
-  && yq -e '.kind == "knowledge-review" and .action == "approve" and .reviewer == "smoke-reviewer" and .target == "lattice/context/drafts/'"$(basename "$ESCALATION_LEARN_DRAFT")"'" and .conflicts_checked == true' "$KNOWLEDGE_REVIEW_EVENT" >/dev/null 2>&1; then
+  && yq -e '.kind == "knowledge-review" and .action == "approve" and .reviewer == "smoke-reviewer" and .target == "halo/context/drafts/'"$(basename "$ESCALATION_LEARN_DRAFT")"'" and .conflicts_checked == true' "$KNOWLEDGE_REVIEW_EVENT" >/dev/null 2>&1; then
   pass "knowledge-review records approval evidence"
 else
   fail "knowledge-review approval evidence invalid"
@@ -1230,21 +1230,21 @@ else
 fi
 
 PROMOTE_EXIT=0
-bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/lattice-learn-promote.log 2>&1 || PROMOTE_EXIT=$?
-PROMOTED_DRAFT="$SANDBOX/lattice/context/drafts/promoted/$(basename "$ESCALATION_LEARN_DRAFT")"
-PROMOTE_EVENT=$(find "$SANDBOX/lattice/state/learn-promotions" -type f -name '*.json' -print | head -1)
+bash "$SANDBOX/halo/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/halo-learn-promote.log 2>&1 || PROMOTE_EXIT=$?
+PROMOTED_DRAFT="$SANDBOX/halo/context/drafts/promoted/$(basename "$ESCALATION_LEARN_DRAFT")"
+PROMOTE_EVENT=$(find "$SANDBOX/halo/state/learn-promotions" -type f -name '*.json' -print | head -1)
 if [[ $PROMOTE_EXIT -eq 0 ]] \
   && [[ -f "$PROMOTED_DRAFT" ]] \
   && grep -q "Promoted Learn Draft" "$PROMOTE_TARGET" \
   && [[ -n "$PROMOTE_EVENT" ]] \
-  && yq -e '.kind == "learn-promotion" and .action == "promote" and .target == "lattice/context/knowledge/pitfalls.md" and .failure_category == "ac_gap" and .default_action == "add_or_map_tests"' "$PROMOTE_EVENT" >/dev/null 2>&1; then
+  && yq -e '.kind == "learn-promotion" and .action == "promote" and .target == "halo/context/knowledge/pitfalls.md" and .failure_category == "ac_gap" and .default_action == "add_or_map_tests"' "$PROMOTE_EVENT" >/dev/null 2>&1; then
   pass "learn-draft promotes draft with audit event"
 else
   fail "learn-draft promote invalid"
-  cat /tmp/lattice-learn-promote.log | tail -20
+  cat /tmp/halo-learn-promote.log | tail -20
 fi
 
-DISCARD_DRAFT="$SANDBOX/lattice/context/drafts/manual-discard.md"
+DISCARD_DRAFT="$SANDBOX/halo/context/drafts/manual-discard.md"
 cat > "$DISCARD_DRAFT" <<'MD'
 ---
 run_id: "manual-discard"
@@ -1260,10 +1260,10 @@ This candidate is intentionally discarded by smoke test.
 MD
 
 DISCARD_EXIT=0
-bash "$SANDBOX/lattice/kernel/context/learn-draft.sh" discard "$DISCARD_DRAFT" --reason="not reusable" >/tmp/lattice-learn-discard.log 2>&1 || DISCARD_EXIT=$?
-DISCARDED_DRAFT="$SANDBOX/lattice/context/drafts/discarded/$(basename "$DISCARD_DRAFT")"
+bash "$SANDBOX/halo/kernel/context/learn-draft.sh" discard "$DISCARD_DRAFT" --reason="not reusable" >/tmp/halo-learn-discard.log 2>&1 || DISCARD_EXIT=$?
+DISCARDED_DRAFT="$SANDBOX/halo/context/drafts/discarded/$(basename "$DISCARD_DRAFT")"
 DISCARD_EVENT=$(
-  for event in "$SANDBOX"/lattice/state/learn-promotions/*.json; do
+  for event in "$SANDBOX"/halo/state/learn-promotions/*.json; do
     [[ -f "$event" ]] || continue
     if yq -e '.action == "discard"' "$event" >/dev/null 2>&1; then
       printf '%s\n' "$event"
@@ -1278,17 +1278,17 @@ if [[ $DISCARD_EXIT -eq 0 ]] \
   pass "learn-draft discards draft with audit event"
 else
   fail "learn-draft discard invalid"
-  cat /tmp/lattice-learn-discard.log | tail -20
+  cat /tmp/halo-learn-discard.log | tail -20
 fi
 
-if bash "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" --strict >/tmp/lattice-knowledge-lint-default.log 2>&1; then
+if bash "$SANDBOX/halo/kernel/context/knowledge-lint.sh" --strict >/tmp/halo-knowledge-lint-default.log 2>&1; then
   pass "knowledge-lint passes default knowledge templates"
 else
   fail "knowledge-lint should pass default knowledge templates"
-  cat /tmp/lattice-knowledge-lint-default.log | tail -20
+  cat /tmp/halo-knowledge-lint-default.log | tail -20
 fi
 
-BAD_KNOWLEDGE="$SANDBOX/lattice/context/knowledge/bad-governance.md"
+BAD_KNOWLEDGE="$SANDBOX/halo/context/knowledge/bad-governance.md"
 cat > "$BAD_KNOWLEDGE" <<'MD'
 ---
 expires_at: "2000-01-01"
@@ -1307,22 +1307,22 @@ CONFLICT: contradicts existing knowledge.
 Same heading repeated.
 MD
 
-if bash "$SANDBOX/lattice/kernel/context/knowledge-lint.sh" --strict --target="$BAD_KNOWLEDGE" >/tmp/lattice-knowledge-lint-bad.log 2>&1; then
+if bash "$SANDBOX/halo/kernel/context/knowledge-lint.sh" --strict --target="$BAD_KNOWLEDGE" >/tmp/halo-knowledge-lint-bad.log 2>&1; then
   fail "knowledge-lint should reject stale/conflicting knowledge metadata"
 else
   pass "knowledge-lint rejects stale/conflicting knowledge metadata"
 fi
 rm -f "$BAD_KNOWLEDGE"
 
-if bash "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" >/tmp/lattice-failure-category-lint.log 2>&1; then
+if bash "$SANDBOX/halo/kernel/delivery/failure-category-lint.sh" >/tmp/halo-failure-category-lint.log 2>&1; then
   pass "failure-category-lint passes default config"
 else
   fail "failure-category-lint should pass default config"
-  cat /tmp/lattice-failure-category-lint.log | tail -20
+  cat /tmp/halo-failure-category-lint.log | tail -20
 fi
 
-cat > "$SANDBOX/lattice/config/failure-categories.invalid.yaml" <<'YAML'
-schema_version: lattice.failure-categories.v1
+cat > "$SANDBOX/halo/config/failure-categories.invalid.yaml" <<'YAML'
+schema_version: halo.failure-categories.v1
 default:
   category: unknown
   default_action: escalate
@@ -1332,14 +1332,14 @@ rules:
     category: bad-category
 YAML
 
-if bash "$SANDBOX/lattice/kernel/delivery/failure-category-lint.sh" "$SANDBOX/lattice/config/failure-categories.invalid.yaml" >/tmp/lattice-failure-category-lint-invalid.log 2>&1; then
+if bash "$SANDBOX/halo/kernel/delivery/failure-category-lint.sh" "$SANDBOX/halo/config/failure-categories.invalid.yaml" >/tmp/halo-failure-category-lint-invalid.log 2>&1; then
   fail "failure-category-lint should reject invalid config"
 else
   pass "failure-category-lint rejects invalid config"
 fi
 
-cat > "$SANDBOX/lattice/config/failure-categories.yaml" <<'YAML'
-schema_version: lattice.failure-categories.v1
+cat > "$SANDBOX/halo/config/failure-categories.yaml" <<'YAML'
+schema_version: halo.failure-categories.v1
 default:
   category: unknown
   default_action: escalate
@@ -1350,19 +1350,19 @@ rules:
     default_action: route_to_qa
 YAML
 
-PIPELINE_CUSTOM_CATEGORY_JSON="$SANDBOX/lattice/state/pipeline-custom-category-smoke.json"
+PIPELINE_CUSTOM_CATEGORY_JSON="$SANDBOX/halo/state/pipeline-custom-category-smoke.json"
 PIPELINE_CUSTOM_CATEGORY_EXIT=0
-bash "$SANDBOX/lattice/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/lattice/specs/modern-feature/spec.md" --json-out="$PIPELINE_CUSTOM_CATEGORY_JSON" >/tmp/lattice-pipeline-custom-category.log 2>&1 || PIPELINE_CUSTOM_CATEGORY_EXIT=$?
+bash "$SANDBOX/halo/kernel/delivery/pipeline.sh" --only=ac-coverage --spec="$SANDBOX/halo/specs/modern-feature/spec.md" --json-out="$PIPELINE_CUSTOM_CATEGORY_JSON" >/tmp/halo-pipeline-custom-category.log 2>&1 || PIPELINE_CUSTOM_CATEGORY_EXIT=$?
 if [[ $PIPELINE_CUSTOM_CATEGORY_EXIT -eq 1 ]] \
   && yq -e '.loop_state.failure_category == "custom_ac_gap" and .loop_state.default_action == "route_to_qa"' "$PIPELINE_CUSTOM_CATEGORY_JSON" >/dev/null 2>&1; then
   pass "pipeline reads configurable failure categories"
 else
   fail "pipeline configurable failure categories invalid"
-  cat /tmp/lattice-pipeline-custom-category.log | tail -20
+  cat /tmp/halo-pipeline-custom-category.log | tail -20
 fi
 
-OUTCOME_LINK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/outcome-link.sh" record --eval="$PIPELINE_GATE_JSON" --type=review_finding --severity=medium --source=smoke-review --summary="missing regression test evidence" --context-ref="rules.md#ac-trace" 2>&1)
-OUTCOME_EVENT=$(find "$SANDBOX/lattice/state/outcomes" -type f -name '*.json' -print | head -1)
+OUTCOME_LINK_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/outcome-link.sh" record --eval="$PIPELINE_GATE_JSON" --type=review_finding --severity=medium --source=smoke-review --summary="missing regression test evidence" --context-ref="rules.md#ac-trace" 2>&1)
+OUTCOME_EVENT=$(find "$SANDBOX/halo/state/outcomes" -type f -name '*.json' -print | head -1)
 if [[ -n "$OUTCOME_EVENT" ]] \
   && yq -e '.kind == "outcome-link" and .outcome.type == "review_finding" and .outcome.severity == "medium" and .eval_run.run_id != "" and (.context_refs | length == 1)' "$OUTCOME_EVENT" >/dev/null 2>&1; then
   pass "outcome-link records post-run outcome evidence"
@@ -1371,53 +1371,53 @@ else
   echo "$OUTCOME_LINK_OUTPUT" | tail -20
 fi
 
-OUTCOME_REPORT_MD="$SANDBOX/lattice/state/outcome-report-smoke.md"
-OUTCOME_REPORT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/outcome-report.sh" --out="$OUTCOME_REPORT_MD" --limit=5 2>&1)
-if [[ -f "$OUTCOME_REPORT_MD" ]] && grep -q "Lattice Outcome Attribution Report" "$OUTCOME_REPORT_MD" && grep -q "Context Ref Signals" "$OUTCOME_REPORT_MD" && grep -q "rules.md#ac-trace" "$OUTCOME_REPORT_MD" && grep -q "Runs Needing Review" "$OUTCOME_REPORT_MD" && grep -q "missing regression test evidence" "$OUTCOME_REPORT_MD"; then
+OUTCOME_REPORT_MD="$SANDBOX/halo/state/outcome-report-smoke.md"
+OUTCOME_REPORT_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/outcome-report.sh" --out="$OUTCOME_REPORT_MD" --limit=5 2>&1)
+if [[ -f "$OUTCOME_REPORT_MD" ]] && grep -q "Halo Outcome Attribution Report" "$OUTCOME_REPORT_MD" && grep -q "Context Ref Signals" "$OUTCOME_REPORT_MD" && grep -q "rules.md#ac-trace" "$OUTCOME_REPORT_MD" && grep -q "Runs Needing Review" "$OUTCOME_REPORT_MD" && grep -q "missing regression test evidence" "$OUTCOME_REPORT_MD"; then
   pass "outcome-report renders attribution signals"
 else
   fail "outcome-report output invalid"
   echo "$OUTCOME_REPORT_OUTPUT" | tail -20
 fi
 
-PIPELINE_SUMMARY_MD="$SANDBOX/lattice/state/eval-summary-smoke.md"
-SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-summary.sh" "$PIPELINE_GATE_JSON" --out="$PIPELINE_SUMMARY_MD" 2>&1)
-if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Lattice Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Outcome Links" "$PIPELINE_SUMMARY_MD" && grep -q "missing regression test evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
+PIPELINE_SUMMARY_MD="$SANDBOX/halo/state/eval-summary-smoke.md"
+SUMMARY_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/eval-summary.sh" "$PIPELINE_GATE_JSON" --out="$PIPELINE_SUMMARY_MD" 2>&1)
+if [[ -f "$PIPELINE_SUMMARY_MD" ]] && grep -q "Halo Eval Summary" "$PIPELINE_SUMMARY_MD" && grep -q "AC Coverage" "$PIPELINE_SUMMARY_MD" && grep -q "ac-coverage" "$PIPELINE_SUMMARY_MD" && grep -q "Review Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "TDD Evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Outcome Links" "$PIPELINE_SUMMARY_MD" && grep -q "missing regression test evidence" "$PIPELINE_SUMMARY_MD" && grep -q "Loop" "$PIPELINE_SUMMARY_MD"; then
   pass "eval-summary renders pipeline JSON as Markdown"
 else
   fail "eval-summary output invalid"
   echo "$SUMMARY_OUTPUT" | tail -10
 fi
 
-PR_COMMENT_MD="$SANDBOX/lattice/state/pr-comment-smoke.md"
-PR_COMMENT_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/pr-comment.sh" "$PIPELINE_SUMMARY_MD" --dry-run --out="$PR_COMMENT_MD" 2>&1)
-if [[ -f "$PR_COMMENT_MD" ]] && grep -q "lattice-eval-comment" "$PR_COMMENT_MD" && grep -q "Lattice Eval Summary" "$PR_COMMENT_MD"; then
+PR_COMMENT_MD="$SANDBOX/halo/state/pr-comment-smoke.md"
+PR_COMMENT_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/pr-comment.sh" "$PIPELINE_SUMMARY_MD" --dry-run --out="$PR_COMMENT_MD" 2>&1)
+if [[ -f "$PR_COMMENT_MD" ]] && grep -q "halo-eval-comment" "$PR_COMMENT_MD" && grep -q "Halo Eval Summary" "$PR_COMMENT_MD"; then
   pass "pr-comment renders stable dry-run body"
 else
   fail "pr-comment dry-run output invalid"
   echo "$PR_COMMENT_OUTPUT" | tail -10
 fi
 
-mkdir -p "$SANDBOX/lattice/state/eval-runs"
-cp "$PIPELINE_GATE_JSON" "$SANDBOX/lattice/state/eval-runs/pipeline-ac-smoke.json"
-EVAL_HISTORY_MD="$SANDBOX/lattice/state/eval-history-smoke.md"
-HISTORY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-history.sh" --out="$EVAL_HISTORY_MD" --limit=5 2>&1)
-if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Lattice Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Outcome Links" "$EVAL_HISTORY_MD" && grep -q "Outcomes" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
+mkdir -p "$SANDBOX/halo/state/eval-runs"
+cp "$PIPELINE_GATE_JSON" "$SANDBOX/halo/state/eval-runs/pipeline-ac-smoke.json"
+EVAL_HISTORY_MD="$SANDBOX/halo/state/eval-history-smoke.md"
+HISTORY_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/eval-history.sh" --out="$EVAL_HISTORY_MD" --limit=5 2>&1)
+if [[ -f "$EVAL_HISTORY_MD" ]] && grep -q "Halo Eval History" "$EVAL_HISTORY_MD" && grep -q "Pipeline Pass Rate" "$EVAL_HISTORY_MD" && grep -q "Review Verdicts" "$EVAL_HISTORY_MD" && grep -q "Outcome Links" "$EVAL_HISTORY_MD" && grep -q "Outcomes" "$EVAL_HISTORY_MD" && grep -q "Loop" "$EVAL_HISTORY_MD" && grep -q "Recent Runs" "$EVAL_HISTORY_MD"; then
   pass "eval-history aggregates eval run JSON"
 else
   fail "eval-history output invalid"
   echo "$HISTORY_OUTPUT" | tail -10
 fi
 
-EVAL_SINK_DIR="$SANDBOX/lattice/state/central-sink"
-EVAL_SINK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-sink.sh" publish --sink-dir="$EVAL_SINK_DIR" 2>&1)
+EVAL_SINK_DIR="$SANDBOX/halo/state/central-sink"
+EVAL_SINK_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/eval-sink.sh" publish --sink-dir="$EVAL_SINK_DIR" 2>&1)
 EVAL_SINK_MANIFEST="$EVAL_SINK_DIR/projects/testapp/manifest.json"
 if [[ -f "$EVAL_SINK_DIR/index.md" ]] \
   && [[ -f "$EVAL_SINK_MANIFEST" ]] \
   && [[ -f "$EVAL_SINK_DIR/projects/testapp/eval-runs/pipeline-ac-smoke.json" ]] \
   && [[ -n "$(find "$EVAL_SINK_DIR/projects/testapp/outcomes" -type f -name '*.json' -print -quit)" ]] \
   && yq -e '.kind == "eval-sink-project" and .project == "testapp" and .counts.eval_runs >= 1 and .counts.outcomes >= 1 and .counts.reports >= 1' "$EVAL_SINK_MANIFEST" >/dev/null 2>&1 \
-  && grep -q "Lattice Central Eval Sink" "$EVAL_SINK_DIR/index.md"; then
+  && grep -q "Halo Central Eval Sink" "$EVAL_SINK_DIR/index.md"; then
   pass "eval-sink publishes project evidence to central sink"
 else
   fail "eval-sink output invalid"
@@ -1425,9 +1425,9 @@ else
 fi
 
 EVAL_DASHBOARD_HTML="$EVAL_SINK_DIR/dashboard.html"
-EVAL_DASHBOARD_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-dashboard.sh" --sink-dir="$EVAL_SINK_DIR" --out="$EVAL_DASHBOARD_HTML" --limit=5 2>&1)
+EVAL_DASHBOARD_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/eval-dashboard.sh" --sink-dir="$EVAL_SINK_DIR" --out="$EVAL_DASHBOARD_HTML" --limit=5 2>&1)
 if [[ -f "$EVAL_DASHBOARD_HTML" ]] \
-  && grep -q "Lattice Eval Dashboard" "$EVAL_DASHBOARD_HTML" \
+  && grep -q "Halo Eval Dashboard" "$EVAL_DASHBOARD_HTML" \
   && grep -q "testapp" "$EVAL_DASHBOARD_HTML" \
   && grep -q "Recent Outcomes" "$EVAL_DASHBOARD_HTML" \
   && grep -q "missing regression test evidence" "$EVAL_DASHBOARD_HTML"; then
@@ -1437,8 +1437,8 @@ else
   echo "$EVAL_DASHBOARD_OUTPUT" | tail -20
 fi
 
-EVAL_QUERY_SUMMARY_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/eval-query.sh" summary --sink-dir="$EVAL_SINK_DIR" 2>&1)
-if echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "Lattice Eval Query" \
+EVAL_QUERY_SUMMARY_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/eval-query.sh" summary --sink-dir="$EVAL_SINK_DIR" 2>&1)
+if echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "Halo Eval Query" \
   && echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "| Projects | 1 |" \
   && echo "$EVAL_QUERY_SUMMARY_OUTPUT" | grep -q "testapp"; then
   pass "eval-query summarizes central sink"
@@ -1447,10 +1447,10 @@ else
   echo "$EVAL_QUERY_SUMMARY_OUTPUT" | tail -20
 fi
 
-EVAL_QUERY_RUNS_JSON="$SANDBOX/lattice/state/eval-query-runs.json"
-EVAL_QUERY_OUTCOMES_JSON="$SANDBOX/lattice/state/eval-query-outcomes.json"
-bash "$SANDBOX/lattice/kernel/delivery/eval-query.sh" runs --sink-dir="$EVAL_SINK_DIR" --project=testapp --format=json > "$EVAL_QUERY_RUNS_JSON"
-bash "$SANDBOX/lattice/kernel/delivery/eval-query.sh" outcomes --sink-dir="$EVAL_SINK_DIR" --project=testapp --type=review_finding --format=json > "$EVAL_QUERY_OUTCOMES_JSON"
+EVAL_QUERY_RUNS_JSON="$SANDBOX/halo/state/eval-query-runs.json"
+EVAL_QUERY_OUTCOMES_JSON="$SANDBOX/halo/state/eval-query-outcomes.json"
+bash "$SANDBOX/halo/kernel/delivery/eval-query.sh" runs --sink-dir="$EVAL_SINK_DIR" --project=testapp --format=json > "$EVAL_QUERY_RUNS_JSON"
+bash "$SANDBOX/halo/kernel/delivery/eval-query.sh" outcomes --sink-dir="$EVAL_SINK_DIR" --project=testapp --type=review_finding --format=json > "$EVAL_QUERY_OUTCOMES_JSON"
 if yq -e '.kind == "eval-query" and .action == "runs" and .metrics.eval_runs >= 1 and .items[0].project == "testapp"' "$EVAL_QUERY_RUNS_JSON" >/dev/null 2>&1 \
   && yq -e '.kind == "eval-query" and .action == "outcomes" and .metrics.outcomes >= 1 and .items[0].type == "review_finding" and .items[0].summary == "missing regression test evidence"' "$EVAL_QUERY_OUTCOMES_JSON" >/dev/null 2>&1; then
   pass "eval-query emits filtered JSON"
@@ -1458,12 +1458,12 @@ else
   fail "eval-query JSON output invalid"
   cat "$EVAL_QUERY_RUNS_JSON" "$EVAL_QUERY_OUTCOMES_JSON" | tail -40
 fi
-rm -f /tmp/lattice-ac-json.log /tmp/lattice-drift-json.log /tmp/lattice-compliance-json.log /tmp/lattice-pipeline-gate-json.log /tmp/lattice-pipeline-escalation.log /tmp/lattice-pipeline-custom-category.log /tmp/lattice-failure-category-lint.log /tmp/lattice-failure-category-lint-invalid.log
+rm -f /tmp/halo-ac-json.log /tmp/halo-drift-json.log /tmp/halo-compliance-json.log /tmp/halo-pipeline-gate-json.log /tmp/halo-pipeline-escalation.log /tmp/halo-pipeline-custom-category.log /tmp/halo-failure-category-lint.log /tmp/halo-failure-category-lint-invalid.log
 echo ""
 
 # ── 8. Context knowledge backend ──
 echo "── 8. Context knowledge backend ──"
-LIST_OUTPUT=$(bash "$SANDBOX/lattice/kernel/context/backends/knowledge.sh" --list 2>&1)
+LIST_OUTPUT=$(bash "$SANDBOX/halo/kernel/context/backends/knowledge.sh" --list 2>&1)
 if echo "$LIST_OUTPUT" | grep -q "Context Knowledge Files"; then
   pass "knowledge backend --list works"
 else
@@ -1473,14 +1473,14 @@ echo ""
 
 # ── 9. Spec-lock ──
 echo "── 9. Spec-lock ──"
-LOCK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/gates/spec-lock.sh" acquire "$SANDBOX/lattice/specs/modern-feature/spec.md" 2>&1)
+LOCK_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/spec-lock.sh" acquire "$SANDBOX/halo/specs/modern-feature/spec.md" 2>&1)
 if echo "$LOCK_OUTPUT" | grep -q "Locked"; then
   pass "spec-lock acquire works"
 else
   fail "spec-lock acquire failed"
 fi
 
-UNLOCK_OUTPUT=$(bash "$SANDBOX/lattice/kernel/delivery/gates/spec-lock.sh" release "$SANDBOX/lattice/specs/modern-feature/spec.md" 2>&1)
+UNLOCK_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/spec-lock.sh" release "$SANDBOX/halo/specs/modern-feature/spec.md" 2>&1)
 if echo "$UNLOCK_OUTPUT" | grep -q "Released"; then
   pass "spec-lock release works"
 else

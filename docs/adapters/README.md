@@ -1,6 +1,6 @@
 # Engine & Agent Adapters
 
-Lattice is agent-agnostic. It injects behavioral constraints at phase boundaries via `rules.md` and provides CLI tools that any agent can invoke. The integration mechanism varies by agent:
+Halo is agent-agnostic. It injects behavioral constraints at phase boundaries via `rules.md` and provides CLI tools that any agent can invoke. The integration mechanism varies by agent:
 
 | Agent / Engine | Integration Method | File |
 |---------------|-------------------|------|
@@ -12,16 +12,16 @@ Lattice is agent-agnostic. It injects behavioral constraints at phase boundaries
 
 ## How It Works
 
-Lattice has two integration surfaces:
+Halo has two integration surfaces:
 
 1. **Rules injection** — `rules.md` is a plain Markdown file describing agent behavior per phase. Any agent that supports system prompt customization can import it.
 2. **CLI tools** — All gates (`pipeline.sh`, `spec-lint.sh`, etc.) are standalone bash scripts. Any agent that can run shell commands can use them.
 
 ## Writing a New Adapter
 
-To integrate Lattice with a new agent or workflow engine:
+To integrate Halo with a new agent or workflow engine:
 
 1. Find how your agent loads custom instructions (system prompt, rules file, config)
-2. Point it to `lattice/kernel/orchestrator/rules.md`
+2. Point it to `halo/kernel/orchestrator/rules.md`
 3. Document how to invoke CLI tools (`/run`, shell access, MCP, etc.)
 4. Add a `<agent-name>.md` file to this directory

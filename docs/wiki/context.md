@@ -2,7 +2,7 @@
 
 ## 定位
 
-Lattice 的 Context 层不是知识库产品，也不是校验系统，而是给 Agent 的项目上下文供给层。
+Halo 的 Context 层不是知识库产品，也不是校验系统，而是给 Agent 的项目上下文供给层。
 
 它的核心任务是：让 Agent 在写 `spec.md`、`plan.md` 和代码之前，知道这个项目的关键知识在哪里、哪些来源更可信、冲突时如何取舍，以及本次需求应该引用哪些最小上下文依据。
 
@@ -24,7 +24,7 @@ Lattice 的 Context 层不是知识库产品，也不是校验系统，而是给
 ## 推荐结构
 
 ```text
-lattice/
+halo/
 ├── context/
 │   ├── README.md              # Agent 必读的项目上下文地图
 │   ├── external.md            # 项目外部关联知识、中心知识、第三方协议入口
@@ -47,11 +47,11 @@ lattice/
     └── knowledge-reviews/     # knowledge reviewer 决策证据
 ```
 
-最重要的是 `lattice/context/README.md`。它不是普通说明文档，而是 Agent 的上下文地图。
+最重要的是 `halo/context/README.md`。它不是普通说明文档，而是 Agent 的上下文地图。
 
 ## Context README
 
-`lattice/context/README.md` 应该回答四个问题：
+`halo/context/README.md` 应该回答四个问题：
 
 1. 这个项目是什么。
 2. 需要某类上下文时应该读哪里。
@@ -122,7 +122,7 @@ prismspec/templates/spec-template.md
 
 ## 外部关联知识
 
-外部知识不应散落在 prompt 里，建议统一写到 `lattice/context/external.md`：
+外部知识不应散落在 prompt 里，建议统一写到 `halo/context/external.md`：
 
 ```markdown
 # External Context
@@ -145,7 +145,7 @@ prismspec/templates/spec-template.md
 
 ## `spec.md` Context Basis
 
-`lattice/specs/<spec-id>/spec.md` 的 Context Basis 是单次需求的上下文依据。它不是资料汇编，而是 Agent 从上下文地图中按需加载、筛选和压缩后的结果。
+`halo/specs/<spec-id>/spec.md` 的 Context Basis 是单次需求的上下文依据。它不是资料汇编，而是 Agent 从上下文地图中按需加载、筛选和压缩后的结果。
 
 推荐模板：
 
@@ -186,10 +186,10 @@ prismspec/templates/spec-template.md
 | 判断本次需求需要哪些上下文 | Agent / Skill | 需要语义理解和取舍。 |
 | 搜索相关代码、测试、schema、历史 spec | Agent / Skill | 模型根据需求主动查。 |
 | 选择哪些事实进入 Context Basis | Agent / Skill | 只保留影响决策的事实。 |
-| 提供上下文地图和知识资产 | Lattice / 项目 | 让 Agent 知道去哪里找。 |
-| 提供模板和取舍规则 | Lattice / 项目 | 稳定输出结构，降低噪声。 |
-| 同步中心知识 | Lattice tooling | Git/文件同步适合脚本。 |
-Lattice 负责供给和约束，模型负责理解和选择。
+| 提供上下文地图和知识资产 | Halo / 项目 | 让 Agent 知道去哪里找。 |
+| 提供模板和取舍规则 | Halo / 项目 | 稳定输出结构，降低噪声。 |
+| 同步中心知识 | Halo tooling | Git/文件同步适合脚本。 |
+Halo 负责供给和约束，模型负责理解和选择。
 
 ## `sources.yaml` 的定位
 
@@ -223,7 +223,7 @@ knowledge loader = 可选工具，用于检索 curated project knowledge
 当前实现已将检索能力下沉为：
 
 ```text
-lattice/kernel/context/backends/knowledge.sh
+halo/kernel/context/backends/knowledge.sh
 ```
 
 `loader.sh` 只保留为兼容包装，不应在 Specification 里写成必做主入口。
@@ -254,9 +254,9 @@ expires_at: "2026-12-31" # optional
 推荐用法：
 
 ```bash
-bash lattice/kernel/context/knowledge-lint.sh
-bash lattice/kernel/context/knowledge-lint.sh --strict
-bash lattice/kernel/context/knowledge-lint.sh --target=lattice/context/knowledge/pitfalls.md
+bash halo/kernel/context/knowledge-lint.sh
+bash halo/kernel/context/knowledge-lint.sh --strict
+bash halo/kernel/context/knowledge-lint.sh --target=halo/context/knowledge/pitfalls.md
 ```
 
 默认模式只给 warning，适合 doctor 和本地日常检查；`--strict` 适合 CI、promotion 前检查或团队治理。
@@ -268,20 +268,20 @@ bash lattice/kernel/context/knowledge-lint.sh --target=lattice/context/knowledge
 推荐用法：
 
 ```bash
-bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
-bash lattice/kernel/context/knowledge-review.sh reject lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="not reusable"
+bash halo/kernel/context/knowledge-review.sh approve halo/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
+bash halo/kernel/context/knowledge-review.sh reject halo/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="not reusable"
 ```
 
 输出位置：
 
 ```text
-lattice/state/knowledge-reviews/<event-id>.json
+halo/state/knowledge-reviews/<event-id>.json
 ```
 
 团队可以在关键项目中使用强制晋升策略：
 
 ```bash
-bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
+bash halo/kernel/context/learn-draft.sh promote halo/context/drafts/escalation-<run-id>.md --require-review --to=halo/context/knowledge/pitfalls.md
 ```
 
 `--require-review` 要求同一个 draft 已有 `approve` 事件且 `conflicts_checked=true`。这让轻量个人使用仍然顺滑，同时让团队知识库可以逐步收紧治理。
@@ -310,7 +310,7 @@ PrismSpec 负责 SDD 工作流；Context 负责提供更准确的项目上下文
 
 ## 推荐演进
 
-1. 在真实示例中填充 `lattice/context/README.md`、`external.md` 和项目知识文件。
+1. 在真实示例中填充 `halo/context/README.md`、`external.md` 和项目知识文件。
 2. 增加跨文件 semantic conflict resolution。
 3. 将 `sources.yaml` 保留为可选自动化配置，后续脚本真正消费后再提升权重。
 4. 基于 outcome report 和真实样本分析哪些上下文真的降低返工、review finding 和 escaped defect。

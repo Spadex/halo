@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">Lattice</h1>
+  <h1 align="center">Halo</h1>
   <p align="center">
     <strong>Repo-local AI Coding control plane for teams</strong>
   </p>
@@ -21,11 +21,11 @@
 
 ---
 
-## What Is Lattice
+## What Is Halo
 
-Lattice is a repo-local AI Coding control plane for teams. It embeds PrismSpec: a risk-adaptive Spec Coding workflow that uses the minimum necessary contract to compress ambiguous intent into executable, reviewable, and verifiable engineering constraints, with two implementation modes: `plan` and `tdd`.
+Halo is a repo-local AI Coding control plane for teams. It embeds PrismSpec: a risk-adaptive Spec Coding workflow that uses the minimum necessary contract to compress ambiguous intent into executable, reviewable, and verifiable engineering constraints, with two implementation modes: `plan` and `tdd`.
 
-PrismSpec turns an AI coding task into `spec.md`, `plan.md`, `review.md`, and `verify.md`. Lattice adds project context, verification gates, evidence/eval, loop, and learn so individual productivity compounds into reusable team engineering capability.
+PrismSpec turns an AI coding task into `spec.md`, `plan.md`, `review.md`, and `verify.md`. Halo adds project context, verification gates, evidence/eval, loop, and learn so individual productivity compounds into reusable team engineering capability.
 
 | Capability Layer | Purpose |
 |------------------|---------|
@@ -34,7 +34,7 @@ PrismSpec turns an AI coding task into `spec.md`, `plan.md`, `review.md`, and `v
 | Delivery Verification | Uses build, lint, test, AC coverage, drift checks, and compliance gates to verify that code, specs, and project constraints stay aligned before delivery. |
 | Evidence Intelligence | Aggregates command output, gate results, eval runs, history, and outcomes so completion status, quality risk, and improvement direction are traceable. |
 
-In short: **PrismSpec provides the risk-adaptive Spec Coding contract; Lattice connects that contract to team-level context, verification, and evidence loops.**
+In short: **PrismSpec provides the risk-adaptive Spec Coding contract; Halo connects that contract to team-level context, verification, and evidence loops.**
 
 ## What Problem It Solves
 
@@ -45,21 +45,21 @@ Individual AI Coding can be fast, but team adoption often breaks down when:
 - "done" depends on a summary instead of fresh command output;
 - project rules, lessons, and verification practices do not become shared assets.
 
-Lattice turns those implicit individual workflows into versioned, reviewable, and verifiable engineering assets inside the repository.
+Halo turns those implicit individual workflows into versioned, reviewable, and verifiable engineering assets inside the repository.
 
 ## Why Not Plain AI Coding
 
-| Plain AI Coding | Lattice |
+| Plain AI Coding | Halo |
 |---|---|
 | Requirements and assumptions stay in chat | `spec.md` records Context Basis, ACs, and risk boundaries. |
 | The agent declares completion in prose | `verify.md` records commands, exit codes, results, and residual risks. |
-| Each task rediscovers the project | `lattice/context/` keeps project maps, rules, pitfalls, and external constraints. |
+| Each task rediscovers the project | `halo/context/` keeps project maps, rules, pitfalls, and external constraints. |
 | Review depends on one-off prompts | `review.md` records read-only verdicts, findings, and risk disposition. |
 | Lessons are hard to reuse | Knowledge drafts and promotion turn reusable lessons into project knowledge. |
 
 ## What You Get
 
-A Lattice-guided AI Coding task leaves a clear delivery chain in the repo:
+A Halo-guided AI Coding task leaves a clear delivery chain in the repo:
 
 | Artifact | Purpose |
 |----------|---------|
@@ -67,23 +67,23 @@ A Lattice-guided AI Coding task leaves a clear delivery chain in the repo:
 | `plan.md` | AC-traced tasks, file boundaries, and verification commands. |
 | `review.md` | Read-only review verdicts, findings, and risk dispositions. |
 | `verify.md` | Commands, exit codes, results, residual risks, and knowledge candidates. |
-| `lattice/state/eval-runs/*.json` | Structured delivery evidence for queries, summaries, CI, and dashboards. |
+| `halo/state/eval-runs/*.json` | Structured delivery evidence for queries, summaries, CI, and dashboards. |
 
 Example verification summary:
 
 ```text
-Spec: lattice/specs/create-item-api/spec.md
+Spec: halo/specs/create-item-api/spec.md
 Review: pass
 AC Coverage: 4/4
 Drift: none
-Command: lattice/kernel/delivery/pipeline.sh --json-out
+Command: halo/kernel/delivery/pipeline.sh --json-out
 Result: pass
-Evidence: lattice/state/eval-runs/example.json
+Evidence: halo/state/eval-runs/example.json
 ```
 
 ## Reliability / Safety
 
-Lattice is designed as a repository-local engineering control plane, so it keeps these boundaries by default:
+Halo is designed as a repository-local engineering control plane, so it keeps these boundaries by default:
 
 - It does not take over the IDE, replace coding agents, or bind teams to a model provider.
 - It does not upload code or project knowledge; default assets stay in the current repository.
@@ -103,18 +103,18 @@ cd /path/to/your-project
 bash <(curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh) --init
 
 # Or clone locally first, then install into the current repository
-git clone https://github.com/Spadex/halo.git /tmp/lattice
-/tmp/lattice/install.sh "$PWD" --init
+git clone https://github.com/Spadex/halo.git /tmp/halo
+/tmp/halo/install.sh "$PWD" --init
 ```
 
 Prerequisites: Bash 3.2+, `yq` 4.x, and `git`.
 
-Installation adds `lattice/`, `prismspec/`, and agent entry files. On upgrade, framework code under `kernel/` and PrismSpec can be refreshed; project-owned assets such as `lattice/manifest.yaml`, `lattice/context/`, and `lattice/specs/` should not be overwritten.
+Installation adds `halo/`, `prismspec/`, and agent entry files. On upgrade, framework code under `kernel/` and PrismSpec can be refreshed; project-owned assets such as `halo/manifest.yaml`, `halo/context/`, and `halo/specs/` should not be overwritten.
 
 Before a public launch, confirm the remote install URL is anonymously accessible:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh >/tmp/lattice-install.sh
+curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh >/tmp/halo-install.sh
 ```
 
 If this returns `404`, the repository or raw URL is not public yet. Switch the repository visibility or publish from a public release/tag URL first. For commercial distribution, prefer a tag URL as the default install path and keep `main` as the development install path.
@@ -136,7 +136,7 @@ The example demonstrates directory specs, embedded Context Basis in `spec.md`, s
 bash examples/go-gin-gorm/try-it.sh
 
 # 2. After installing into a non-critical repository, run health checks.
-bash lattice/kernel/doctor.sh
+bash halo/kernel/doctor.sh
 bash prismspec/bin/doctor.sh
 
 # 3. Create a small spec and inspect the next route.
@@ -144,16 +144,16 @@ bash prismspec/bin/new.sh checkout-flow --template=service --mode=plan
 bash prismspec/bin/guide.sh --spec=checkout-flow --json
 
 # 4. After editing spec.md, run the minimal contract check.
-bash prismspec/bin/lint.sh lattice/specs/checkout-flow spec
+bash prismspec/bin/lint.sh halo/specs/checkout-flow spec
 ```
 
 ## Adoption Path
 
 1. Run `examples/go-gin-gorm/try-it.sh` to confirm local dependencies and evidence output.
-2. Install Lattice into one non-critical repository and run `lattice/kernel/doctor.sh`.
+2. Install Halo into one non-critical repository and run `halo/kernel/doctor.sh`.
 3. Use PrismSpec for one small feature or bug fix, producing `spec.md`, `plan.md`, `review.md`, and `verify.md`.
-4. Add the Lattice pipeline to CI, or start with `spec-lint`, `ac-coverage`, and `drift-check`.
-5. Promote repeated rules, pitfalls, and verification lessons into `lattice/context/knowledge/`.
+4. Add the Halo pipeline to CI, or start with `spec-lint`, `ac-coverage`, and `drift-check`.
+5. Promote repeated rules, pitfalls, and verification lessons into `halo/context/knowledge/`.
 
 ## Core Workflow
 
@@ -174,7 +174,7 @@ PrismSpec is not documentation ceremony, and it is not one rigid workflow for ev
 | Clarify | Use `/clarify` grilling mode to resolve engineering boundaries, context basis, assumptions, conflicts, and blocking questions. | `status: clarifying` `spec.md`, `spec.md#Context Basis` |
 | Spec | Capture scope, non-goals, ACs, risks, mode, and verification plan. | `spec.md` |
 | Build | Plan and implement AC-traced slices with Plan/TDD/debugging evidence. | `plan.md`, task evidence, TDD/debug evidence |
-| Quality Gate | Inspect implementation evidence, diff, and quality risk first, then prove completion with fresh commands or the Lattice pipeline. | `review.md`, `verify.md` |
+| Quality Gate | Inspect implementation evidence, diff, and quality risk first, then prove completion with fresh commands or the Halo pipeline. | `review.md`, `verify.md` |
 
 Machine-side evidence such as task briefs, review packages, `review-summary.json`, eval run JSON, and TDD/debug evidence feeds the pipeline and recovery flow. It is not the primary human-readable artifact contract.
 
@@ -187,14 +187,14 @@ Plan Mode and TDD Mode are two risk tiers inside the same implementation workflo
 | `plan` | Docs, config, low-risk features, simple refactors, or changes already well covered by tests. | `plan.md`, relevant tests or no-test rationale, verification commands. |
 | `tdd` | Bug fixes, permissions, security, money, state machines, concurrency, idempotency, migrations, or regressions. | Red test, green test, AC-to-test trace, and related verification. |
 
-Projects can set the default mode in `lattice/manifest.yaml`. Users can override per spec. Risk discovered later may upgrade `plan -> tdd`; downgrading `tdd -> plan` requires explicit user override.
+Projects can set the default mode in `halo/manifest.yaml`. Users can override per spec. Risk discovered later may upgrade `plan -> tdd`; downgrading `tdd -> plan` requires explicit user override.
 
 ## Installed Layout
 
 ```text
 your-project/
 ├── CLAUDE.md
-├── lattice/
+├── halo/
 │   ├── manifest.yaml
 │   ├── config/
 │   ├── kernel/
@@ -235,10 +235,10 @@ The capability layers above are the user-facing view; the component model below 
 | Component | Responsibility | Key Paths |
 |-----------|----------------|-----------|
 | PrismSpec | Standalone Spec Coding skill pack. | `prismspec/skills/`, `prismspec/bin/`, `prismspec/templates/` |
-| Orchestrator | Agent control plane for stage routing, status transitions, task selection, and evidence gating. | `lattice/kernel/orchestrator/` |
-| Context | Context map, project knowledge, external references, and optional retrieval backend. | `lattice/context/`, `lattice/kernel/context/` |
-| Verification | Reproducible pipeline and gates. | `lattice/kernel/delivery/` |
-| Evidence / Eval | Gate output, structured eval runs, Markdown summary/history, central sink, dashboard, queries, and outcomes. | `lattice/state/eval-runs/*.json`, `*.md`, `lattice/state/outcomes/` |
+| Orchestrator | Agent control plane for stage routing, status transitions, task selection, and evidence gating. | `halo/kernel/orchestrator/` |
+| Context | Context map, project knowledge, external references, and optional retrieval backend. | `halo/context/`, `halo/kernel/context/` |
+| Verification | Reproducible pipeline and gates. | `halo/kernel/delivery/` |
+| Evidence / Eval | Gate output, structured eval runs, Markdown summary/history, central sink, dashboard, queries, and outcomes. | `halo/state/eval-runs/*.json`, `*.md`, `halo/state/outcomes/` |
 
 ## Support Matrix And Troubleshooting
 
@@ -256,7 +256,7 @@ The capability layers above are the user-facing view; the component model below 
 | `yq` is missing | Install Mike Farah `yq` 4.x, for example `brew install yq` on macOS. |
 | Shell version behaves unexpectedly | Use the system Bash first; if compatibility issues appear, install a newer Bash and rerun the checks. |
 | `doctor.sh` fails | Inspect the missing file/tool, then run `bash prismspec/bin/doctor.sh` to isolate PrismSpec contract issues. |
-| Pipeline skips most steps | Check project commands in `lattice/manifest.yaml` and whether an active spec exists. |
+| Pipeline skips most steps | Check project commands in `halo/manifest.yaml` and whether an active spec exists. |
 
 See [SUPPORT.md](SUPPORT.md) for support scope and troubleshooting details, and [SECURITY.md](SECURITY.md) for security boundaries and vulnerability reporting.
 
@@ -266,41 +266,41 @@ See [SUPPORT.md](SUPPORT.md) for support scope and troubleshooting details, and 
 |----------|---------|
 | Preview install target before writing files | `bash install.sh /path/to/project --dry-run --init` |
 | Print installer version metadata | `bash install.sh --version` |
-| Check installation health | `bash lattice/kernel/doctor.sh` |
+| Check installation health | `bash halo/kernel/doctor.sh` |
 | Check PrismSpec standalone health | `bash prismspec/bin/doctor.sh` |
 | Create an initial spec directory | `bash prismspec/bin/new.sh checkout-flow --template=service --mode=plan` |
 | Route the next PrismSpec step | `bash prismspec/bin/guide.sh --json` |
 | Clarify engineering boundaries | `/clarify checkout-flow` |
 | Lint the PrismSpec skill pack | `bash prismspec/bin/lint.sh prismspec skillpack` |
 | Regress skill trigger quality | `bash prismspec/bin/eval-skills.sh --all` |
-| Lint spec / plan / evidence | `bash prismspec/bin/lint.sh lattice/specs/<spec-id>` |
-| Run the full verification pipeline | `bash lattice/kernel/delivery/pipeline.sh --json-out` |
-| Run one gate | `bash lattice/kernel/delivery/pipeline.sh --only=spec-lint` |
-| Resolve next task | `bash lattice/kernel/orchestrator/sdd/task-next.sh <spec-id> --json` |
-| Complete a task with evidence | `bash lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> T1 --json` |
-| Check task evidence | `bash lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` |
-| Advance spec status | `bash lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` |
-| Write review verdict | `bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch --spec-compliance=pass --code-quality=pass --test-coverage=pass --risk=pass` |
-| Create knowledge draft from candidates | `bash lattice/kernel/context/summary-learn-draft.sh <spec-id>` |
-| Render eval summary | `bash lattice/kernel/delivery/eval-summary.sh lattice/state/eval-runs/<run-id>.json` |
-| Aggregate eval history | `bash lattice/kernel/delivery/eval-history.sh --out=lattice/state/eval-runs/history.md` |
-| Publish central eval sink | `bash lattice/kernel/delivery/eval-sink.sh publish --sink-dir=lattice/state/eval-sink` |
-| Render static dashboard | `bash lattice/kernel/delivery/eval-dashboard.sh --sink-dir=lattice/state/eval-sink --out=lattice/state/eval-sink/dashboard.html` |
-| Query central sink | `bash lattice/kernel/delivery/eval-query.sh summary --sink-dir=lattice/state/eval-sink` |
-| Approve knowledge draft | `bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/<draft>.md --reviewer=<name> --reason=<reason> --conflicts-checked` |
-| Promote knowledge draft | `bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/<draft>.md --require-review --to=lattice/context/knowledge/pitfalls.md` |
+| Lint spec / plan / evidence | `bash prismspec/bin/lint.sh halo/specs/<spec-id>` |
+| Run the full verification pipeline | `bash halo/kernel/delivery/pipeline.sh --json-out` |
+| Run one gate | `bash halo/kernel/delivery/pipeline.sh --only=spec-lint` |
+| Resolve next task | `bash halo/kernel/orchestrator/sdd/task-next.sh <spec-id> --json` |
+| Complete a task with evidence | `bash halo/kernel/orchestrator/sdd/task-complete.sh <spec-id> T1 --json` |
+| Check task evidence | `bash halo/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` |
+| Advance spec status | `bash halo/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` |
+| Write review verdict | `bash halo/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch --spec-compliance=pass --code-quality=pass --test-coverage=pass --risk=pass` |
+| Create knowledge draft from candidates | `bash halo/kernel/context/summary-learn-draft.sh <spec-id>` |
+| Render eval summary | `bash halo/kernel/delivery/eval-summary.sh halo/state/eval-runs/<run-id>.json` |
+| Aggregate eval history | `bash halo/kernel/delivery/eval-history.sh --out=halo/state/eval-runs/history.md` |
+| Publish central eval sink | `bash halo/kernel/delivery/eval-sink.sh publish --sink-dir=halo/state/eval-sink` |
+| Render static dashboard | `bash halo/kernel/delivery/eval-dashboard.sh --sink-dir=halo/state/eval-sink --out=halo/state/eval-sink/dashboard.html` |
+| Query central sink | `bash halo/kernel/delivery/eval-query.sh summary --sink-dir=halo/state/eval-sink` |
+| Approve knowledge draft | `bash halo/kernel/context/knowledge-review.sh approve halo/context/drafts/<draft>.md --reviewer=<name> --reason=<reason> --conflicts-checked` |
+| Promote knowledge draft | `bash halo/kernel/context/learn-draft.sh promote halo/context/drafts/<draft>.md --require-review --to=halo/context/knowledge/pitfalls.md` |
 
 See the [Design Wiki](docs/wiki/) and script `--help` output for the full command contracts.
 
 ## Current Status
 
-Lattice currently provides a minimum trusted loop for repo-local AI Coding. It is suitable for preview / pilot adoption in non-critical repositories, new feature workflows, and internal team process validation.
+Halo currently provides a minimum trusted loop for repo-local AI Coding. It is suitable for preview / pilot adoption in non-critical repositories, new feature workflows, and internal team process validation.
 
 > A commercial stable claim requires additional release gates: anonymous public install, tag/release versioning, reproducible fresh-clone examples, clear security disclosure, and CI coverage for the public install path. Until those gates pass, avoid stable or production-SLA language.
 
 | Capability | Status | Evidence |
 |------------|--------|----------|
-| Repo-local install/init | Available | `install.sh --init`, `lattice/kernel/doctor.sh`, smoke test. |
+| Repo-local install/init | Available | `install.sh --init`, `halo/kernel/doctor.sh`, smoke test. |
 | Spec / Plan / Review / Verify artifacts | Available | `new.sh`, `guide.sh --json`, `lint.sh prismspec skillpack`. |
 | Delivery pipeline | Available | spec lint, AC coverage, drift check, and compliance gates. |
 | Go/Gin/GORM drift parser | Available | `examples/go-gin-gorm/try-it.sh`. |
@@ -323,7 +323,7 @@ Maintainers should run at least:
 
 ```bash
 bash tests/release-check.sh
-LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh
+HALO_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh
 ```
 
 The first command validates the local repository loop. The second validates public raw install, initialization, doctor checks, and PrismSpec routing. See [Release Readiness Review](docs/wiki/release-readiness-review.md) for the full checklist.
@@ -347,7 +347,7 @@ The first command validates the local repository loop. The second validates publ
 - Current code, tests, schema, and command output remain the source of truth.
 - Context starts with a map, then the Agent discovers, selects, and compresses relevant facts.
 - Verification must be backed by external commands and evidence.
-- PrismSpec can be used independently; Lattice adds project-level context, verification, evidence, loop, and learn.
+- PrismSpec can be used independently; Halo adds project-level context, verification, evidence, loop, and learn.
 - Extensions integrate through files, YAML, and command contracts.
 
 ## License
