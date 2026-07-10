@@ -2,7 +2,7 @@
 
 ## 定位
 
-Loop 是 Lattice 从失败到修复、重跑、升级和 context 沉淀的闭环。
+Loop 是 Halo 从失败到修复、重跑、升级和 context 沉淀的闭环。
 
 ```mermaid
 flowchart LR
@@ -32,13 +32,13 @@ Loop 的目标不是让 Agent 无限自修复，而是让失败可控：
 - 某一步失败后停止；
 - 重试耗尽后 exit `2`；
 - 输出 escalation 诊断；
-- 在 `lattice/state/loops/<run-id>.json` 记录 loop state；
-- 基于 `lattice/config/failure-categories.yaml` 生成 `failure_category` 与 `default_action`，缺失配置时回退到内置规则；
+- 在 `halo/state/loops/<run-id>.json` 记录 loop state；
+- 基于 `halo/config/failure-categories.yaml` 生成 `failure_category` 与 `default_action`，缺失配置时回退到内置规则；
 - 用 `failure-category-lint.sh` 校验分类配置，并由 doctor 执行；
-- retry 耗尽时在 `lattice/context/drafts/escalation-<run-id>.md` 生成 learn draft；
-- 用 `lattice/kernel/context/learn-draft.sh` promote 或 discard 待确认 draft；
-- 在 `lattice/state/learn-promotions/*.json` 记录 promotion/discard 审计事件；
-- 用 `lattice/kernel/context/knowledge-review.sh` 记录 approve/reject reviewer evidence；
+- retry 耗尽时在 `halo/context/drafts/escalation-<run-id>.md` 生成 learn draft；
+- 用 `halo/kernel/context/learn-draft.sh` promote 或 discard 待确认 draft；
+- 在 `halo/state/learn-promotions/*.json` 记录 promotion/discard 审计事件；
+- 用 `halo/kernel/context/knowledge-review.sh` 记录 approve/reject reviewer evidence；
 - promotion 后运行 advisory `knowledge-lint.sh`，提示 source、placeholder、conflict marker、expiry 和 duplicate heading 风险；
 - 在 eval run 中嵌入 `loop_state`，并把 retry/escalation 指标汇总到 summary 和 history。
 
@@ -67,7 +67,7 @@ stateDiagram-v2
 状态文件：
 
 ```text
-lattice/state/loops/<run-id>.json
+halo/state/loops/<run-id>.json
 ```
 
 示例：
@@ -75,7 +75,7 @@ lattice/state/loops/<run-id>.json
 ```json
 {
   "run_id": "2026-06-28T12-00-00Z",
-  "spec_file": "lattice/specs/coupon-redemption/spec.md",
+  "spec_file": "halo/specs/coupon-redemption/spec.md",
   "git_sha": "abc1234",
   "status": "fail",
   "retry_count": 2,
@@ -105,7 +105,7 @@ lattice/state/loops/<run-id>.json
 
 分类可以先从 gate name + regex 做起，不需要一开始引入复杂模型。
 
-项目可通过 `lattice/config/failure-categories.yaml` 覆盖默认分类：
+项目可通过 `halo/config/failure-categories.yaml` 覆盖默认分类：
 
 ```yaml
 rules:
@@ -120,7 +120,7 @@ rules:
 当 retry 耗尽时，pipeline 会自动生成待确认 learn draft：
 
 ```text
-lattice/context/drafts/escalation-<run-id>.md
+halo/context/drafts/escalation-<run-id>.md
 ```
 
 draft 内容：
@@ -132,20 +132,20 @@ draft 内容：
 **Failed step**: drift-check
 **Failure category**: drift
 **Default action**: align_code_or_spec
-**Spec**: lattice/specs/coupon-redemption/spec.md
+**Spec**: halo/specs/coupon-redemption/spec.md
 **Lesson candidate**: New API specs must update router registration and route tests together.
-**Evidence**: lattice/state/eval-runs/<run-id>.json
+**Evidence**: halo/state/eval-runs/<run-id>.json
 ```
 
 进入正式 knowledge 前必须人工或 reviewer 确认，避免把一次性实现细节污染知识库。确认后使用命令完成 review、归档和审计：
 
 ```bash
-bash lattice/kernel/context/knowledge-review.sh approve lattice/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
-bash lattice/kernel/context/learn-draft.sh promote lattice/context/drafts/escalation-<run-id>.md --require-review --to=lattice/context/knowledge/pitfalls.md
-bash lattice/kernel/context/learn-draft.sh discard lattice/context/drafts/escalation-<run-id>.md --reason="not reusable"
+bash halo/kernel/context/knowledge-review.sh approve halo/context/drafts/escalation-<run-id>.md --reviewer=<name> --reason="durable lesson checked" --conflicts-checked
+bash halo/kernel/context/learn-draft.sh promote halo/context/drafts/escalation-<run-id>.md --require-review --to=halo/context/knowledge/pitfalls.md
+bash halo/kernel/context/learn-draft.sh discard halo/context/drafts/escalation-<run-id>.md --reason="not reusable"
 ```
 
-review 会写出 `lattice/state/knowledge-reviews/*.json`。promotion 会把 `## Lesson Candidate` 追加到目标 knowledge 文件，把原 draft 移到 `lattice/context/drafts/promoted/`，写出 `lattice/state/learn-promotions/*.json`，并运行 advisory `knowledge-lint.sh`。discard 会把原 draft 移到 `lattice/context/drafts/discarded/`，并要求记录废弃原因。
+review 会写出 `halo/state/knowledge-reviews/*.json`。promotion 会把 `## Lesson Candidate` 追加到目标 knowledge 文件，把原 draft 移到 `halo/context/drafts/promoted/`，写出 `halo/state/learn-promotions/*.json`，并运行 advisory `knowledge-lint.sh`。discard 会把原 draft 移到 `halo/context/drafts/discarded/`，并要求记录废弃原因。
 
 ## 与 PrismSpec 的关系
 

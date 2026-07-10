@@ -31,14 +31,14 @@ Recommended path:
 
 ```text
 .prismspec/runs/<spec-id>/<task-id>/tdd-evidence.md
-.lattice/sdd/<spec-id>/<task-id>/tdd-evidence.md
-.lattice/sdd/<spec-id>/<task-id>/tdd-evidence.json
+.halo/sdd/<spec-id>/<task-id>/tdd-evidence.md
+.halo/sdd/<spec-id>/<task-id>/tdd-evidence.json
 ```
 
-Lattice-hosted projects should also write structured evidence:
+Halo-hosted projects should also write structured evidence:
 
 ```bash
-bash lattice/kernel/orchestrator/sdd/tdd-evidence.sh <spec-id> <task-id> \
+bash halo/kernel/orchestrator/sdd/tdd-evidence.sh <spec-id> <task-id> \
   --ac=AC-1 \
   --test=TestAC1_CreateItem \
   --red-command="go test ./... -run TestAC1_CreateItem" \

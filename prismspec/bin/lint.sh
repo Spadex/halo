@@ -135,7 +135,7 @@ check_skillpack() {
   check_file "$manifest" "skillpack manifest"
   [[ -f "$manifest" ]] || return
 
-  check_contains "$manifest" '^api_version: prismspec\.lattice\.dev/v1$' "skillpack api_version"
+  check_contains "$manifest" '^api_version: prismspec\.halo\.dev/v1$' "skillpack api_version"
   check_contains "$manifest" '^kind: SkillPack$' "skillpack kind"
   check_contains "$manifest" '^[[:space:]]+name: prismspec$' "skillpack metadata.name"
   check_contains "$manifest" 'agent-skills-packaging' "skillpack Agent Skills standard"

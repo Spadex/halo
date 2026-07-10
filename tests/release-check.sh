@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REMOTE_INSTALL_URL="${LATTICE_REMOTE_INSTALL_URL:-https://raw.githubusercontent.com/Spadex/halo/main/install.sh}"
+REMOTE_INSTALL_URL="${HALO_REMOTE_INSTALL_URL:-https://raw.githubusercontent.com/Spadex/halo/main/install.sh}"
 
 cd "$ROOT"
 
@@ -31,7 +31,7 @@ bash examples/go-gin-gorm/try-it.sh
 section "Whitespace"
 git diff --check
 
-if [[ "${LATTICE_CHECK_REMOTE_INSTALL:-0}" == "1" ]]; then
+if [[ "${HALO_CHECK_REMOTE_INSTALL:-0}" == "1" ]]; then
   section "Remote install URL"
   tmp="$(mktemp -d)"
   trap 'rm -rf "$tmp"' EXIT
@@ -40,14 +40,14 @@ if [[ "${LATTICE_CHECK_REMOTE_INSTALL:-0}" == "1" ]]; then
   (
     cd "$tmp/target"
     bash "$tmp/install.sh"
-    bash .lattice/framework/init.sh --non-interactive --name=target --lang=unknown --framework=none --orm=none --db=none --ci=none
-    bash lattice/kernel/doctor.sh
+    bash .halo/framework/init.sh --non-interactive --name=target --lang=unknown --framework=none --orm=none --db=none --ci=none
+    bash halo/kernel/doctor.sh
     bash prismspec/bin/doctor.sh
     bash prismspec/bin/guide.sh --json >/dev/null
   )
 else
   section "Remote install URL"
-  echo "Skipped. Set LATTICE_CHECK_REMOTE_INSTALL=1 for public release verification."
+  echo "Skipped. Set HALO_CHECK_REMOTE_INSTALL=1 for public release verification."
 fi
 
 section "Release check complete"

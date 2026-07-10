@@ -15,19 +15,19 @@ For process or skill changes, treat knowledge capture like TDD for agent behavio
 
 - `verify.md`
 - Verification or review findings.
-- Existing `lattice/context/knowledge/`, `lattice/context/drafts/`, or `prismspec/knowledge/`.
+- Existing `halo/context/knowledge/`, `halo/context/drafts/`, or `prismspec/knowledge/`.
 
 ## Workflow
 
 1. Check existing knowledge before writing a new entry.
-2. In Lattice-hosted mode, convert durable candidates from `verify.md` with the available knowledge draft helper.
+2. In Halo-hosted mode, convert durable candidates from `verify.md` with the available knowledge draft helper.
 3. Decide whether the lesson is durable, reusable, and non-secret.
 4. Write one concise knowledge entry per rule or pitfall.
 5. Include trigger context, rule, source, and practical guidance.
 6. For process knowledge, include at least one pressure scenario: what future agent behavior should change?
-7. If running inside Lattice and promoting a draft, record reviewer evidence when governance is required.
+7. If running inside Halo and promoting a draft, record reviewer evidence when governance is required.
 8. Update the relevant knowledge file or context map.
-9. If running inside Lattice, run `knowledge-lint.sh` before treating promoted knowledge as clean.
+9. If running inside Halo, run `knowledge-lint.sh` before treating promoted knowledge as clean.
 
 ## Knowledge Entry Shape
 
@@ -51,10 +51,10 @@ expires_at: "YYYY-MM-DD" # optional
 
 ## Outputs
 
-- Knowledge draft in `lattice/context/drafts/`, promoted project knowledge in `lattice/context/knowledge/`, or standalone `prismspec/knowledge/`.
+- Knowledge draft in `halo/context/drafts/`, promoted project knowledge in `halo/context/knowledge/`, or standalone `prismspec/knowledge/`.
 - Updated project context map or relevant knowledge file.
-- Lattice reviewer event from `bash lattice/kernel/context/knowledge-review.sh approve <draft.md> --reviewer=<name> --reason=<reason> --conflicts-checked` when promotion review is required.
-- Lattice advisory output from `bash lattice/kernel/context/knowledge-lint.sh --target=<knowledge-file>` when available.
+- Halo reviewer event from `bash halo/kernel/context/knowledge-review.sh approve <draft.md> --reviewer=<name> --reason=<reason> --conflicts-checked` when promotion review is required.
+- Halo advisory output from `bash halo/kernel/context/knowledge-lint.sh --target=<knowledge-file>` when available.
 
 ## Stop Conditions
 
@@ -87,7 +87,7 @@ expires_at: "YYYY-MM-DD" # optional
 - [ ] New entry is concise and sourced.
 - [ ] Process knowledge includes the failure pattern or pressure scenario it prevents.
 - [ ] Knowledge metadata has owner, verified_at, and applies_to.
-- [ ] Lattice promotion has reviewer evidence when `--require-review` is used.
-- [ ] Relevant context entry is discoverable from `lattice/context/README.md` or the appropriate knowledge file.
+- [ ] Halo promotion has reviewer evidence when `--require-review` is used.
+- [ ] Relevant context entry is discoverable from `halo/context/README.md` or the appropriate knowledge file.
 - [ ] `knowledge-lint.sh` has no unresolved warnings, or warnings are explicitly accepted by a reviewer.
 - [ ] No secrets or raw sensitive data are included.

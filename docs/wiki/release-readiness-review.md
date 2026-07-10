@@ -1,12 +1,12 @@
-# Lattice 发布验收 Review
+# Halo 发布验收 Review
 
 日期：2026-06-30
 
 ## 结论
 
-Lattice 的本地工程闭环已经达到 **commercially credible preview / pilot** 标准：安装、PrismSpec contract、spec/plan/review/verify artifact、delivery gates、eval evidence、Go 示例和 release check 都有可运行证据。
+Halo 的本地工程闭环已经达到 **commercially credible preview / pilot** 标准：安装、PrismSpec contract、spec/plan/review/verify artifact、delivery gates、eval evidence、Go 示例和 release check 都有可运行证据。
 
-当前公开分发入口已经可用：GitHub 仓库为 public，README 默认 remote install URL 可以匿名下载，`LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` 已通过。
+当前公开分发入口已经可用：GitHub 仓库为 public，README 默认 remote install URL 可以匿名下载，`HALO_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` 已通过。
 
 但当前仍不建议直接以 **commercial-grade stable** 口径发布。stable 口径还需要 tag/release 版本化、公开安装 CI、兼容性矩阵、安全披露渠道和支持承诺。
 
@@ -30,7 +30,7 @@ Lattice 的本地工程闭环已经达到 **commercially credible preview / pilo
 | Release check | `bash tests/release-check.sh` | PASS，remote install 默认跳过 |
 | Whitespace | `git diff --check` | PASS |
 | Remote install | `curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh` | PASS |
-| Remote release check | `LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` | PASS |
+| Remote release check | `HALO_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` | PASS |
 
 ## P0 发布阻断
 
@@ -58,14 +58,14 @@ Lattice 的本地工程闭环已经达到 **commercially credible preview / pilo
 
 - macOS + Ubuntu matrix；
 - tag/release install smoke；
-- `LATTICE_CHECK_REMOTE_INSTALL=1` 的公开路径定时或 release job；
+- `HALO_CHECK_REMOTE_INSTALL=1` 的公开路径定时或 release job；
 - README 命令 copy-paste smoke。
 
 ### 首日体验
 
 README 已经给出 10 分钟体验路径。为了进一步降低试用摩擦，后续可以增加：
 
-- `prismspec/bin/demo.sh` 或 `lattice/kernel/quickstart.sh`；
+- `prismspec/bin/demo.sh` 或 `halo/kernel/quickstart.sh`；
 - 一个空仓库最小闭环 demo；
 - 安装失败时更具体的 `yq` / shell / URL remediation hint。
 
@@ -106,13 +106,13 @@ git diff --check
 公开安装检查：
 
 ```bash
-LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh
+HALO_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh
 ```
 
 只有两组都通过，README 默认安装命令才适合进入对外发布材料。
 
 ## 专家判断
 
-项目真正有价值的部分已经成立：PrismSpec 把模糊意图压缩成工程契约，Lattice 把契约接入 repo-local context、verification 和 evidence loop。这比单纯 prompt 模板更接近团队可采用的工程产品。
+项目真正有价值的部分已经成立：PrismSpec 把模糊意图压缩成工程契约，Halo 把契约接入 repo-local context、verification 和 evidence loop。这比单纯 prompt 模板更接近团队可采用的工程产品。
 
 当前最后一公里不是再增加概念，而是完成发布供应链：公开可获取、版本可复现、首日路径可跑通、支持边界清楚。解决 P0 后，可以用 **risk-adaptive Spec Coding workflow + repo-local AI Coding control plane** 的口径发布 preview；等版本化安装和支持面补齐后，再升级 stable 口径。

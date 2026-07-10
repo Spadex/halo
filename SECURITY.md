@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Lattice is currently in an early preview stage. Security fixes are applied to the default branch first and should be consumed by upgrading from the latest public release or commit.
+Halo is currently in an early preview stage. Security fixes are applied to the default branch first and should be consumed by upgrading from the latest public release or commit.
 
 | Version | Supported |
 |---------|-----------|
@@ -25,11 +25,11 @@ If no private disclosure channel is available yet, open a minimal public issue t
 
 ## Security Boundaries
 
-Lattice is a repo-local engineering harness:
+Halo is a repo-local engineering harness:
 
 - It does not intentionally upload source code, specs, context, or eval evidence.
-- It writes artifacts into the target repository, including `lattice/`, `prismspec/`, and optional `.claude/` command files.
-- It executes project-configured commands from `lattice/manifest.yaml`; treat those commands as trusted project code.
+- It writes artifacts into the target repository, including `halo/`, `prismspec/`, and optional `.claude/` command files.
+- It executes project-configured commands from `halo/manifest.yaml`; treat those commands as trusted project code.
 - It does not sandbox build, lint, test, or custom gate commands.
 - It should not be used to store secrets in `spec.md`, `plan.md`, `review.md`, `verify.md`, context knowledge, or eval JSON.
 

@@ -9,7 +9,7 @@ description: Executes PrismSpec plan.md one AC-traced slice at a time in plan or
 
 Implement one planned slice at a time. Keep scope narrow, produce evidence, and do not claim completion before verification.
 
-This skill aligns with Superpowers `subagent-driven-development`, `executing-plans`, and `test-driven-development`: use file-backed handoffs, task-scoped review, strict TDD when required, and completion gates. PrismSpec adds routed task state, AC traceability, and Lattice evidence.
+This skill aligns with Superpowers `subagent-driven-development`, `executing-plans`, and `test-driven-development`: use file-backed handoffs, task-scoped review, strict TDD when required, and completion gates. PrismSpec adds routed task state, AC traceability, and Halo evidence.
 
 TDD mode is intentionally strict: write the test first, watch it fail for the expected reason, write the minimum code to pass, then refactor while staying green. If implementation code was written before the failing test, delete it or isolate it away from the final change and restart the task from the test.
 
@@ -26,7 +26,7 @@ TDD mode is intentionally strict: write the test first, watch it fail for the ex
 ## Workflow
 
 1. Check worktree status and avoid mixing unrelated changes.
-2. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/task-next.sh <spec-id> --json` and execute the returned `task_id`; otherwise pick the first incomplete task from `plan.md`.
+2. In Halo-hosted mode, run `halo/kernel/orchestrator/sdd/task-next.sh <spec-id> --json` and execute the returned `task_id`; otherwise pick the first incomplete task from `plan.md`.
 3. If `task-next` returns `status=complete`, run task evidence lint and advance status instead of editing code.
 4. Generate or write a task brief in the evidence directory.
 5. Execute according to mode:
@@ -38,17 +38,17 @@ TDD mode is intentionally strict: write the test first, watch it fail for the ex
 9. Generate a review package when helpers exist.
 10. Generate review evidence for the review stage. When task-scoped review is requested, use one reviewer that returns both spec-compliance and code-quality verdicts.
 11. In TDD mode, write `tdd-evidence.json` when the helper exists.
-12. In Lattice-hosted mode, mark the task complete with `lattice/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id>`; otherwise update `plan.md` only after evidence exists.
+12. In Halo-hosted mode, mark the task complete with `halo/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id>`; otherwise update `plan.md` only after evidence exists.
 13. Update the progress ledger when available.
-14. In Lattice-hosted mode, re-run `task-next`; if another task is returned, stop or continue only when the user asked for multi-task execution.
-15. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` after completed implementation tasks are checked.
-16. In Lattice-hosted mode, when all planned tasks are complete, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> implemented --from=planned`.
+14. In Halo-hosted mode, re-run `task-next`; if another task is returned, stop or continue only when the user asked for multi-task execution.
+15. In Halo-hosted mode, run `halo/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>` after completed implementation tasks are checked.
+16. In Halo-hosted mode, when all planned tasks are complete, advance status with `halo/kernel/orchestrator/sdd/spec-status.sh <spec-id> implemented --from=planned`.
 
 ## Subagent Execution Loop
 
 Use this loop when subagents are available and the task can be isolated:
 
-1. Create or read the progress ledger at `.lattice/sdd/<spec-id>/progress.md` or `.prismspec/runs/<spec-id>/progress.md`.
+1. Create or read the progress ledger at `.halo/sdd/<spec-id>/progress.md` or `.prismspec/runs/<spec-id>/progress.md`.
 2. Record the base commit before dispatching the implementer.
 3. Dispatch a fresh implementer with only the task brief, global constraints, relevant interfaces, output report path, and test/evidence contract.
 4. Interpret implementer status:
@@ -110,8 +110,8 @@ Task review is a gate, not a rewrite session.
 ## Outputs
 
 - Code and tests.
-- Task evidence under `.prismspec/runs/<spec-id>/<task-id>/` or `.lattice/sdd/<spec-id>/<task-id>/`.
-- For Lattice-hosted TDD tasks: `.lattice/sdd/<spec-id>/<task-id>/tdd-evidence.json`.
+- Task evidence under `.prismspec/runs/<spec-id>/<task-id>/` or `.halo/sdd/<spec-id>/<task-id>/`.
+- For Halo-hosted TDD tasks: `.halo/sdd/<spec-id>/<task-id>/tdd-evidence.json`.
 - Updated `plan.md` task status when appropriate.
 - Progress ledger when subagent execution is used.
 
@@ -152,7 +152,7 @@ Task review is a gate, not a rewrite session.
 - [ ] Implementer report and review package exist when review is required.
 - [ ] Task review has both spec-compliance and code-quality verdicts when review is required.
 - [ ] Progress ledger is updated when subagent execution is used.
-- [ ] Lattice task-evidence-lint passes for completed tasks.
-- [ ] Lattice spec-status advances to `implemented` when all planned tasks are complete.
+- [ ] Halo task-evidence-lint passes for completed tasks.
+- [ ] Halo spec-status advances to `implemented` when all planned tasks are complete.
 - [ ] Diff is scoped to the planned task.
 - [ ] Broader relevant tests are ready for `review` and `verify`.

@@ -1,11 +1,11 @@
-Run Lattice Planning for an existing spec.
+Run Halo Planning for an existing spec.
 
 Execute `prismspec/skills/prismspec-planning/SKILL.md`.
 
 ## Core behavior
 
-1. Read `lattice/specs/<spec-id>/spec.md`.
-2. Create `lattice/specs/<spec-id>/plan.md`.
+1. Read `halo/specs/<spec-id>/spec.md`.
+2. Create `halo/specs/<spec-id>/plan.md`.
 3. Add `Global Constraints` that every task must carry.
 4. Ensure every task references Scope or ACs and declares interfaces.
 5. If `execution_mode: tdd`, include test-first tasks.

@@ -9,7 +9,7 @@ description: Reviews PrismSpec implementation evidence, review-package.md files,
 
 Review is the independent quality gate between implementation and verification. Treat implementer reports as claims, inspect the diff and evidence, and record a verdict before the run claims verified completion.
 
-This skill aligns with Superpowers task review discipline: use one skeptical read-only reviewer per task or run, return spec-compliance and code-quality verdicts, and do not tell the reviewer what to ignore. PrismSpec adds AC traceability, Lattice evidence paths, a human-readable `review.md`, and a machine sidecar `review-summary.json` for pipeline/eval ingestion.
+This skill aligns with Superpowers task review discipline: use one skeptical read-only reviewer per task or run, return spec-compliance and code-quality verdicts, and do not tell the reviewer what to ignore. PrismSpec adds AC traceability, Halo evidence paths, a human-readable `review.md`, and a machine sidecar `review-summary.json` for pipeline/eval ingestion.
 
 ## Inputs
 
@@ -33,10 +33,10 @@ This skill aligns with Superpowers task review discipline: use one skeptical rea
 5. Return verdicts for spec compliance, code quality, test coverage, and risk: `pass`, `fail`, or `cannot_verify`.
 6. Treat missing evidence as `cannot_verify`, not pass.
 7. Write `review.md` as the canonical review artifact. User-facing headings and field labels should be Chinese. It must include front matter plus a professional verdict table for spec compliance, code quality, test coverage, and risk.
-8. In Lattice-hosted mode, the helper can generate `review.md` plus `review-summary.json`:
+8. In Halo-hosted mode, the helper can generate `review.md` plus `review-summary.json`:
 
 ```bash
-bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
+bash halo/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
   --spec-compliance=pass|fail|cannot_verify \
   --code-quality=pass|fail|cannot_verify \
   --test-coverage=pass|fail|cannot_verify \
@@ -54,8 +54,8 @@ bash lattice/kernel/orchestrator/sdd/review-summary.sh <spec-id> branch \
 
 ## Outputs
 
-- Branch review artifact: `lattice/specs/<spec-id>/review.md` or `prismspec/specs/<spec-id>/review.md`.
-- Task review artifact when reviewing a task slice: `.lattice/sdd/<spec-id>/<task-id>/review.md`.
+- Branch review artifact: `halo/specs/<spec-id>/review.md` or `prismspec/specs/<spec-id>/review.md`.
+- Task review artifact when reviewing a task slice: `.halo/sdd/<spec-id>/<task-id>/review.md`.
 - Machine sidecar for pipeline/eval ingestion: `review-summary.json`.
 - Findings with file/line references where possible.
 - Disposition for received review feedback: accepted, rejected with reason, cannot_verify, or needs user decision.

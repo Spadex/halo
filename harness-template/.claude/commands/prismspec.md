@@ -10,7 +10,7 @@ Execute `prismspec/skills/prismspec-workflow/SKILL.md`.
    `specification -> planning -> implementation -> review -> verification`.
 4. After each stage, recompute artifact state and continue when the next action is clear.
 5. Stop only on verified completion, retry exhaustion, or a material human decision.
-6. Follow mature Superpowers discipline where it exists; keep PrismSpec artifact paths and Lattice gates.
+6. Follow mature Superpowers discipline where it exists; keep PrismSpec artifact paths and Halo gates.
 7. Do not create extra stages, skip review/verification, or claim completion without `verify.md` evidence.
 
 User input: $ARGUMENTS

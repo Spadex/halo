@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# try-it.sh — Run Lattice gates on this example project
+# try-it.sh — Run Halo gates on this example project
 # Usage: bash examples/go-gin-gorm/try-it.sh  (from repo root)
 set -euo pipefail
 
@@ -14,7 +14,7 @@ SANDBOX=$(mktemp -d)
 trap "rm -rf $SANDBOX" EXIT
 
 echo "══════════════════════════════════"
-echo "Lattice — Go Example Demo"
+echo "Halo — Go Example Demo"
 echo "Sandbox: $SANDBOX"
 echo "══════════════════════════════════"
 echo ""
@@ -25,14 +25,14 @@ cd "$SANDBOX"
 git init --quiet
 
 # Copy framework pieces used by this standalone demo.
-cp -r "$REPO_DIR/harness-template/lattice/kernel" "$SANDBOX/lattice/kernel"
+cp -r "$REPO_DIR/harness-template/halo/kernel" "$SANDBOX/halo/kernel"
 cp -r "$REPO_DIR/prismspec" "$SANDBOX/prismspec"
-chmod +x lattice/kernel/*.sh lattice/kernel/context/*.sh lattice/kernel/context/backends/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh prismspec/bin/*.sh 2>/dev/null || true
+chmod +x halo/kernel/*.sh halo/kernel/context/*.sh halo/kernel/context/backends/*.sh halo/kernel/delivery/*.sh halo/kernel/delivery/gates/*.sh prismspec/bin/*.sh 2>/dev/null || true
 
-SPEC="lattice/specs/create-item-api/spec.md"
+SPEC="halo/specs/create-item-api/spec.md"
 
 echo "── 1. Spec Lint ──"
-bash lattice/kernel/delivery/gates/spec-lint.sh "$SPEC"
+bash halo/kernel/delivery/gates/spec-lint.sh "$SPEC"
 echo ""
 
 echo "── 2. PrismSpec Lint ──"
@@ -40,41 +40,41 @@ bash prismspec/bin/lint.sh "$(dirname "$SPEC")" spec
 echo ""
 
 echo "── 3. AC Coverage ──"
-bash lattice/kernel/delivery/gates/ac-coverage.sh "$SPEC" .
+bash halo/kernel/delivery/gates/ac-coverage.sh "$SPEC" .
 echo ""
 
 echo "── 4. Drift Check ──"
-bash lattice/kernel/delivery/gates/drift-check.sh "$SPEC" .
+bash halo/kernel/delivery/gates/drift-check.sh "$SPEC" .
 echo ""
 
 echo "── 5. Context Knowledge Backend ──"
-bash lattice/kernel/context/backends/knowledge.sh naming
+bash halo/kernel/context/backends/knowledge.sh naming
 echo ""
 
 echo "── 6. Review Summary Evidence ──"
-bash lattice/kernel/orchestrator/sdd/review-summary.sh create-item-api branch \
+bash halo/kernel/orchestrator/sdd/review-summary.sh create-item-api branch \
   --spec-compliance=pass \
   --code-quality=pass \
   --test-coverage=pass \
   --risk=pass \
   --evidence="spec-lint, ac-coverage, drift-check"
-sed -n '1,24p' lattice/specs/create-item-api/review.md
-yq '.verdict, .axes' .lattice/sdd/create-item-api/branch/review-summary.json
+sed -n '1,24p' halo/specs/create-item-api/review.md
+yq '.verdict, .axes' .halo/sdd/create-item-api/branch/review-summary.json
 echo ""
 
 echo "── 7. Pipeline Eval JSON ──"
-bash lattice/kernel/delivery/pipeline.sh --only=ac-coverage --spec="$SPEC" --json-out=lattice/state/eval-runs/example.json
-yq '.metrics, .gates[0].metrics, .process_evidence.review_summaries[0].verdict, .loop_state' lattice/state/eval-runs/example.json
+bash halo/kernel/delivery/pipeline.sh --only=ac-coverage --spec="$SPEC" --json-out=halo/state/eval-runs/example.json
+yq '.metrics, .gates[0].metrics, .process_evidence.review_summaries[0].verdict, .loop_state' halo/state/eval-runs/example.json
 echo ""
 
 echo "── 8. Eval Markdown Summary ──"
-bash lattice/kernel/delivery/eval-summary.sh lattice/state/eval-runs/example.json --out=lattice/state/eval-runs/example.md
-sed -n '1,48p' lattice/state/eval-runs/example.md
+bash halo/kernel/delivery/eval-summary.sh halo/state/eval-runs/example.json --out=halo/state/eval-runs/example.md
+sed -n '1,48p' halo/state/eval-runs/example.md
 echo ""
 
 echo "── 9. Eval History ──"
-bash lattice/kernel/delivery/eval-history.sh --out=lattice/state/eval-runs/history.md
-sed -n '1,32p' lattice/state/eval-runs/history.md
+bash halo/kernel/delivery/eval-history.sh --out=halo/state/eval-runs/history.md
+sed -n '1,32p' halo/state/eval-runs/history.md
 echo ""
 
 echo "══════════════════════════════════"

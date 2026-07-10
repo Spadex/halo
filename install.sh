@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh — One-command install Lattice into a project
+# install.sh — One-command install Halo into a project
 #
 # Usage:
 #   Remote install:
@@ -17,7 +17,7 @@
 #
 set -euo pipefail
 
-REPO_URL="${LATTICE_REPO:-https://github.com/Spadex/halo.git}"
+REPO_URL="${HALO_REPO:-https://github.com/Spadex/halo.git}"
 TARGET=""
 AUTO_INIT=false
 FORCE_UPGRADE=false
@@ -42,14 +42,14 @@ print_version() {
   local script_dir version commit
   script_dir="$(cd "$(dirname "$0")" && pwd)"
   version="unknown"
-  if [ -f "$script_dir/harness-template/lattice/kernel/VERSION" ]; then
-    version="$(tr -d '[:space:]' < "$script_dir/harness-template/lattice/kernel/VERSION")"
+  if [ -f "$script_dir/harness-template/halo/kernel/VERSION" ]; then
+    version="$(tr -d '[:space:]' < "$script_dir/harness-template/halo/kernel/VERSION")"
   fi
   commit="unknown"
   if command -v git >/dev/null 2>&1 && git -C "$script_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     commit="$(git -C "$script_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)"
   fi
-  echo "Lattice installer"
+  echo "Halo installer"
   echo "  kernel_version: $version"
   echo "  source_commit: $commit"
   echo "  repo_url: $REPO_URL"
@@ -73,9 +73,9 @@ if [ ! -d "$TARGET" ]; then
   exit 1
 fi
 TARGET="$(cd "$TARGET" && pwd)"
-DEST="$TARGET/.lattice/framework"
+DEST="$TARGET/.halo/framework"
 PROJECT_ALREADY_INITIALIZED=false
-if [ -f "$TARGET/lattice/manifest.yaml" ]; then
+if [ -f "$TARGET/halo/manifest.yaml" ]; then
   PROJECT_ALREADY_INITIALIZED=true
 fi
 
@@ -87,7 +87,7 @@ if [ "$DRY_RUN" = true ]; then
   else
     INSTALL_MODE="remote"
   fi
-  echo "Lattice install dry run"
+  echo "Halo install dry run"
   echo "  target: $TARGET"
   echo "  framework_dest: $DEST"
   echo "  mode: $INSTALL_MODE"
@@ -99,8 +99,8 @@ if [ "$DRY_RUN" = true ]; then
 fi
 
 upgrade_project_kernel() {
-  local src_kernel="$DEST/harness-template/lattice/kernel"
-  local target_root="$TARGET/lattice"
+  local src_kernel="$DEST/harness-template/halo/kernel"
+  local target_root="$TARGET/halo"
   local target_kernel="$target_root/kernel"
 
   if [ ! -d "$src_kernel" ]; then
@@ -145,7 +145,7 @@ upgrade_project_prismspec() {
 
   if [ -d "$target_module/skills" ] || [ -d "$target_module/templates" ] || [ -d "$target_module/bin" ] || [ -d "$target_module/references" ] || [ -d "$target_module/agents" ] || [ -d "$target_module/commands" ]; then
     local backup_dir
-    backup_dir="$TARGET/lattice/state/prismspec-backups/$(date +%Y%m%d%H%M%S)"
+    backup_dir="$TARGET/halo/state/prismspec-backups/$(date +%Y%m%d%H%M%S)"
     mkdir -p "$backup_dir"
     [ -d "$target_module/skills" ] && mv "$target_module/skills" "$backup_dir/skills"
     [ -d "$target_module/templates" ] && mv "$target_module/templates" "$backup_dir/templates"
@@ -176,24 +176,24 @@ if [ -d "$DEST" ]; then
     rm -rf "$DEST"
   else
     echo "⚠️  Already installed: $DEST"
-    echo "   To upgrade, add --upgrade flag, or set LATTICE_REPO=<url> to override repo"
+    echo "   To upgrade, add --upgrade flag, or set HALO_REPO=<url> to override repo"
     exit 0
   fi
 fi
 
 if [ -d "$SCRIPT_DIR/harness-template" ]; then
-  echo "📦 Local install Lattice → $DEST"
+  echo "📦 Local install Halo → $DEST"
   mkdir -p "$DEST"
   cp -r "$SCRIPT_DIR"/. "$DEST"/
   rm -rf "$DEST/.git"
 else
-  echo "📦 Remote install Lattice → $DEST"
+  echo "📦 Remote install Halo → $DEST"
   echo "   Repo: $REPO_URL"
   mkdir -p "$(dirname "$DEST")"
   git clone --depth=1 "$REPO_URL" "$DEST" 2>/dev/null || {
     echo "Clone failed. Check the repo URL and SSH/HTTPS permissions."
     echo "   Repo: $REPO_URL"
-    echo "   Override with LATTICE_REPO=<url>"
+    echo "   Override with HALO_REPO=<url>"
     exit 1
   }
   rm -rf "$DEST/.git"
@@ -216,6 +216,6 @@ elif [ "$FORCE_UPGRADE" = true ]; then
 else
   echo ""
   echo "Next steps:"
-  echo "  Option 1 (recommended): Tell your AI agent 'lattice init'"
+  echo "  Option 1 (recommended): Tell your AI agent 'halo init'"
   echo "  Option 2: cd $TARGET && bash $DEST/init.sh"
 fi

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible Lattice bug.
+description: Report a reproducible Halo bug.
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -28,14 +28,14 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Include OS, shell, bash version, git version, yq version, and Lattice commit/tag.
+      description: Include OS, shell, bash version, git version, yq version, and Halo commit/tag.
       placeholder: |
         OS:
         Shell:
         bash --version:
         git --version:
         yq --version:
-        Lattice commit/tag:
+        Halo commit/tag:
     validations:
       required: true
   - type: textarea

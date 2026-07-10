@@ -76,19 +76,19 @@ RUN_ROOT=".prismspec/runs"
 VERIFY_CMD="detect local build/lint/test commands"
 TEMPLATE_ROOT="prismspec/templates"
 
-if [[ -f "$ROOT/lattice/manifest.yaml" ]]; then
-  HOST="lattice"
-  SPEC_ROOT="lattice/specs"
-  RUN_ROOT=".lattice/sdd"
-  VERIFY_CMD="bash lattice/kernel/delivery/pipeline.sh"
+if [[ -f "$ROOT/halo/manifest.yaml" ]]; then
+  HOST="halo"
+  SPEC_ROOT="halo/specs"
+  RUN_ROOT=".halo/sdd"
+  VERIFY_CMD="bash halo/kernel/delivery/pipeline.sh"
   TEMPLATE_ROOT="prismspec/templates"
 fi
 
 active_from_manifest() {
-  [[ "$HOST" == "lattice" ]] || return 1
+  [[ "$HOST" == "halo" ]] || return 1
   command -v yq >/dev/null 2>&1 || return 1
   local active
-  active=$(yq -r '.specs.active // ""' lattice/manifest.yaml 2>/dev/null || true)
+  active=$(yq -r '.specs.active // ""' halo/manifest.yaml 2>/dev/null || true)
   [[ -n "$active" && "$active" != "null" ]] || return 1
   if [[ -f "$active" ]]; then
     dirname "$active" | sed "s#^$SPEC_ROOT/##"

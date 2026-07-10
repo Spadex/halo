@@ -1,6 +1,6 @@
 # Superpowers Alignment
 
-PrismSpec is not a fork of Superpowers. When Superpowers already has a mature workflow discipline, PrismSpec should align to it and keep only the parts that are specific to PrismSpec or Lattice artifacts.
+PrismSpec is not a fork of Superpowers. When Superpowers already has a mature workflow discipline, PrismSpec should align to it and keep only the parts that are specific to PrismSpec or Halo artifacts.
 
 ## Rule
 
@@ -18,22 +18,22 @@ PrismSpec owns the artifact contract:
 
 - `spec.md`
 - `plan.md`
-- task evidence under `.prismspec/runs/` or `.lattice/sdd/`
+- task evidence under `.prismspec/runs/` or `.halo/sdd/`
 - `review.md`
 - `verify.md`
-- Lattice context, verification, evidence, eval, and learn gates
+- Halo context, verification, evidence, eval, and learn gates
 
-Do not create a PrismSpec-only behavior when a Superpowers skill already covers the same workflow discipline. Add PrismSpec rules only when they are needed for durable artifacts, Lattice gates, context discovery, execution mode, AC traceability, or verification evidence.
+Do not create a PrismSpec-only behavior when a Superpowers skill already covers the same workflow discipline. Add PrismSpec rules only when they are needed for durable artifacts, Halo gates, context discovery, execution mode, AC traceability, or verification evidence.
 
 ## Mapping
 
 | PrismSpec Stage | Superpowers Reference | PrismSpec Addition |
 |---|---|---|
-| `specification` | `brainstorming` | `spec.md` Context Basis, stable `AC-{n}`, execution mode, context discovery, Lattice spec gates |
-| `planning` | `writing-plans` | AC-traced `plan.md`, Lattice plan lint, task evidence paths |
-| `implementation` | `subagent-driven-development`, `executing-plans`, `test-driven-development` | task status scripts, TDD evidence JSON, Lattice task evidence lint |
+| `specification` | `brainstorming` | `spec.md` Context Basis, stable `AC-{n}`, execution mode, context discovery, Halo spec gates |
+| `planning` | `writing-plans` | AC-traced `plan.md`, Halo plan lint, task evidence paths |
+| `implementation` | `subagent-driven-development`, `executing-plans`, `test-driven-development` | task status scripts, TDD evidence JSON, Halo task evidence lint |
 | `review` | Superpowers SDD task reviewer discipline, code review skills | `review.md`, `pass/fail/cannot_verify`, AC/evidence grounding |
-| `verification` | `verification-before-completion` | command-backed `verify.md`, Lattice delivery pipeline, AC coverage and drift gates |
+| `verification` | `verification-before-completion` | command-backed `verify.md`, Halo delivery pipeline, AC coverage and drift gates |
 | optional `debugging` | `systematic-debugging` | root-cause evidence, AC/task mapping, reproducible command, fix evidence |
 | optional `knowledge-capture` | no required Superpowers main stage | durable, reusable, non-secret lessons from `verify.md` or review evidence |
 
@@ -58,7 +58,7 @@ Tiny, low-risk changes may use a short design, but they still need a durable `sp
 If Superpowers and PrismSpec disagree:
 
 1. Safety and user instructions win.
-2. PrismSpec artifact locations and Lattice gates win for PrismSpec/Lattice projects.
+2. PrismSpec artifact locations and Halo gates win for PrismSpec/Halo projects.
 3. Superpowers workflow discipline wins for human interaction, planning discipline, TDD discipline, review discipline, and completion discipline.
 4. If the conflict changes product behavior, scope, execution mode, or risk, stop and ask.
 
@@ -67,7 +67,7 @@ If Superpowers and PrismSpec disagree:
 Before adding or changing a PrismSpec skill rule, ask:
 
 - Does a Superpowers skill already solve this workflow behavior?
-- Is the PrismSpec change only about artifact shape, AC traceability, context discovery, or Lattice verification?
+- Is the PrismSpec change only about artifact shape, AC traceability, context discovery, or Halo verification?
 - Can this be expressed as a mapping to Superpowers plus a PrismSpec artifact override?
 
 If the answer is yes, reference the Superpowers discipline instead of inventing a parallel one.

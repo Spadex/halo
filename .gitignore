@@ -1,5 +1,5 @@
-# Lattice installed framework cache (in target projects)
-.lattice/
+# Halo installed framework cache (in target projects)
+.halo/
 
 .DS_Store
-lattice/specs/.locks/
+halo/specs/.locks/

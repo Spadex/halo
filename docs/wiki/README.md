@@ -1,10 +1,10 @@
-# Lattice 设计 Wiki
+# Halo 设计 Wiki
 
-这组文档解释 Lattice 的系统设计、当前实现边界和后续路线。README 负责快速上手；Wiki 负责回答“为什么这样设计、现在做到哪里、下一步怎么演进”。
+这组文档解释 Halo 的系统设计、当前实现边界和后续路线。README 负责快速上手；Wiki 负责回答“为什么这样设计、现在做到哪里、下一步怎么演进”。
 
 ## 核心判断
 
-Lattice 的技术路线是可行的，但它不是中心化 AI 平台，也不是新的 IDE。它更适合定位为安装在业务仓库内的 **AI Coding harness**：
+Halo 的技术路线是可行的，但它不是中心化 AI 平台，也不是新的 IDE。它更适合定位为安装在业务仓库内的 **AI Coding harness**：
 
 - 在意图到代码之间，用 PrismSpec 和 Context 减少 Agent 猜测。
 - 在代码到交付之间，用 Verification gates 和 Evidence 抑制 Agent 自评。
@@ -33,7 +33,7 @@ flowchart LR
 
 | 文档 | 重点 |
 |------|------|
-| [整体设计](overall-design.md) | Lattice 的边界、组件模型、生命周期和可插拔点 |
+| [整体设计](overall-design.md) | Halo 的边界、组件模型、生命周期和可插拔点 |
 | [五板块工作台](workflow-blocks.md) | Clarify / Spec / Build / Review / Verify 的产品契约与 gap |
 | [SDD 设计](sdd.md) | PrismSpec 五阶段链路、Plan/TDD mode、产物契约 |
 | [Context 设计](context.md) | Agent 上下文地图、项目知识、外部知识和 `spec.md` Context Basis |
@@ -60,12 +60,12 @@ flowchart LR
 - `install.sh` / `init.sh` 安装初始化。
 - `prismspec/skills/*/SKILL.md` canonical skills。
 - `prismspec/bin/new.sh` 初始 spec 产物创建。
-- `prismspec/bin/doctor.sh` standalone / Lattice-hosted skill pack 健康检查。
+- `prismspec/bin/doctor.sh` standalone / Halo-hosted skill pack 健康检查。
 - `prismspec/bin/eval-skills.sh` skill anatomy、trigger fixtures 和相邻阶段碰撞回归。
 - `prismspec/bin/guide.sh` 阶段路由。
 - `prismspec/bin/lint.sh` skillpack / artifact contract 校验。
-- `lattice/context/` 项目上下文资产与基础 knowledge backend。
-- `lattice/kernel/delivery/pipeline.sh` 和内置 gates。
+- `halo/context/` 项目上下文资产与基础 knowledge backend。
+- `halo/kernel/delivery/pipeline.sh` 和内置 gates。
 - `review.md`、`tdd-evidence.json`、spec-state-lint、spec-status、spec transition events/history、plan-lint、task-next、task-complete、task-evidence-lint、summary-draft、summary-learn-draft、loop state、outcome link/report、central eval sink、static eval dashboard、eval query、可配置 failure category、failure category lint、escalation learn draft、learn promotion event、knowledge review event、knowledge metadata lint、knowledge governance lint、eval run 数据集、Markdown summary 和 history report。
 - smoke test 和 GitHub CI。
 
@@ -77,7 +77,7 @@ flowchart LR
 
 ## 推荐阅读顺序
 
-1. 先读 [整体设计](overall-design.md)，理解 Lattice 的系统边界。
+1. 先读 [整体设计](overall-design.md)，理解 Halo 的系统边界。
 2. 再读 [SDD 设计](sdd.md)，理解 PrismSpec 如何驱动一次 AI Coding。
 3. 继续读 [Context 设计](context.md) 与 [Eval 设计](eval.md)，它们对应上下文边界和验证边界。
 4. 最后读 [Loop 设计](loop.md) 和 [Gap 与 Roadmap](gaps-and-roadmap.md)，判断下一步建设优先级。

@@ -9,7 +9,7 @@ description: Converts an approved PrismSpec spec.md into an AC-traced plan.md. U
 
 Decompose `spec.md` into small, ordered, verifiable tasks. The plan is the implementation control surface.
 
-This skill aligns with Superpowers `writing-plans`: global constraints, concrete task interfaces, right-sized independently reviewable tasks, and a pre-flight plan review are preferred over PrismSpec-specific reinvention. PrismSpec adds AC traceability, execution mode, and Lattice evidence paths.
+This skill aligns with Superpowers `writing-plans`: global constraints, concrete task interfaces, right-sized independently reviewable tasks, and a pre-flight plan review are preferred over PrismSpec-specific reinvention. PrismSpec adds AC traceability, execution mode, and Halo evidence paths.
 
 ## Inputs
 
@@ -31,8 +31,8 @@ This skill aligns with Superpowers `writing-plans`: global constraints, concrete
 9. For implementation tasks, include concrete steps that a zero-context implementer can follow: exact file paths, code/test locations, focused command, expected result, and commit or evidence boundary.
 10. For TDD tasks, include the red test intent, exact command, expected failure reason, green command, and regression command.
 11. Run the self-review checklist below before implementation starts.
-12. In Lattice-hosted mode, run `lattice/kernel/orchestrator/sdd/plan-lint.sh <spec-id>` before implementation starts.
-13. In Lattice-hosted mode, advance status with `lattice/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` after plan-lint passes.
+12. In Halo-hosted mode, run `halo/kernel/orchestrator/sdd/plan-lint.sh <spec-id>` before implementation starts.
+13. In Halo-hosted mode, advance status with `halo/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted` after plan-lint passes.
 
 ## Plan Header
 
@@ -47,7 +47,7 @@ Every `plan.md` must start with:
 
 ## 1. 来源
 
-- 技术方案：`lattice/specs/<spec-id>/spec.md`
+- 技术方案：`halo/specs/<spec-id>/spec.md`
 - 工作项：`<ticket-or-spec-id>`
 - 执行模式：`plan|tdd`
 
@@ -72,7 +72,7 @@ A task is the smallest unit that can be implemented, tested, reviewed, and recov
 
 ## Task Shape
 
-Use checkbox task rows so Lattice can track execution state. Every AC in `spec.md` must be referenced by at least one task.
+Use checkbox task rows so Halo can track execution state. Every AC in `spec.md` must be referenced by at least one task.
 Place task rows under `## 3. 任务拆解`.
 
 ```markdown
@@ -95,10 +95,10 @@ Place task rows under `## 3. 任务拆解`.
     - [ ] 重新运行 `<focused command>`，预期通过。
     - [ ] 运行 `<regression command>`，或记录无测试理由。
   - 证据：
-    - 任务简报：`.lattice/sdd/<spec-id>/T1/brief.md`
-    - 评审包：`.lattice/sdd/<spec-id>/T1/review-package.md`
-    - 实施报告：`.lattice/sdd/<spec-id>/T1/report.md`
-    - 评审记录：`.lattice/sdd/<spec-id>/T1/review.md`
+    - 任务简报：`.halo/sdd/<spec-id>/T1/brief.md`
+    - 评审包：`.halo/sdd/<spec-id>/T1/review-package.md`
+    - 实施报告：`.halo/sdd/<spec-id>/T1/report.md`
+    - 评审记录：`.halo/sdd/<spec-id>/T1/review.md`
   - 完成条件：
     - [ ] <observable condition>
 ```
@@ -180,8 +180,8 @@ Before reporting the plan ready, review it once as if you were the future task r
 ## Verification
 
 - [ ] `plan.md` exists.
-- [ ] Lattice plan-lint passes when running in Lattice-hosted mode.
-- [ ] Lattice spec-status advances to `planned` when running in Lattice-hosted mode.
+- [ ] Halo plan-lint passes when running in Halo-hosted mode.
+- [ ] Halo spec-status advances to `planned` when running in Halo-hosted mode.
 - [ ] Every behavior task references at least one AC.
 - [ ] Global constraints and task interfaces are present and concrete.
 - [ ] Every task has verification evidence requirements.

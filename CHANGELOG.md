@@ -7,23 +7,23 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `prismspec/skillpack.yaml` as the machine-readable PrismSpec skill pack contract.
-- `lattice/kernel/doctor.sh` to verify installed Lattice/PrismSpec project health.
-- `pipeline.sh --json-out[=<file>]` to write structured eval run evidence under `lattice/state/eval-runs/`.
+- `halo/kernel/doctor.sh` to verify installed Halo/PrismSpec project health.
+- `pipeline.sh --json-out[=<file>]` to write structured eval run evidence under `halo/state/eval-runs/`.
 - `--json-out[=<file>]` for AC coverage, drift check, and compliance gates, embedded into pipeline eval runs.
 - `eval-summary.sh` to render eval run JSON into Markdown for local review and CI Step Summary.
 - `eval-history.sh` to aggregate eval run JSON files into a Markdown trend report.
 - `eval-sink.sh` to publish eval runs, outcome links, and Markdown reports to a local central eval sink with per-project manifests and an index.
 - `eval-dashboard.sh` to render a static HTML dashboard from the central eval sink.
 - `eval-query.sh` to query central eval sink summaries, runs, and outcomes as Markdown or JSON.
-- `outcome-link.sh` to link post-run review findings, rework, escaped defects, incidents, or success signals back to eval runs under `lattice/state/outcomes/`.
+- `outcome-link.sh` to link post-run review findings, rework, escaped defects, incidents, or success signals back to eval runs under `halo/state/outcomes/`.
 - `outcome-report.sh` to render outcome attribution signals, context references, severity distribution, and runs needing review.
-- Loop state JSON under `lattice/state/loops/`, embedded into eval runs and summarized in eval reports.
+- Loop state JSON under `halo/state/loops/`, embedded into eval runs and summarized in eval reports.
 - Failure category and default action fields in loop state, eval summaries, and escalation learn drafts.
-- Configurable failure categories via `lattice/config/failure-categories.yaml`.
+- Configurable failure categories via `halo/config/failure-categories.yaml`.
 - `failure-category-lint.sh` and doctor integration for failure category config validation.
-- Escalation knowledge drafts under `lattice/context/drafts/` when retry budget is exhausted.
-- `learn-draft.sh` to promote or discard confirmed knowledge drafts with archived source drafts and audit events under `lattice/state/learn-promotions/`.
-- `knowledge-review.sh` to record approve/reject reviewer decisions under `lattice/state/knowledge-reviews/`; `learn-draft.sh promote --require-review` can require approved review evidence with conflict checks.
+- Escalation knowledge drafts under `halo/context/drafts/` when retry budget is exhausted.
+- `learn-draft.sh` to promote or discard confirmed knowledge drafts with archived source drafts and audit events under `halo/state/learn-promotions/`.
+- `knowledge-review.sh` to record approve/reject reviewer decisions under `halo/state/knowledge-reviews/`; `learn-draft.sh promote --require-review` can require approved review evidence with conflict checks.
 - `summary-learn-draft.sh` to convert Knowledge Candidates into reviewable knowledge drafts.
 - `knowledge-lint.sh` to flag missing metadata, missing sources, placeholders, conflict markers, expired entries, and duplicate headings in project knowledge.
 - `pr-comment.sh` to create or update a stable GitHub PR comment from the eval Markdown summary.
@@ -56,7 +56,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - PrismSpec guide now requires actual verification evidence and no longer treats review packages as verification output.
-- Public contribution docs now use Lattice naming and current paths.
+- Public contribution docs now use Halo naming and current paths.
 - CI now runs the Go/Gin/GORM example and release readiness check in addition to smoke tests.
 
 ## [1.0.0] — 2026-06-23
@@ -86,4 +86,4 @@ All notable changes to this project will be documented in this file.
 - All CLI output in English (previously Chinese).
 - Internal delivery variables standardized on the `SH_*` / `_SH_*` prefix.
 - Spec template sections use English headers by default.
-- Install paths standardized for the Lattice harness-template layout.
+- Install paths standardized for the Halo harness-template layout.

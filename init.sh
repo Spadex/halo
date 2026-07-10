@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# init.sh — Lattice project initialization
+# init.sh — Halo project initialization
 # Detects project language/framework, copies harness-template, generates manifest, appends CLAUDE.md
 #
 # Usage:
@@ -13,10 +13,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HARNESS_TEMPLATE_DIR=""
 
 for candidate in \
-  "$(pwd)/.lattice/framework/harness-template" \
+  "$(pwd)/.halo/framework/harness-template" \
   "$SCRIPT_DIR/harness-template" \
-  "$HOME/.agents/skills/lattice/harness-template"; do
-  if [[ -d "$candidate/lattice/kernel" ]]; then
+  "$HOME/.agents/skills/halo/harness-template"; do
+  if [[ -d "$candidate/halo/kernel" ]]; then
     HARNESS_TEMPLATE_DIR="$candidate"
     break
   fi
@@ -24,7 +24,7 @@ done
 
 if [[ -z "$HARNESS_TEMPLATE_DIR" ]]; then
   echo "Cannot find harness-template directory"
-  echo "   Make sure Lattice is installed to .lattice/framework/"
+  echo "   Make sure Halo is installed to .halo/framework/"
   exit 1
 fi
 
@@ -105,7 +105,7 @@ ask_choice() {
 }
 
 echo "══════════════════════════════════"
-echo "Lattice — Init"
+echo "Halo — Init"
 echo "══════════════════════════════════"
 echo ""
 
@@ -216,32 +216,32 @@ copy_tree_files_if_not_exists() {
   done < <(find "$src_dir" -type f -print0)
 }
 
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/_lib.sh" "lattice/kernel/_lib.sh"
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/doctor.sh" "lattice/kernel/doctor.sh"
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/capabilities.sh" "lattice/kernel/capabilities.sh"
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/templates/spec-template.md" "lattice/kernel/orchestrator/templates/spec-template.md"
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/rules.md" "lattice/kernel/orchestrator/rules.md"
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/flow.yaml" "lattice/kernel/orchestrator/flow.yaml"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/_lib.sh" "halo/kernel/_lib.sh"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/doctor.sh" "halo/kernel/doctor.sh"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/capabilities.sh" "halo/kernel/capabilities.sh"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/orchestrator/templates/spec-template.md" "halo/kernel/orchestrator/templates/spec-template.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/orchestrator/rules.md" "halo/kernel/orchestrator/rules.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/orchestrator/flow.yaml" "halo/kernel/orchestrator/flow.yaml"
 for f in task-next.sh task-complete.sh task-brief.sh task-evidence-lint.sh plan-lint.sh spec-state-lint.sh spec-status.sh spec-history.sh summary-draft.sh review-package.sh review-summary.sh tdd-evidence.sh; do
-  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/orchestrator/sdd/$f" "lattice/kernel/orchestrator/sdd/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/orchestrator/sdd/$f" "halo/kernel/orchestrator/sdd/$f"
 done
 
-copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/context" "lattice/kernel/context"
+copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/context" "halo/kernel/context"
 
-copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/config" "lattice/config"
+copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/config" "halo/config"
 
 for f in pipeline.sh bootstrap.sh deploy.sh eval-summary.sh eval-history.sh eval-sink.sh eval-dashboard.sh eval-query.sh outcome-link.sh outcome-report.sh pr-comment.sh failure-category-lint.sh; do
-  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/delivery/$f" "lattice/kernel/delivery/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/delivery/$f" "halo/kernel/delivery/$f"
 done
 for f in spec-lint.sh ac-coverage.sh drift-check.sh compliance.sh spec-lock.sh; do
-  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/delivery/gates/$f" "lattice/kernel/delivery/gates/$f"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/delivery/gates/$f" "halo/kernel/delivery/gates/$f"
 done
 
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/kernel/VERSION" "lattice/kernel/VERSION"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/VERSION" "halo/kernel/VERSION"
 
 for dir in specs state state/eval-runs state/eval-sink state/loops state/outcomes state/learn-promotions state/knowledge-reviews skills config context context/knowledge context/knowledge/decisions context/drafts context/drafts/promoted context/drafts/discarded; do
-  mkdir -p "lattice/$dir"
-  [[ -f "lattice/$dir/.gitkeep" ]] || touch "lattice/$dir/.gitkeep"
+  mkdir -p "halo/$dir"
+  [[ -f "halo/$dir/.gitkeep" ]] || touch "halo/$dir/.gitkeep"
 done
 
 if [[ -d "$PRISMSPEC_SOURCE" ]]; then
@@ -256,18 +256,18 @@ if [[ -d "$PRISMSPEC_SOURCE" ]]; then
   copy_if_not_exists "$PRISMSPEC_SOURCE/README.en.md" "prismspec/README.en.md"
 fi
 
-chmod +x lattice/kernel/*.sh lattice/kernel/context/*.sh lattice/kernel/context/backends/*.sh lattice/kernel/delivery/*.sh lattice/kernel/delivery/gates/*.sh lattice/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
+chmod +x halo/kernel/*.sh halo/kernel/context/*.sh halo/kernel/context/backends/*.sh halo/kernel/delivery/*.sh halo/kernel/delivery/gates/*.sh halo/kernel/orchestrator/sdd/*.sh 2>/dev/null || true
 chmod +x prismspec/bin/*.sh 2>/dev/null || true
 
 if [[ -d ".git" ]]; then
   touch .gitignore
-  if ! grep -qxF ".lattice/sdd/" .gitignore; then
+  if ! grep -qxF ".halo/sdd/" .gitignore; then
     {
       echo ""
-      echo "# Lattice transient SDD evidence"
-      echo ".lattice/sdd/"
+      echo "# Halo transient SDD evidence"
+      echo ".halo/sdd/"
     } >> .gitignore
-    echo "  ✅ .gitignore: .lattice/sdd/"
+    echo "  ✅ .gitignore: .halo/sdd/"
   fi
   if ! grep -qxF ".prismspec/runs/" .gitignore; then
     {
@@ -279,22 +279,22 @@ if [[ -d ".git" ]]; then
   fi
 fi
 
-copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/context" "lattice/context"
+copy_tree_files_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/context" "halo/context"
 
-copy_if_not_exists "$HARNESS_TEMPLATE_DIR/lattice/skills/init.md" "lattice/skills/init.md"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/skills/init.md" "halo/skills/init.md"
 
 for f in init.md prismspec.md build.md clarify.md spec.md plan.md implement.md review.md verify.md capture.md; do
   copy_if_not_exists "$HARNESS_TEMPLATE_DIR/.claude/commands/$f" ".claude/commands/$f"
 done
 
 if [[ "$CI" == "github" ]]; then
-  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/.github/workflows/lattice-eval.yml" ".github/workflows/lattice-eval.yml"
+  copy_if_not_exists "$HARNESS_TEMPLATE_DIR/.github/workflows/halo-eval.yml" ".github/workflows/halo-eval.yml"
 fi
 
 echo ""
 echo "📝 Generating manifest.yaml..."
 
-MANIFEST_FILE="lattice/manifest.yaml"
+MANIFEST_FILE="halo/manifest.yaml"
 
 if [[ -f "$MANIFEST_FILE" ]]; then
   echo "  ⏭️  Already exists: $MANIFEST_FILE (skipping generation)"
@@ -380,13 +380,13 @@ else
   esac
 
   cat > "$MANIFEST_FILE" <<YAML
-# manifest.yaml - Lattice project contract
+# manifest.yaml - Halo project contract
 # Project-owned and reviewable. Framework scripts read this file to adapt
 # to each project; change project behavior here instead of editing kernel code.
-# Auto-generated by lattice init on $(date +%Y-%m-%d).
+# Auto-generated by halo init on $(date +%Y-%m-%d).
 
-schema_version: "lattice.manifest.v1"
-kind: "LatticeManifest"
+schema_version: "halo.manifest.v1"
+kind: "HaloManifest"
 
 project:
   name: ${NAME}
@@ -420,12 +420,12 @@ commands:
   smoke_test:       ""
 
 specs:
-  dir: "lattice/specs"
+  dir: "halo/specs"
   # Optional active spec selector. Accepts either a spec id under specs.dir or a path.
   active: ""
   # Override this path to use a project/team-specific spec template.
   # PrismSpec also provides scenario templates under prismspec/templates/.
-  template: "lattice/kernel/orchestrator/templates/spec-template.md"
+  template: "halo/kernel/orchestrator/templates/spec-template.md"
   # Project default. auto lets the model select plan or tdd by risk.
   # Per-spec mode in spec.md wins for a single run when override is allowed.
   default_execution_mode: "auto"
@@ -461,23 +461,23 @@ drift:
 
 pipeline:
   # Verification contract. Use pipeline.sh --json-out to produce eval evidence.
-  failure_categories_file: "lattice/config/failure-categories.yaml"
+  failure_categories_file: "halo/config/failure-categories.yaml"
   steps:
-    - { name: bootstrap,        run: "lattice/kernel/delivery/bootstrap.sh check",              skip_when: never }
-    - { name: spec-lint,        run: "lattice/kernel/delivery/gates/spec-lint.sh \${SPEC_FILE}",      skip_when: no_spec }
+    - { name: bootstrap,        run: "halo/kernel/delivery/bootstrap.sh check",              skip_when: never }
+    - { name: spec-lint,        run: "halo/kernel/delivery/gates/spec-lint.sh \${SPEC_FILE}",      skip_when: no_spec }
     - { name: prismspec-lint,   run: "prismspec/bin/lint.sh \$(dirname \${SPEC_FILE}) spec",          skip_when: no_spec }
     - { name: build,            run: "\${commands.build}",                                   skip_when: no_code }
     - { name: lint,             run: "\${commands.lint}",                                    skip_when: no_code }
     - { name: unit-test,        run: "\${commands.test}",                                    skip_when: no_code }
-    - { name: ac-coverage,      run: "lattice/kernel/delivery/gates/ac-coverage.sh \${SPEC_FILE} .",  skip_when: no_spec }
+    - { name: ac-coverage,      run: "halo/kernel/delivery/gates/ac-coverage.sh \${SPEC_FILE} .",  skip_when: no_spec }
     - { name: integration-test, run: "\${commands.integration_test}",                        skip_when: no_integration }
-    - { name: drift-check,      run: "lattice/kernel/delivery/gates/drift-check.sh \${SPEC_FILE} .",  skip_when: no_spec }
-    - { name: compliance,       run: "lattice/kernel/delivery/gates/compliance.sh \${SPEC_FILE}",     skip_when: no_spec }
+    - { name: drift-check,      run: "halo/kernel/delivery/gates/drift-check.sh \${SPEC_FILE} .",  skip_when: no_spec }
+    - { name: compliance,       run: "halo/kernel/delivery/gates/compliance.sh \${SPEC_FILE}",     skip_when: no_spec }
 
 eval:
   # Evidence/Eval output. A central sink can aggregate these files later.
   sink:
-    dir: "lattice/state/eval-sink"
+    dir: "halo/state/eval-sink"
 
 deploy:
   docker:
@@ -497,16 +497,16 @@ deploy:
 
 context:
   # Agent-readable context supply. README.md is primary; sources.yaml is optional automation metadata.
-  root: "lattice/context"
-  map_file: "lattice/context/README.md"
-  external_file: "lattice/context/external.md"
-  sources_file: "lattice/context/sources.yaml"
+  root: "halo/context"
+  map_file: "halo/context/README.md"
+  external_file: "halo/context/external.md"
+  sources_file: "halo/context/sources.yaml"
   knowledge:
-    dir: "lattice/context/knowledge"
-    drafts_dir: "lattice/context/drafts"
+    dir: "halo/context/knowledge"
+    drafts_dir: "halo/context/drafts"
   central:
     repo: ""
-    cache_dir: "lattice/context/.central"
+    cache_dir: "halo/context/.central"
     mode: read-only
     conflict: project-wins
   policy:
@@ -526,25 +526,25 @@ fi
 echo ""
 echo "📝 Configuring CLAUDE.md..."
 
-LATTICE_RULES="$HARNESS_TEMPLATE_DIR/CLAUDE.lattice.md"
+HALO_RULES="$HARNESS_TEMPLATE_DIR/CLAUDE.halo.md"
 if [[ -f "CLAUDE.md" ]]; then
-  if grep -q "Lattice\|lattice" "CLAUDE.md" 2>/dev/null; then
-    echo "  ⏭️  CLAUDE.md already contains Lattice rules"
-  elif [[ -f "$LATTICE_RULES" ]]; then
+  if grep -q "Halo\|halo" "CLAUDE.md" 2>/dev/null; then
+    echo "  ⏭️  CLAUDE.md already contains Halo rules"
+  elif [[ -f "$HALO_RULES" ]]; then
     echo "" >> CLAUDE.md
-    cat "$LATTICE_RULES" >> CLAUDE.md
-    echo "  ✅ Appended Lattice rules to CLAUDE.md"
+    cat "$HALO_RULES" >> CLAUDE.md
+    echo "  ✅ Appended Halo rules to CLAUDE.md"
   fi
 else
-  if [[ -f "$LATTICE_RULES" ]]; then
-    cp "$LATTICE_RULES" CLAUDE.md
+  if [[ -f "$HALO_RULES" ]]; then
+    cp "$HALO_RULES" CLAUDE.md
     echo "  ✅ Created CLAUDE.md"
   fi
 fi
 
 echo ""
 echo "🔍 Verifying environment..."
-if bash lattice/kernel/delivery/bootstrap.sh check 2>/dev/null; then
+if bash halo/kernel/delivery/bootstrap.sh check 2>/dev/null; then
   echo ""
 else
   echo ""
@@ -553,14 +553,14 @@ fi
 
 echo ""
 echo "══════════════════════════════════"
-echo "✅ Lattice initialization complete"
+echo "✅ Halo initialization complete"
 echo ""
 echo "Project: $NAME ($LANG)"
 echo "Artifacts:"
-echo "  lattice/manifest.yaml        — Project contract (review config)"
-echo "  lattice/kernel/              — Harness kernel (orchestrator/context/verification)"
-echo "  lattice/specs/               — Persistent specs and per-spec context"
-echo "  lattice/context/             — Project context and durable knowledge"
+echo "  halo/manifest.yaml        — Project contract (review config)"
+echo "  halo/kernel/              — Harness kernel (orchestrator/context/verification)"
+echo "  halo/specs/               — Persistent specs and per-spec context"
+echo "  halo/context/             — Project context and durable knowledge"
 echo "  prismspec/                   — Standalone PrismSpec skills module"
 echo "  .claude/commands/                — Slash commands"
 echo ""

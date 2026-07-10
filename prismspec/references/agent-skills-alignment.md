@@ -6,7 +6,7 @@ PrismSpec treats Agent Skills as the packaging and quality standard for reusable
 
 - Use Superpowers for proven AI coding workflow behavior.
 - Use Agent Skills for skill naming, folder shape, trigger descriptions, progressive disclosure, bundled resources, and evals.
-- Keep PrismSpec-specific value in durable artifacts, AC traceability, host-aware routing, evidence, and Lattice gates.
+- Keep PrismSpec-specific value in durable artifacts, AC traceability, host-aware routing, evidence, and Halo gates.
 
 ## Packaging Contract
 
@@ -27,7 +27,7 @@ Rules:
 - `description` states what the skill does and when to use it.
 - `agents/openai.yaml` is UI metadata, not workflow logic.
 - `evals/evals.json` records should-trigger, should-not-trigger, and behavior assertions.
-- Shared detailed guidance lives in `prismspec/references/`; deterministic helpers live in `prismspec/bin/` or Lattice kernel scripts.
+- Shared detailed guidance lives in `prismspec/references/`; deterministic helpers live in `prismspec/bin/` or Halo kernel scripts.
 
 ## Product Block Contract
 
@@ -42,7 +42,7 @@ These are product surfaces, not necessarily one skill folder each. `skillpack.ya
 - Clarify uses `prismspec-grilling` with `prismspec-specification`: Clarify focuses on engineering boundaries, context facts, assumptions, conflicts, and blocking questions; Spec focuses on approved scope, ACs, risk, mode, and verification plan.
 - Clarify records its result in a `status: clarifying` `spec.md` and Context Basis rather than a separate required artifact, matching Agent Skills' preference for small, self-contained task outputs.
 - Build composes `prismspec-planning`, `prismspec-implementation`, and `prismspec-debugging`; it risk-loads support skills such as context engineering, source grounding, doubt review, and interface design only when needed.
-- Quality Gate composes `prismspec-review` and `prismspec-verification`: review inspects intent, diff, evidence, and risk before verification; verification proves the current repository state with fresh commands and Lattice delivery gates.
+- Quality Gate composes `prismspec-review` and `prismspec-verification`: review inspects intent, diff, evidence, and risk before verification; verification proves the current repository state with fresh commands and Halo delivery gates.
 
 Host integrations should present the product blocks to users, then route through `prismspec/bin/guide.sh --json` and the canonical skill paths declared in `skillpack.yaml`.
 

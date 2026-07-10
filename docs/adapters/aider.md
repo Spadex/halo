@@ -1,42 +1,42 @@
 # Aider Adapter
 
-Lattice works with [Aider](https://aider.chat) via its conventions file.
+Halo works with [Aider](https://aider.chat) via its conventions file.
 
 ## Setup
 
-1. Install Lattice into your project:
+1. Install Halo into your project:
 
 ```bash
 bash install.sh /path/to/your-project --init
 ```
 
-2. Create `.aider.conf.yml` and add Lattice rules as a read-only file:
+2. Create `.aider.conf.yml` and add Halo rules as a read-only file:
 
 ```yaml
 read:
-  - lattice/kernel/orchestrator/rules.md
+  - halo/kernel/orchestrator/rules.md
 ```
 
 Or pass it on the command line:
 
 ```bash
-aider --read lattice/kernel/orchestrator/rules.md
+aider --read halo/kernel/orchestrator/rules.md
 ```
 
-3. Aider will include Lattice rules in its system prompt context.
+3. Aider will include Halo rules in its system prompt context.
 
 ## Usage
 
 Aider can execute shell commands via `/run`:
 
 ```
-/run bash lattice/kernel/delivery/pipeline.sh
-/run bash lattice/kernel/context/backends/knowledge.sh <keywords>
-/run bash lattice/kernel/delivery/gates/spec-lint.sh lattice/specs/my-spec/spec.md
+/run bash halo/kernel/delivery/pipeline.sh
+/run bash halo/kernel/context/backends/knowledge.sh <keywords>
+/run bash halo/kernel/delivery/gates/spec-lint.sh halo/specs/my-spec/spec.md
 ```
 
 ## Limitations
 
-- No automatic skill triggers — use `/run` for all Lattice commands
+- No automatic skill triggers — use `/run` for all Halo commands
 - Aider's `/run` output is included in context, so pipeline output is visible to the model
 - Context knowledge backend results may consume significant context — use targeted keywords

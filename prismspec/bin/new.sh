@@ -74,12 +74,12 @@ HOST="standalone"
 SPEC_ROOT="prismspec/specs"
 TEMPLATE_ROOT="prismspec/templates"
 
-if [[ -f "$ROOT/lattice/manifest.yaml" ]]; then
-  HOST="lattice"
-  SPEC_ROOT="lattice/specs"
+if [[ -f "$ROOT/halo/manifest.yaml" ]]; then
+  HOST="halo"
+  SPEC_ROOT="halo/specs"
   if command -v yq >/dev/null 2>&1; then
-    SPEC_ROOT="$(yq -r '.specs.dir // "lattice/specs"' lattice/manifest.yaml 2>/dev/null || echo "lattice/specs")"
-    [[ -n "$SPEC_ROOT" && "$SPEC_ROOT" != "null" ]] || SPEC_ROOT="lattice/specs"
+    SPEC_ROOT="$(yq -r '.specs.dir // "halo/specs"' halo/manifest.yaml 2>/dev/null || echo "halo/specs")"
+    [[ -n "$SPEC_ROOT" && "$SPEC_ROOT" != "null" ]] || SPEC_ROOT="halo/specs"
   fi
 fi
 
