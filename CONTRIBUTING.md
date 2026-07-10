@@ -5,8 +5,8 @@ Thanks for your interest in contributing.
 ## Development Setup
 
 ```bash
-git clone https://github.com/zdolphin07-dotcom/lattice.git
-cd lattice
+git clone https://github.com/Spadex/halo.git
+cd halo
 ```
 
 No build step is required. Lattice is a repository-delivered framework built from Bash, Markdown, and YAML.

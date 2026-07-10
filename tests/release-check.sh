@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REMOTE_INSTALL_URL="${LATTICE_REMOTE_INSTALL_URL:-https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh}"
+REMOTE_INSTALL_URL="${LATTICE_REMOTE_INSTALL_URL:-https://raw.githubusercontent.com/Spadex/halo/main/install.sh}"
 
 cd "$ROOT"
 

@@ -29,7 +29,7 @@ Lattice 的本地工程闭环已经达到 **commercially credible preview / pilo
 | Go 示例 | `bash examples/go-gin-gorm/try-it.sh` | PASS，spec lint、AC coverage、drift check、review evidence、pipeline eval、eval summary/history 均通过 |
 | Release check | `bash tests/release-check.sh` | PASS，remote install 默认跳过 |
 | Whitespace | `git diff --check` | PASS |
-| Remote install | `curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh` | PASS |
+| Remote install | `curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh` | PASS |
 | Remote release check | `LATTICE_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh` | PASS |
 
 ## P0 发布阻断

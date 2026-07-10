@@ -12,7 +12,7 @@
     <a href="SUPPORT.md">Support</a>
   </p>
   <p align="center">
-    <a href="https://github.com/zdolphin07-dotcom/lattice/actions/workflows/shellcheck.yml"><img alt="Shellcheck" src="https://github.com/zdolphin07-dotcom/lattice/actions/workflows/shellcheck.yml/badge.svg"></a>
+    <a href="https://github.com/Spadex/halo/actions/workflows/shellcheck.yml"><img alt="Shellcheck" src="https://github.com/Spadex/halo/actions/workflows/shellcheck.yml/badge.svg"></a>
     <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg">
     <img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg">
     <img alt="Runtime" src="https://img.shields.io/badge/runtime-Bash%203.2%2B-informational.svg">
@@ -100,10 +100,10 @@ Lattice is designed as a repository-local engineering control plane, so it keeps
 ```bash
 # Run inside your application repository
 cd /path/to/your-project
-bash <(curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh) --init
+bash <(curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh) --init
 
 # Or clone locally first, then install into the current repository
-git clone https://github.com/zdolphin07-dotcom/lattice.git /tmp/lattice
+git clone https://github.com/Spadex/halo.git /tmp/lattice
 /tmp/lattice/install.sh "$PWD" --init
 ```
 
@@ -114,7 +114,7 @@ Installation adds `lattice/`, `prismspec/`, and agent entry files. On upgrade, f
 Before a public launch, confirm the remote install URL is anonymously accessible:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh >/tmp/lattice-install.sh
+curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh >/tmp/lattice-install.sh
 ```
 
 If this returns `404`, the repository or raw URL is not public yet. Switch the repository visibility or publish from a public release/tag URL first. For commercial distribution, prefer a tag URL as the default install path and keep `main` as the development install path.
@@ -122,8 +122,8 @@ If this returns `404`, the repository or raw URL is not public yet. Switch the r
 ### Run The Example
 
 ```bash
-git clone https://github.com/zdolphin07-dotcom/lattice.git
-cd lattice
+git clone https://github.com/Spadex/halo.git
+cd halo
 bash examples/go-gin-gorm/try-it.sh
 ```
 
