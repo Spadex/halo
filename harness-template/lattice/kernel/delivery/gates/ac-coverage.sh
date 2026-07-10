@@ -165,7 +165,7 @@ while IFS= read -r ac; do
 
   if [[ -n "$func_name" ]]; then
     echo "| $ac | $desc | \`$func_name\` | ✅ |"
-    ((COVERED_COUNT++))
+    ((COVERED_COUNT++)) || true
     record_finding "$ac" "covered" "$func_name" "$desc"
   else
     echo "| $ac | $desc | — | ❌ Uncovered |"
@@ -189,7 +189,7 @@ if [[ "$DEEP_MODE" == "true" ]] && [[ -n "$TEST_FILES" ]]; then
       [[ -z "$test_file" ]] && continue
       if grep -A 5 "$func_name" "$test_file" 2>/dev/null | grep -qiE 't\.Skip|pytest\.skip|\.skip\(|pending\('; then
         echo "  ⚠️  $ac ($func_name): contains Skip/Pending — test not actually running"
-        ((DEEP_WARNINGS++))
+        ((DEEP_WARNINGS++)) || true
         record_finding "$ac" "warning" "$func_name" "contains Skip/Pending"
       fi
 
@@ -199,7 +199,7 @@ if [[ "$DEEP_MODE" == "true" ]] && [[ -n "$TEST_FILES" ]]; then
         has_assert=$(echo "$func_body" | grep -ciE 'assert|expect|should|require|Equal|Error|Nil|True|False|Contains|Len' || true)
         if [[ "$has_assert" -eq 0 ]]; then
           echo "  ⚠️  $ac ($func_name): no assertions detected — may be empty test"
-          ((DEEP_WARNINGS++))
+          ((DEEP_WARNINGS++)) || true
           record_finding "$ac" "warning" "$func_name" "no assertions detected"
         fi
       fi
