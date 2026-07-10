@@ -283,7 +283,7 @@ if [[ "$PLUGIN_COUNT" -gt 0 ]]; then
       record_finding "plugin" "pass" "$plugin_name: no drift"
     else
       echo "  ❌ $plugin_name: drift detected"
-      ((DRIFT++))
+      ((DRIFT++)) || true
       record_finding "plugin" "drift" "$plugin_name: drift detected"
     fi
   done

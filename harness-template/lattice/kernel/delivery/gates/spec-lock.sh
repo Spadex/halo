@@ -89,7 +89,7 @@ case "$ACTION" in
       if [[ -n "$LOCK_TIME" ]] && [[ $((NOW - LOCK_TIME)) -ge $LOCK_TTL ]]; then
         rm -f "$lock"
         echo "  🗑️  $(basename "$lock")"
-        ((CLEANED++))
+        ((CLEANED++)) || true
       fi
     done
     echo "Done: $CLEANED expired locks cleaned"
