@@ -12,7 +12,7 @@
     <a href="SUPPORT.md">支持</a>
   </p>
   <p align="center">
-    <a href="https://github.com/zdolphin07-dotcom/lattice/actions/workflows/shellcheck.yml"><img alt="Shellcheck" src="https://github.com/zdolphin07-dotcom/lattice/actions/workflows/shellcheck.yml/badge.svg"></a>
+    <a href="https://github.com/Spadex/halo/actions/workflows/shellcheck.yml"><img alt="Shellcheck" src="https://github.com/Spadex/halo/actions/workflows/shellcheck.yml/badge.svg"></a>
     <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg">
     <img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg">
     <img alt="Runtime" src="https://img.shields.io/badge/runtime-Bash%203.2%2B-informational.svg">
@@ -100,10 +100,10 @@ Lattice 设计为安装在业务仓库内的工程控制面，因此默认遵守
 ```bash
 # 在你的业务仓库内执行
 cd /path/to/your-project
-bash <(curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh) --init
+bash <(curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh) --init
 
 # 或先本地克隆，再安装到当前业务仓库
-git clone https://github.com/zdolphin07-dotcom/lattice.git /tmp/lattice
+git clone https://github.com/Spadex/halo.git /tmp/lattice
 /tmp/lattice/install.sh "$PWD" --init
 ```
 
@@ -114,7 +114,7 @@ git clone https://github.com/zdolphin07-dotcom/lattice.git /tmp/lattice
 对外发布前请确认 remote install URL 可匿名访问：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/install.sh >/tmp/lattice-install.sh
+curl -fsSL https://raw.githubusercontent.com/Spadex/halo/main/install.sh >/tmp/lattice-install.sh
 ```
 
 如果这里返回 `404`，说明仓库或 raw URL 尚未对外公开；请先切换仓库可见性，或改用公开 release/tag 地址。商业化发布建议默认使用 tag URL，`main` 只作为开发版安装入口。
@@ -122,8 +122,8 @@ curl -fsSL https://raw.githubusercontent.com/zdolphin07-dotcom/lattice/main/inst
 ### 运行示例
 
 ```bash
-git clone https://github.com/zdolphin07-dotcom/lattice.git
-cd lattice
+git clone https://github.com/Spadex/halo.git
+cd halo
 bash examples/go-gin-gorm/try-it.sh
 ```
 
