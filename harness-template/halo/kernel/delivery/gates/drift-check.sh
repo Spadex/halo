@@ -279,12 +279,9 @@ if [[ "$PLUGIN_COUNT" -gt 0 ]]; then
 
     printf "  🔌 %s: %s\n" "$plugin_name" "$plugin_run"
     if bash -c "$plugin_run" 2>&1 | sed 's/^/    /'; then
-      echo "  ✅ $plugin_name: no drift"
-      record_finding "plugin" "pass" "$plugin_name: no drift"
+      ok "$plugin_name: no drift"
     else
-      echo "  ❌ $plugin_name: drift detected"
-      DRIFT=$((DRIFT + 1))
-      record_finding "plugin" "drift" "$plugin_name: drift detected"
+      drift "$plugin_name: drift detected"
     fi
   done
 fi
