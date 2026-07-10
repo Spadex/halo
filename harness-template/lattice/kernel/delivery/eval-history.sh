@@ -120,9 +120,9 @@ if [[ "$RUN_TOTAL" -gt 0 ]]; then
   for file in "${EVAL_FILES[@]}"; do
     status="$(json_get "$file" '.pipeline.status')"
     case "$status" in
-      pass) ((PASS_TOTAL++)) || true ;;
-      fail) ((FAIL_TOTAL++)) || true ;;
-      escalation) ((ESCALATION_TOTAL++)) || true ;;
+      pass) PASS_TOTAL=$((PASS_TOTAL + 1)) ;;
+      fail) FAIL_TOTAL=$((FAIL_TOTAL + 1)) ;;
+      escalation) ESCALATION_TOTAL=$((ESCALATION_TOTAL + 1)) ;;
     esac
     AC_TOTAL=$((AC_TOTAL + $(json_num "$file" '.metrics.ac_total')))
     AC_COVERED=$((AC_COVERED + $(json_num "$file" '.metrics.ac_covered')))
@@ -138,12 +138,12 @@ if [[ "$RUN_TOTAL" -gt 0 ]]; then
     TDD_INVALID=$((TDD_INVALID + $(json_num "$file" '.metrics.tdd_invalid')))
     retry_count="$(json_num "$file" '.loop_state.retry_count')"
     RETRY_TOTAL=$((RETRY_TOTAL + retry_count))
-    [[ "$retry_count" -gt 0 ]] && ((RETRY_RUNS++)) || true
+    if [[ "$retry_count" -gt 0 ]]; then RETRY_RUNS=$((RETRY_RUNS + 1)); fi
     next_action="$(json_get "$file" '.loop_state.next_action')"
-    [[ "$next_action" == "retry" ]] && ((LOOP_RETRY_ACTIONS++)) || true
-    [[ "$next_action" == "escalate" ]] && ((LOOP_ESCALATE_ACTIONS++)) || true
+    if [[ "$next_action" == "retry" ]]; then LOOP_RETRY_ACTIONS=$((LOOP_RETRY_ACTIONS + 1)); fi
+    if [[ "$next_action" == "escalate" ]]; then LOOP_ESCALATE_ACTIONS=$((LOOP_ESCALATE_ACTIONS + 1)); fi
     learn_draft="$(json_get "$file" '.loop_state.learn_draft')"
-    [[ -n "$learn_draft" ]] && ((LEARN_DRAFT_TOTAL++)) || true
+    if [[ -n "$learn_draft" ]]; then LEARN_DRAFT_TOTAL=$((LEARN_DRAFT_TOTAL + 1)); fi
   done
 fi
 
@@ -152,14 +152,14 @@ if [[ "$OUTCOME_TOTAL" -gt 0 ]]; then
     outcome_type="$(json_get "$file" '.outcome.type')"
     outcome_severity="$(json_get "$file" '.outcome.severity')"
     case "$outcome_type" in
-      review_finding) ((OUTCOME_REVIEW_FINDING++)) || true ;;
-      rework) ((OUTCOME_REWORK++)) || true ;;
-      escaped_defect) ((OUTCOME_ESCAPED_DEFECT++)) || true ;;
-      incident) ((OUTCOME_INCIDENT++)) || true ;;
-      success) ((OUTCOME_SUCCESS++)) || true ;;
+      review_finding) OUTCOME_REVIEW_FINDING=$((OUTCOME_REVIEW_FINDING + 1)) ;;
+      rework) OUTCOME_REWORK=$((OUTCOME_REWORK + 1)) ;;
+      escaped_defect) OUTCOME_ESCAPED_DEFECT=$((OUTCOME_ESCAPED_DEFECT + 1)) ;;
+      incident) OUTCOME_INCIDENT=$((OUTCOME_INCIDENT + 1)) ;;
+      success) OUTCOME_SUCCESS=$((OUTCOME_SUCCESS + 1)) ;;
     esac
     case "$outcome_severity" in
-      high|critical) ((OUTCOME_HIGH_OR_CRITICAL++)) || true ;;
+      high|critical) OUTCOME_HIGH_OR_CRITICAL=$((OUTCOME_HIGH_OR_CRITICAL + 1)) ;;
     esac
   done
 fi

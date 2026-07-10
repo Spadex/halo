@@ -12,8 +12,8 @@ FAIL=0
 SANDBOX=""
 TARGET_INIT_SANDBOX=""
 
-pass() { ((PASS++)) || true; printf "  ✅ %s\n" "$*"; }
-fail() { ((FAIL++)) || true; printf "  ❌ %s\n" "$*"; }
+pass() { PASS=$((PASS + 1)); printf "  ✅ %s\n" "$*"; }
+fail() { FAIL=$((FAIL + 1)); printf "  ❌ %s\n" "$*"; }
 
 cleanup() {
   if [[ -n "$SANDBOX" ]] && [[ -d "$SANDBOX" ]]; then

@@ -72,7 +72,7 @@ while IFS= read -r file; do
   for kw in "${KEYWORDS[@]}"; do
     if echo "$haystack" | grep -qi -- "$kw"; then
       print_file "$file"
-      ((MATCHED++)) || true
+      MATCHED=$((MATCHED + 1))
       break
     fi
   done

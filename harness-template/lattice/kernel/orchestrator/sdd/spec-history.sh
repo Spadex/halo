@@ -74,10 +74,10 @@ SPEC_LIST=""
 for file in "${EVENT_FILES[@]}"; do
   spec_id="$(json_get "$file" '.spec_id')"
   [[ -n "$spec_id" ]] && SPEC_LIST+="$spec_id"$'\n'
-  [[ "$(json_get "$file" '.force')" == "true" ]] && ((FORCED_TOTAL++)) || true
+  if [[ "$(json_get "$file" '.force')" == "true" ]]; then FORCED_TOTAL=$((FORCED_TOTAL + 1)); fi
   case "$(json_get "$file" '.transition_type')" in
-    noop) ((NOOP_TOTAL++)) || true ;;
-    *) ((ADVANCE_TOTAL++)) || true ;;
+    noop) NOOP_TOTAL=$((NOOP_TOTAL + 1)) ;;
+    *) ADVANCE_TOTAL=$((ADVANCE_TOTAL + 1)) ;;
   esac
 done
 

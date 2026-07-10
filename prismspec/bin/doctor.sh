@@ -11,9 +11,9 @@ PASS=0
 FAIL=0
 WARN=0
 
-pass() { ((PASS++)) || true; printf "  ✅ %s\n" "$*"; }
-fail() { ((FAIL++)) || true; printf "  ❌ %s\n" "$*"; }
-warn() { ((WARN++)) || true; printf "  ⚠️  %s\n" "$*"; }
+pass() { PASS=$((PASS + 1)); printf "  ✅ %s\n" "$*"; }
+fail() { FAIL=$((FAIL + 1)); printf "  ❌ %s\n" "$*"; }
+warn() { WARN=$((WARN + 1)); printf "  ⚠️  %s\n" "$*"; }
 info() { printf "  ℹ️  %s\n" "$*"; }
 
 check_file() {

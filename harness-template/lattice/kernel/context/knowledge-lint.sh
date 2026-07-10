@@ -60,7 +60,7 @@ file_list() {
 
 warn_issue() {
   local file="$1" code="$2" message="$3"
-  ((WARNINGS++)) || true
+  WARNINGS=$((WARNINGS + 1))
   printf 'WARN [%s] %s: %s\n' "$code" "$(rel_path "$file")" "$message"
 }
 
@@ -178,7 +178,7 @@ echo ""
 FILES=0
 while IFS= read -r file; do
   [[ -n "$file" ]] || continue
-  ((FILES++)) || true
+  FILES=$((FILES + 1))
   check_metadata "$file"
   check_source "$file"
   check_placeholders "$file"
