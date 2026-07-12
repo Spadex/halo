@@ -139,7 +139,7 @@ if [[ -n "$TEST_FILES" ]]; then
     [[ -z "$test_file" ]] && continue
     while IFS= read -r match_line; do
       [[ -z "$match_line" ]] && continue
-      ac_num=$(echo "$match_line" | grep -oE 'AC[_-]?([0-9]+)' | grep -oE '[0-9]+' | head -1)
+      ac_num=$(echo "$match_line" | grep -ioE 'AC[_-]?([0-9]+)' | grep -oE '[0-9]+' | head -1 || true)
       [[ -z "$ac_num" ]] && continue
       ac_num=$((10#$ac_num))
       func_name=$(echo "$match_line" | grep -oE 'func [A-Za-z0-9_]+|def [a-z_0-9]+|(describe|it|test)\(' | head -1 | sed 's/^func //' | sed 's/^def //' | sed 's/($//')

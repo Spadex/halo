@@ -1139,6 +1139,35 @@ else
   cat /tmp/halo-ac-json.log | tail -20
 fi
 
+# ── 7b. AC-coverage python covered path (regression: lowercase `def test_ac` must be counted, not crash) ──
+PY_SPEC="$SANDBOX/py-ac-coverage-spec.md"
+cat > "$PY_SPEC" << 'PYSPEC'
+# Spec: Python AC coverage regression
+
+| AC | Description |
+|----|-------------|
+| AC-1 | Lowercase python test is counted as covered |
+PYSPEC
+PY_TEST_DIR="$SANDBOX/py-ac-coverage"
+mkdir -p "$PY_TEST_DIR"
+cat > "$PY_TEST_DIR/test_ac.py" << 'PYTEST'
+def test_ac1():
+    assert True
+PYTEST
+PY_ORIG_LANG=$(yq -r '.project.language' "$SANDBOX/halo/manifest.yaml")
+yq -i '.project.language = "python"' "$SANDBOX/halo/manifest.yaml"
+PY_EXIT=0
+PY_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/ac-coverage.sh" "$PY_SPEC" "$PY_TEST_DIR" 2>&1) || PY_EXIT=$?
+yq -i ".project.language = \"$PY_ORIG_LANG\"" "$SANDBOX/halo/manifest.yaml"
+if [[ $PY_EXIT -eq 0 ]] \
+  && echo "$PY_OUTPUT" | grep -q "AC Coverage Matrix" \
+  && echo "$PY_OUTPUT" | grep -q "1/1"; then
+  pass "ac-coverage counts python def test_ac tests as covered"
+else
+  fail "ac-coverage python coverage regression (exit=$PY_EXIT)"
+  echo "$PY_OUTPUT" | tail -20
+fi
+
 DRIFT_JSON="$SANDBOX/halo/state/drift-smoke.json"
 bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" "$SANDBOX" --json-out="$DRIFT_JSON" >/tmp/halo-drift-json.log 2>&1 || true
 if yq -e '.gate == "drift-check" and .metrics.drift_count == 0 and (.findings | length > 0)' "$DRIFT_JSON" >/dev/null 2>&1; then
