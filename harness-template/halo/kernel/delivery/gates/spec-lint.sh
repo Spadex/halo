@@ -148,7 +148,9 @@ else
     fail "AC number gaps:$GAPS"
   fi
 
-  TABLE_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | { grep -oE 'AC-[0-9]+' || true; } | sort)
+  # Take only each row's first-cell AC as its row key; an in-cell cross-reference
+  # to another AC (e.g. "see AC-13") must not count toward duplicate detection.
+  TABLE_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | sed -E 's/^\| *(AC-[0-9]+).*/\1/' | sort)
   TABLE_DUPES=$(echo "$TABLE_ACS" | uniq -d)
   if [[ -z "$TABLE_DUPES" ]]; then
     pass "No duplicate AC rows in table"

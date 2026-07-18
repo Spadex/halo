@@ -546,6 +546,23 @@ else
   echo "$MODERN_LINT_OUTPUT" | tail -10
 fi
 
+# Regression: an AC cell that cross-references another AC (e.g. "see AC-1") must
+# not be counted as a duplicate row. Only the first-cell AC is a row key.
+mkdir -p "$SANDBOX/halo/specs/xref-ac"
+sed 's/| Returns item |/| Returns item (see AC-1) |/' \
+  "$SANDBOX/halo/specs/modern-feature/spec.md" > "$SANDBOX/halo/specs/xref-ac/spec.md"
+
+XREF_LINT_EXIT=0
+XREF_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/spec-lint.sh" "$SANDBOX/halo/specs/xref-ac/spec.md" 2>&1) || XREF_LINT_EXIT=$?
+
+if [[ $XREF_LINT_EXIT -eq 0 ]] && ! echo "$XREF_LINT_OUTPUT" | grep -q "Duplicate AC rows"; then
+  pass "spec-lint tolerates AC cross-reference in cell (no false duplicate)"
+else
+  fail "spec-lint false-flagged AC cross-reference as duplicate (exit=$XREF_LINT_EXIT)"
+  echo "$XREF_LINT_OUTPUT" | grep -iE 'duplicate|AC ' | head -10
+fi
+rm -rf "$SANDBOX/halo/specs/xref-ac"
+
 PRISMSPEC_SPEC_LINT_EXIT=0
 PRISMSPEC_SPEC_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" spec 2>&1) || PRISMSPEC_SPEC_LINT_EXIT=$?
 if [[ $PRISMSPEC_SPEC_LINT_EXIT -eq 0 ]]; then
