@@ -106,6 +106,35 @@ case "$LANG" in
     ;;
 esac
 
+# Shape of a test identifier the spec author may write in an AC row's last
+# ("verification") cell. This is the spec's OWN, authoritative AC→test binding —
+# unlike a bare AC number it is spec-local, so it cannot collide across specs.
+# Node test titles are free-form strings, not stable identifiers, so no token is
+# extracted for node; those ACs use the numeric fallback below.
+case "$LANG" in
+  go)                          DECL_TOKEN_REGEX='Test[A-Za-z0-9_]+' ;;
+  python)                      DECL_TOKEN_REGEX='test_[a-z0-9_]+' ;;
+  node|javascript|typescript)  DECL_TOKEN_REGEX='' ;;
+  *)                           DECL_TOKEN_REGEX='Test[A-Za-z0-9_]+' ;;
+esac
+
+# A test that a DIFFERENT spec binds in its own AC table is owned by that spec and
+# must never satisfy this spec's ACs, even when they share an AC number (the
+# cross-spec test_acN collision this gate previously mis-attributed). Collect that
+# owned set once from sibling specs so the numeric fallback can exclude it.
+SPECS_DIR=$(manifest_get ".specs.dir"); SPECS_DIR="${SPECS_DIR:-halo/specs}"
+SPECS_ABS="$PROJECT_ROOT/$SPECS_DIR"
+build_foreign_owned() {
+  [[ -n "$DECL_TOKEN_REGEX" && -d "$SPECS_ABS" ]] || return 0
+  local f
+  while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    [[ "$f" -ef "$SPEC" ]] && continue
+    { grep -E '^\| *AC-[0-9]+ *\|' "$f" 2>/dev/null || true; } | grep -oE "$DECL_TOKEN_REGEX" 2>/dev/null || true
+  done < <(find "$SPECS_ABS" -name 'spec.md' -type f 2>/dev/null || true)
+}
+FOREIGN_OWNED=$(build_foreign_owned | sort -u)
+
 SPEC_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | { grep -o 'AC-[0-9]*' || true; } | sort -t- -k2 -n | uniq)
 SPEC_COUNT=$(echo "$SPEC_ACS" | grep -c . || true)
 
@@ -143,7 +172,7 @@ if [[ -n "$TEST_FILES" ]]; then
       [[ -z "$ac_num" ]] && continue
       ac_num=$((10#$ac_num))
       func_name=$(echo "$match_line" | grep -oE 'func [A-Za-z0-9_]+|def [a-z_0-9]+|(describe|it|test)\(' | head -1 | sed 's/^func //' | sed 's/^def //' | sed 's/($//')
-      COVERAGE_ROWS+="$ac_num|${func_name:-unknown}"$'\n'
+      COVERAGE_ROWS+="$ac_num|${func_name:-unknown}|$test_file"$'\n'
     done < <(grep -E "$FUNC_REGEX" "$test_file" 2>/dev/null || true)
   done <<< "$TEST_FILES"
 fi
@@ -156,21 +185,54 @@ echo "|----|------------------|---------------|--------|"
 
 COVERED_COUNT=0
 UNCOVERED=""
+RESOLVED=""   # "num|status|func" per AC; reused by deep mode so it analyzes the resolved test
 while IFS= read -r ac; do
   num=${ac#AC-}
-  desc=$(grep -E "^\| *$ac *\|" "$SPEC" | head -1 | awk -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
+  row=$(grep -E "^\| *$ac *\|" "$SPEC" | head -1 || true)
+  desc=$(printf '%s' "$row" | awk -F'|' '{gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
   [[ -z "$desc" ]] && desc="—"
 
-  func_name=$(printf '%s\n' "$COVERAGE_ROWS" | grep "^${num}|" 2>/dev/null | head -1 | cut -d'|' -f2 || true)
+  # The spec's own authoritative binding lives in the AC row's last non-empty cell.
+  verif=$(printf '%s' "$row" | awk -F'|' '{for(i=NF;i>=1;i--){gsub(/^[ \t]+|[ \t]+$/,"",$i); if($i!=""){print $i; exit}}}')
+  decl=""
+  [[ -n "$DECL_TOKEN_REGEX" ]] && decl=$(printf '%s' "$verif" | grep -oE "$DECL_TOKEN_REGEX" | head -1 || true)
+
+  func_name=""
+  note=""
+  if [[ -n "$decl" ]]; then
+    # Tier 1 — spec names a specific test: covered iff that exact function exists.
+    if printf '%s\n' "$COVERAGE_ROWS" | awk -F'|' -v d="$decl" '$2==d{f=1} END{exit !f}'; then
+      func_name="$decl"
+    else
+      note="declared test \`$decl\` not found"
+    fi
+  else
+    # Tier 2 — no declared test: numeric fallback, excluding tests owned by other
+    # specs, with cross-spec ambiguity treated as unproven (not silently covered).
+    cands=$(printf '%s\n' "$COVERAGE_ROWS" | awk -F'|' -v n="$num" '$1==n && $2!="unknown"{print $2}' | sort -u | sed '/^$/d')
+    if [[ -n "$FOREIGN_OWNED" && -n "$cands" ]]; then
+      cands=$(comm -23 <(printf '%s\n' "$cands") <(printf '%s\n' "$FOREIGN_OWNED"))
+    fi
+    ccount=$(printf '%s' "$cands" | grep -c . || true)
+    if [[ "$ccount" -eq 1 ]]; then
+      func_name=$(printf '%s\n' "$cands" | head -1)
+    elif [[ "$ccount" -ge 2 ]]; then
+      note="ambiguous across specs: $(printf '%s' "$cands" | tr '\n' ' ' | sed 's/ *$//')"
+    else
+      note="no spec-owned test found"
+    fi
+  fi
 
   if [[ -n "$func_name" ]]; then
     echo "| $ac | $desc | \`$func_name\` | ✅ |"
     COVERED_COUNT=$((COVERED_COUNT + 1))
+    RESOLVED+="$num|covered|$func_name"$'\n'
     record_finding "$ac" "covered" "$func_name" "$desc"
   else
-    echo "| $ac | $desc | — | ❌ Uncovered |"
+    echo "| $ac | $desc | — | ❌ ${note:-Uncovered} |"
     UNCOVERED="$UNCOVERED $ac"
-    record_finding "$ac" "uncovered" "" "$desc"
+    RESOLVED+="$num|uncovered|"$'\n'
+    record_finding "$ac" "uncovered" "" "${desc}${note:+ — $note}"
   fi
 done <<< "$SPEC_ACS"
 
@@ -182,7 +244,7 @@ if [[ "$DEEP_MODE" == "true" ]] && [[ -n "$TEST_FILES" ]]; then
 
   while IFS= read -r ac; do
     num=${ac#AC-}
-    func_name=$(printf '%s\n' "$COVERAGE_ROWS" | grep "^${num}|" 2>/dev/null | head -1 | cut -d'|' -f2 || true)
+    func_name=$(printf '%s\n' "$RESOLVED" | awk -F'|' -v n="$num" '$1==n && $2=="covered"{print $3; exit}')
     [[ -z "$func_name" ]] && continue
 
     while IFS= read -r test_file; do

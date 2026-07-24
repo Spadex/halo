@@ -1,0 +1,21 @@
+{
+  "schema_version": "halo.spec-transition.v1",
+  "kind": "spec-transition",
+  "spec_id": "layout-migration",
+  "spec_file": "halo/specs/layout-migration/spec.md",
+  "from_status": "implemented",
+  "to_status": "verified",
+  "transition_type": "advance",
+  "execution_mode": "tdd",
+  "changed_at": "2026-07-24T14:44:40Z",
+  "actor": "huxiao",
+  "force": false,
+  "expected_from": "implemented",
+  "checks": {
+    "transition_allowed": true,
+    "required_artifacts": true,
+    "plan_lint": true,
+    "task_evidence_lint": true,
+    "spec_state_lint": true
+  }
+}

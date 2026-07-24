@@ -1,0 +1,34 @@
+{
+  "gate": "ac-coverage",
+  "status": "pass",
+  "spec_file": "halo/specs/layout-migration/spec.md",
+  "language": "python",
+  "metrics": {
+    "ac_total": 19,
+    "ac_covered": 19,
+    "ac_uncovered": 0,
+    "coverage_percent": 100,
+    "deep_warnings": 0
+  },
+  "findings": [
+    {"ac":"AC-1","status":"covered","test":"test_ac1","message":"床贴北墙（近墙间隙≤20mm）、床头柜与床间隙≤50mm、另一件间隙>50mm"},
+    {"ac":"AC-2","status":"covered","test":"test_ac2","message":"两件家具中心沿墙坐标差≤20mm；另一对差>20mm"},
+    {"ac":"AC-3","status":"covered","test":"test_ac3","message":"墙 x 0~3000、门占 150~1000、衣柜占 1200~2800"},
+    {"ac":"AC-4","status":"covered","test":"test_ac4_export_clears_stale_files","message":"同墙含窗与开口；另一无构件整墙"},
+    {"ac":"AC-5","status":"covered","test":"test_ac5_round_trip_layout","message":"窗帘与窗区间重叠（叠窗摆放），同墙另有衣柜"},
+    {"ac":"AC-6","status":"covered","test":"test_ac6_import_idempotent","message":"mounting_height=500、height=1500、源房高 2500，同墙有窗"},
+    {"ac":"AC-7","status":"covered","test":"test_ac7_import_rolls_back_on_invalid","message":"默认 SolverConfig"},
+    {"ac":"AC-8","status":"covered","test":"test_ac8_prune_flag_controls_deletion","message":"衣柜源相对区间宽 0.8，目标空间长与源不同"},
+    {"ac":"AC-9","status":"covered","test":"test_ac9_dry_run_reports_without_writing","message":"同一房含 wardrobe（高可变）、fridge（高不变）、bed（全不变），目标房高与源不同"},
+    {"ac":"AC-10","status":"covered","test":"test_ac10","message":"请求项带 size 的衣柜"},
+    {"ac":"AC-11","status":"covered","test":"test_ac11","message":"① 请求含映射外 category；② 请求合法但库候选家具含映射外 category"},
+    {"ac":"AC-12","status":"covered","test":"test_ac12","message":"源方案床贴墙、间隙 0"},
+    {"ac":"AC-13","status":"covered","test":"test_ac13","message":"床+床头柜源邻接（间隙 0）"},
+    {"ac":"AC-14","status":"covered","test":"test_ac14","message":"源方案两件轴对齐"},
+    {"ac":"AC-15","status":"covered","test":"test_ac15","message":"无约束冲突的单件贴墙家具，目标墙长/构件与源不同"},
+    {"ac":"AC-16","status":"covered","test":"test_ac16","message":"构造邻接与相对区间不可同时满足的场景"},
+    {"ac":"AC-17","status":"covered","test":"test_ac17","message":"最佳对齐为镜像的候选"},
+    {"ac":"AC-18","status":"covered","test":"test_ac18","message":"居中茶几（不贴墙），与沙发邻接"},
+    {"ac":"AC-19","status":"covered","test":"test_ac19","message":"带 recorder 求解含冲突场景的 case"}
+  ]
+}
