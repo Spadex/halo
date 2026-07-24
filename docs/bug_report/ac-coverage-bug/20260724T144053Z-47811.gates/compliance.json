@@ -1,0 +1,17 @@
+{
+  "gate": "compliance",
+  "status": "warn",
+  "spec_file": "halo/specs/layout-migration/spec.md",
+  "strict": false,
+  "metrics": {
+    "warnings": 3,
+    "knowledge_files": 4
+  },
+  "findings": [
+    {"check":"context_basis","status":"pass","message":"spec includes Context Basis"},
+    {"check":"context_structure","status":"pass","message":"structured decision sections found"},
+    {"check":"knowledge_reference","status":"warning","message":"spec does not reference project knowledge paths"},
+    {"check":"source_trace","status":"warning","message":"context basis does not clearly record source categories"},
+    {"check":"ambiguity_tracking","status":"warning","message":"no ambiguity or gap records found"}
+  ]
+}

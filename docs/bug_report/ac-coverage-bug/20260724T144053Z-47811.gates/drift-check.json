@@ -1,0 +1,18 @@
+{
+  "gate": "drift-check",
+  "status": "pass",
+  "spec_file": "halo/specs/layout-migration/spec.md",
+  "language": "python",
+  "metrics": {
+    "drift_count": 0,
+    "spec_tables": 0,
+    "spec_routes": 0,
+    "spec_error_codes": 0
+  },
+  "findings": [
+    {"category":"ddl","status":"skip","message":"No DDL in spec"},
+    {"category":"routes","status":"skip","message":"No routes in spec API table"},
+    {"category":"error_codes","status":"skip","message":"No business error codes in spec"},
+    {"category":"seed_sql","status":"skip","message":"fixtures/seed.sql not found"}
+  ]
+}
