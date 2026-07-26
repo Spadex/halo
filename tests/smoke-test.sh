@@ -563,6 +563,44 @@ else
 fi
 rm -rf "$SANDBOX/halo/specs/xref-ac"
 
+# Regression: a spec may declare ACs with a non-1 start point that is internally
+# contiguous (frontend increment specs continue a global AC numbering, e.g.
+# AC-12..13, so bridge test names stay collision-free). Prose/in-cell cross-refs
+# to lower ACs (e.g. "see AC-3") must NOT be treated as declared ACs. spec-lint
+# must not report a false "AC number gaps" for this shape.
+mkdir -p "$SANDBOX/halo/specs/global-ac"
+sed -e 's/| AC-1 |/| AC-12 |/' -e 's/| AC-2 |/| AC-13 |/' \
+  -e 's/Returns item |/Returns item (see AC-3) |/' \
+  "$SANDBOX/halo/specs/modern-feature/spec.md" > "$SANDBOX/halo/specs/global-ac/spec.md"
+
+GLOBAL_AC_LINT_EXIT=0
+GLOBAL_AC_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/spec-lint.sh" "$SANDBOX/halo/specs/global-ac/spec.md" 2>&1) || GLOBAL_AC_LINT_EXIT=$?
+
+if [[ $GLOBAL_AC_LINT_EXIT -eq 0 ]] && ! echo "$GLOBAL_AC_LINT_OUTPUT" | grep -q "AC number gaps"; then
+  pass "spec-lint accepts non-1 start with contiguous table ACs (no false gap)"
+else
+  fail "spec-lint false-flagged non-1 start AC numbering (exit=$GLOBAL_AC_LINT_EXIT)"
+  echo "$GLOBAL_AC_LINT_OUTPUT" | grep -iE 'AC number|gaps|ACs found' | head -10
+fi
+rm -rf "$SANDBOX/halo/specs/global-ac"
+
+# Regression (guard): a real internal gap in the AC table (AC-12, AC-14 — missing
+# AC-13) must still be reported, so the non-1-start relaxation does not blind the
+# gate to genuinely missing declared ACs.
+mkdir -p "$SANDBOX/halo/specs/real-gap-ac"
+sed -e 's/| AC-1 |/| AC-12 |/' -e 's/| AC-2 |/| AC-14 |/' \
+  "$SANDBOX/halo/specs/modern-feature/spec.md" > "$SANDBOX/halo/specs/real-gap-ac/spec.md"
+
+REAL_GAP_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/spec-lint.sh" "$SANDBOX/halo/specs/real-gap-ac/spec.md" 2>&1) || true
+
+if echo "$REAL_GAP_LINT_OUTPUT" | grep -q "AC number gaps: 13"; then
+  pass "spec-lint still reports a real internal AC gap (missing AC-13)"
+else
+  fail "spec-lint missed a real internal AC gap (missing AC-13)"
+  echo "$REAL_GAP_LINT_OUTPUT" | grep -iE 'AC number|gaps|ACs found' | head -10
+fi
+rm -rf "$SANDBOX/halo/specs/real-gap-ac"
+
 PRISMSPEC_SPEC_LINT_EXIT=0
 PRISMSPEC_SPEC_LINT_OUTPUT=$(bash "$SANDBOX/prismspec/bin/lint.sh" "$SANDBOX/halo/specs/modern-feature/spec.md" spec 2>&1) || PRISMSPEC_SPEC_LINT_EXIT=$?
 if [[ $PRISMSPEC_SPEC_LINT_EXIT -eq 0 ]]; then

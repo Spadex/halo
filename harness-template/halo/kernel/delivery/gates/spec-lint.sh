@@ -125,7 +125,12 @@ echo ""
 # ── 2. AC numbering continuity ──
 echo "── AC numbering check ──"
 
-AC_NUMS=$({ grep -oE 'AC-[0-9]+' "$SPEC" || true; } | sed 's/AC-//' | sort -n | uniq)
+# Only each AC table row's first-cell AC counts as a declared AC. Prose
+# cross-references (e.g. "existing AC-3/7/8/9/10/11 must not regress", "see AC-13")
+# and in-cell references are NOT declarations, so they must not drive numbering,
+# count, or duplicate detection. This matches ac-coverage's "Spec AC count" source.
+TABLE_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | sed -E 's/^\| *(AC-[0-9]+).*/\1/' | sort)
+AC_NUMS=$(echo "$TABLE_ACS" | { grep -oE '[0-9]+' || true; } | sort -n | uniq)
 AC_COUNT=$(echo "$AC_NUMS" | grep -c . || true)
 
 if [[ "$AC_COUNT" -eq 0 ]]; then
@@ -133,24 +138,28 @@ if [[ "$AC_COUNT" -eq 0 ]]; then
 else
   pass "$AC_COUNT ACs found"
 
-  EXPECTED=1
+  # Declared ACs need only be internally sequential (adjacent numbers differ by 1).
+  # The start point may be non-1: frontend increment specs continue a global AC
+  # numbering (e.g. AC-12..22) so their bridge test names stay collision-free.
+  # A real internal gap (e.g. AC-12,14 missing 13) is still reported.
+  PREV=""
+  FIRST=""
   GAPS=""
   while IFS= read -r num; do
-    if [[ "$num" -ne "$EXPECTED" ]]; then
-      GAPS="$GAPS $EXPECTED"
+    [[ -z "$num" ]] && continue
+    [[ -z "$FIRST" ]] && FIRST="$num"
+    if [[ -n "$PREV" && "$num" -ne $((PREV + 1)) ]]; then
+      GAPS="$GAPS $((PREV + 1))"
     fi
-    EXPECTED=$((num + 1))
+    PREV="$num"
   done <<< "$AC_NUMS"
 
   if [[ -z "$GAPS" ]]; then
-    pass "AC numbers sequential (1-$((EXPECTED - 1)))"
+    pass "AC numbers sequential ($FIRST-$PREV)"
   else
     fail "AC number gaps:$GAPS"
   fi
 
-  # Take only each row's first-cell AC as its row key; an in-cell cross-reference
-  # to another AC (e.g. "see AC-13") must not count toward duplicate detection.
-  TABLE_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | sed -E 's/^\| *(AC-[0-9]+).*/\1/' | sort)
   TABLE_DUPES=$(echo "$TABLE_ACS" | uniq -d)
   if [[ -z "$TABLE_DUPES" ]]; then
     pass "No duplicate AC rows in table"
