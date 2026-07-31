@@ -67,6 +67,26 @@ task_body() {
   ' "$file"
 }
 
+task_mode() {
+  local body="$1" line value
+  line="$(grep -Eim1 '(Mode|模式)[[:space:]]*[:：][[:space:]]*`?(plan|tdd)`?' <<< "$body" || true)"
+  [[ -n "$line" ]] || return 0
+  value="$(sed -E 's/.*(Mode|模式)[[:space:]]*[:：][[:space:]]*//; s/`//g; s/[^A-Za-z].*$//' <<< "$line" | tr '[:upper:]' '[:lower:]')"
+  case "$value" in
+    plan|tdd) printf '%s' "$value" ;;
+  esac
+}
+
+execution_mode() {
+  local spec="$1" plan="$2" value=""
+  if [[ -n "$spec" && -f "$spec" ]]; then
+    value="$(frontmatter_value "execution_mode" "$spec")"
+  fi
+  [[ "$value" == "plan" || "$value" == "tdd" ]] || value="$(grep -Eim1 'Execution mode:[[:space:]]*(plan|tdd)' "$plan" 2>/dev/null | sed -E 's/.*Execution mode:[[:space:]]*//; s/[`"]//g' || true)"
+  [[ "$value" == "plan" || "$value" == "tdd" ]] || value="$(grep -Eim1 '执行模式[[:space:]]*[:：][[:space:]]*(plan|tdd|`plan`|`tdd`)' "$plan" 2>/dev/null | sed -E 's/.*执行模式[[:space:]]*[:：][[:space:]]*//; s/[`"]//g' || true)"
+  printf '%s' "${value:-unknown}"
+}
+
 task_exists() {
   local task_id="$1" file="$2"
   grep -qE "^- \\[[ xX]\\] ${task_id}:" "$file"
@@ -83,18 +103,23 @@ valid_tdd_evidence() {
   yq -e '.kind == "tdd-evidence" and .status == "pass" and (.red.exit_code | tonumber) != 0 and (.green.exit_code | tonumber) == 0 and ((.ac_ids // []) | length > 0)' "$file" >/dev/null 2>&1
 }
 
+# Every AC the red task claims must have a red/green cycle recorded, not just one of them.
 red_task_has_cycle_evidence() {
-  local body="$1" ac evidence
+  local body="$1" ac evidence ac_count=0 matched
   while IFS= read -r ac; do
     [[ -n "$ac" ]] || continue
+    ac_count=$((ac_count + 1))
+    matched=false
     while IFS= read -r evidence; do
       [[ -n "$evidence" ]] || continue
       if valid_tdd_evidence "$evidence" && yq -r '.ac_ids[]?' "$evidence" 2>/dev/null | grep -qxF "$ac"; then
-        return 0
+        matched=true
+        break
       fi
     done < <(find "$EVIDENCE_ROOT" -path '*/tdd-evidence.json' -type f -print 2>/dev/null | sort)
+    [[ "$matched" == "true" ]] || return 1
   done < <(grep -oE 'AC-[0-9]+' <<< "$body" | sort -u || true)
-  return 1
+  [[ "$ac_count" -gt 0 ]]
 }
 
 mark_task_complete() {
@@ -154,13 +179,7 @@ case "$TASK_ID" in
   *) fail_complete "Invalid task id: $TASK_ID" ;;
 esac
 
-if [[ -f "$SPEC_FILE" ]]; then
-  MODE="$(frontmatter_value "execution_mode" "$SPEC_FILE")"
-fi
-if [[ -z "$MODE" || "$MODE" == "unknown" ]]; then
-  MODE="$(grep -Eim1 'Execution mode:[[:space:]]*(plan|tdd)' "$PLAN_FILE" 2>/dev/null | sed -E 's/.*Execution mode:[[:space:]]*//; s/[`"]//g' || true)"
-fi
-MODE="${MODE:-unknown}"
+MODE="$(execution_mode "$SPEC_FILE" "$PLAN_FILE")"
 
 task_exists "$TASK_ID" "$PLAN_FILE" || fail_complete "Task not found in plan.md: $TASK_ID"
 if task_is_complete "$TASK_ID" "$PLAN_FILE"; then
@@ -177,7 +196,11 @@ if [[ "$TASK_ID" == T* ]]; then
   TASK_DIR="$EVIDENCE_ROOT/$TASK_ID"
   [[ -f "$TASK_DIR/brief.md" ]] || fail_complete "$TASK_ID missing brief.md"
   [[ -f "$TASK_DIR/review-package.md" ]] || fail_complete "$TASK_ID missing review-package.md"
-  if [[ "$MODE" == "tdd" ]]; then
+  # The per-task `Mode:` / `模式：` field is mandatory in plan-lint, so it wins over
+  # the spec-level execution_mode; the spec level is only a fallback.
+  EFFECTIVE_MODE="$(task_mode "$BODY")"
+  EFFECTIVE_MODE="${EFFECTIVE_MODE:-$MODE}"
+  if [[ "$EFFECTIVE_MODE" == "tdd" ]]; then
     valid_tdd_evidence "$TASK_DIR/tdd-evidence.json" || fail_complete "$TASK_ID missing or invalid tdd-evidence.json"
   fi
 else

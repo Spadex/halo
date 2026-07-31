@@ -46,6 +46,36 @@ frontmatter_value() {
   ' "$file"
 }
 
+task_body() {
+  local task_id="$1" file="$2"
+  awk -v task_id="$task_id" '
+    $0 ~ "^- \\[[ xX]\\] " task_id ":" { in_task = 1; print; next }
+    in_task && /^- \[[ xX]\] (T[0-9]+|RED-[0-9]+):/ { exit }
+    in_task && /^##[[:space:]]+/ { exit }
+    in_task { print }
+  ' "$file"
+}
+
+task_mode() {
+  local body="$1" line value
+  line="$(grep -Eim1 '(Mode|模式)[[:space:]]*[:：][[:space:]]*`?(plan|tdd)`?' <<< "$body" || true)"
+  [[ -n "$line" ]] || return 0
+  value="$(sed -E 's/.*(Mode|模式)[[:space:]]*[:：][[:space:]]*//; s/`//g; s/[^A-Za-z].*$//' <<< "$line" | tr '[:upper:]' '[:lower:]')"
+  case "$value" in
+    plan|tdd) printf '%s' "$value" ;;
+  esac
+}
+
+execution_mode() {
+  local spec="$1" plan="$2" value=""
+  if [[ -n "$spec" && -f "$spec" ]]; then
+    value="$(frontmatter_value "execution_mode" "$spec")"
+  fi
+  [[ "$value" == "plan" || "$value" == "tdd" ]] || value="$(grep -Eim1 'Execution mode:[[:space:]]*(plan|tdd)' "$plan" 2>/dev/null | sed -E 's/.*Execution mode:[[:space:]]*//; s/[`"]//g' || true)"
+  [[ "$value" == "plan" || "$value" == "tdd" ]] || value="$(grep -Eim1 '执行模式[[:space:]]*[:：][[:space:]]*(plan|tdd|`plan`|`tdd`)' "$plan" 2>/dev/null | sed -E 's/.*执行模式[[:space:]]*[:：][[:space:]]*//; s/[`"]//g' || true)"
+  printf '%s' "${value:-unknown}"
+}
+
 completed_task_lines() {
   local file="$1"
   grep -E '^- \[[xX]\] T[0-9]+:' "$file" 2>/dev/null || true
@@ -68,15 +98,7 @@ SPEC_FILE="$SPEC_DIR/spec.md"
 SPEC_ID="$(basename "$SPEC_DIR")"
 PLAN_REL="$(rel_path "$PLAN_FILE")"
 EVIDENCE_ROOT="$PROJECT_ROOT/.halo/sdd/$SPEC_ID"
-MODE="unknown"
-
-if [[ -f "$SPEC_FILE" ]]; then
-  MODE="$(frontmatter_value "execution_mode" "$SPEC_FILE")"
-fi
-if [[ -z "$MODE" || "$MODE" == "unknown" ]]; then
-  MODE="$(grep -Eim1 'Execution mode:[[:space:]]*(plan|tdd)' "$PLAN_FILE" 2>/dev/null | sed -E 's/.*Execution mode:[[:space:]]*//; s/[`"]//g' || true)"
-fi
-MODE="${MODE:-unknown}"
+MODE="$(execution_mode "$SPEC_FILE" "$PLAN_FILE")"
 
 FAILS=0
 WARNS=0
@@ -107,12 +129,18 @@ while IFS= read -r line; do
     fail_msg "$task_id missing review-package.md"
   fi
 
-  if [[ "$MODE" == "tdd" ]]; then
+  # The per-task `Mode:` / `模式：` field is mandatory in plan-lint, so it wins over
+  # the spec-level execution_mode; the spec level is only a fallback.
+  effective_mode="$(task_mode "$(task_body "$task_id" "$PLAN_FILE")")"
+  effective_mode="${effective_mode:-$MODE}"
+  if [[ "$effective_mode" == "tdd" ]]; then
     if valid_tdd_evidence "$task_dir/tdd-evidence.json"; then
       pass_msg "$task_id tdd-evidence.json"
     else
       fail_msg "$task_id missing or invalid tdd-evidence.json"
     fi
+  elif [[ "$effective_mode" == "plan" ]]; then
+    pass_msg "$task_id plan mode (TDD evidence not required)"
   fi
 done < <(completed_task_lines "$PLAN_FILE")
 

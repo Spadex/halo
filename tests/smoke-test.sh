@@ -971,6 +971,294 @@ else
   [[ -f "$IMPLEMENTED_TRANSITION_EVENT" ]] && cat "$IMPLEMENTED_TRANSITION_EVENT"
 fi
 
+# ── 6d. Per-task execution mode in evidence gates ──
+echo ""
+echo "── 6d. Per-task execution mode ──"
+mkdir -p "$SANDBOX/halo/specs/mixed-mode"
+cat > "$SANDBOX/halo/specs/mixed-mode/spec.md" << 'MIXED_SPEC'
+---
+id: mixed-mode
+status: planned
+execution_mode: tdd
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Mixed Mode
+
+## Intent
+
+A tdd spec that also contains one regression-guard task declared as plan mode.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestAC1 |
+| AC-2 | Existing endpoints are untouched | Contract count stays the same | Regression guard |
+MIXED_SPEC
+cat > "$SANDBOX/halo/specs/mixed-mode/plan.md" << 'MIXED_PLAN'
+# Plan: Mixed Mode
+
+## Source
+
+- Spec: `halo/specs/mixed-mode/spec.md`
+- Execution mode: tdd
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Out-of-scope: export behavior.
+
+## Tasks
+
+- [ ] RED-1: Add failing test for AC-1
+  - Ref: AC-1
+  - Expected failure: handler does not create items yet
+  - Test file: `internal/handler/item_test.go`
+  - Verification: `go test ./internal/handler -run TestAC1_CreateItem`
+  - Done when:
+    - [ ] Expected failure is captured in `.halo/sdd/mixed-mode/T1/tdd-evidence.json`
+
+- [ ] T1: Add create behavior
+  - Ref: AC-1
+  - Mode: tdd
+  - Scope: Implement the smallest create path needed for AC-1.
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC1_CreateItem`
+  - Evidence:
+    - Brief: `.halo/sdd/mixed-mode/T1/brief.md`
+    - Review package: `.halo/sdd/mixed-mode/T1/review-package.md`
+  - Done when:
+    - [ ] AC-1 passes focused verification and evidence exists.
+
+- [ ] T2: 既有契约零变更回归护栏
+  - 覆盖验收：AC-2
+  - 模式：plan
+  - 范围：只断言既有端点契约数量未变，不新增行为，因此不存在合法的红。
+  - 涉及文件：`internal/handler/item.go`
+  - 验证方式：`go test ./internal/handler -run TestContractRegression`
+  - 证据：
+    - 任务简报：`.halo/sdd/mixed-mode/T2/brief.md`
+    - 评审包：`.halo/sdd/mixed-mode/T2/review-package.md`
+  - 完成条件：
+    - [ ] 回归命令通过且既有契约数量未变。
+MIXED_PLAN
+for mixed_task in T1 T2; do
+  mkdir -p "$SANDBOX/.halo/sdd/mixed-mode/$mixed_task"
+  printf '# Brief %s\n' "$mixed_task" > "$SANDBOX/.halo/sdd/mixed-mode/$mixed_task/brief.md"
+  printf '# Review package %s\n' "$mixed_task" > "$SANDBOX/.halo/sdd/mixed-mode/$mixed_task/review-package.md"
+done
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" mixed-mode T1 \
+  --ac=AC-1 \
+  --test=TestAC1_CreateItem \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestAC1_CreateItem" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestAC1_CreateItem" \
+  --green-exit=0 \
+  --green-summary="focused AC test passes" \
+  --refactor=none >/dev/null 2>&1
+
+for mixed_task in T1 RED-1; do
+  MIXED_COMPLETE_EXIT=0
+  bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" mixed-mode "$mixed_task" >/tmp/halo-mixed-complete.log 2>&1 || MIXED_COMPLETE_EXIT=$?
+  if [[ $MIXED_COMPLETE_EXIT -ne 0 ]]; then
+    fail "task-complete failed for mixed-mode $mixed_task"
+    tail -10 /tmp/halo-mixed-complete.log
+  fi
+done
+
+MIXED_PLAN_TASK_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" mixed-mode T2 >/tmp/halo-mixed-plan-task.log 2>&1 || MIXED_PLAN_TASK_EXIT=$?
+if [[ $MIXED_PLAN_TASK_EXIT -eq 0 ]] && grep -qE '^- \[x\] T2:' "$SANDBOX/halo/specs/mixed-mode/plan.md"; then
+  pass "task-complete honors per-task plan mode inside a tdd spec"
+else
+  fail "task-complete ignored per-task plan mode inside a tdd spec"
+  tail -10 /tmp/halo-mixed-plan-task.log
+fi
+
+MIXED_EVIDENCE_LINT_EXIT=0
+MIXED_EVIDENCE_LINT_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-evidence-lint.sh" mixed-mode 2>&1) || MIXED_EVIDENCE_LINT_EXIT=$?
+if [[ $MIXED_EVIDENCE_LINT_EXIT -eq 0 ]]; then
+  pass "task-evidence-lint honors per-task plan mode inside a tdd spec"
+else
+  fail "task-evidence-lint rejected per-task plan mode inside a tdd spec"
+  echo "$MIXED_EVIDENCE_LINT_OUTPUT" | tail -20
+fi
+
+MIXED_STATUS_EXIT=0
+MIXED_STATUS_OUTPUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/spec-status.sh" mixed-mode implemented --from=planned 2>&1) || MIXED_STATUS_EXIT=$?
+if [[ $MIXED_STATUS_EXIT -eq 0 ]] && grep -q '^status: implemented$' "$SANDBOX/halo/specs/mixed-mode/spec.md"; then
+  pass "spec-status advances tdd spec containing a plan-mode task"
+else
+  fail "spec-status blocked tdd spec containing a plan-mode task"
+  echo "$MIXED_STATUS_OUTPUT" | tail -20
+fi
+
+mkdir -p "$SANDBOX/halo/specs/plan-spec-tdd-task"
+cat > "$SANDBOX/halo/specs/plan-spec-tdd-task/spec.md" << 'PLAN_SPEC'
+---
+id: plan-spec-tdd-task
+status: planned
+execution_mode: plan
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Plan Spec With TDD Task
+
+## Intent
+
+A plan spec whose single task opts into tdd mode.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestAC1 |
+PLAN_SPEC
+cat > "$SANDBOX/halo/specs/plan-spec-tdd-task/plan.md" << 'PLAN_SPEC_PLAN'
+# Plan: Plan Spec With TDD Task
+
+## Source
+
+- Spec: `halo/specs/plan-spec-tdd-task/spec.md`
+- Execution mode: plan
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Out-of-scope: export behavior.
+
+## Tasks
+
+- [ ] T1: Add create behavior
+  - Ref: AC-1
+  - Mode: tdd
+  - Scope: Implement the smallest create path needed for AC-1.
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC1_CreateItem`
+  - Evidence:
+    - Brief: `.halo/sdd/plan-spec-tdd-task/T1/brief.md`
+    - Review package: `.halo/sdd/plan-spec-tdd-task/T1/review-package.md`
+  - Done when:
+    - [ ] AC-1 passes focused verification and evidence exists.
+PLAN_SPEC_PLAN
+mkdir -p "$SANDBOX/.halo/sdd/plan-spec-tdd-task/T1"
+printf '# Brief T1\n' > "$SANDBOX/.halo/sdd/plan-spec-tdd-task/T1/brief.md"
+printf '# Review package T1\n' > "$SANDBOX/.halo/sdd/plan-spec-tdd-task/T1/review-package.md"
+PLAN_SPEC_TDD_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" plan-spec-tdd-task T1 >/tmp/halo-plan-spec-tdd-task.log 2>&1 || PLAN_SPEC_TDD_EXIT=$?
+if [[ $PLAN_SPEC_TDD_EXIT -ne 0 ]] && grep -q "T1 missing or invalid tdd-evidence.json" /tmp/halo-plan-spec-tdd-task.log; then
+  pass "task-complete honors per-task tdd mode inside a plan spec"
+else
+  fail "task-complete ignored per-task tdd mode inside a plan spec"
+  tail -10 /tmp/halo-plan-spec-tdd-task.log
+fi
+
+mkdir -p "$SANDBOX/halo/specs/red-multi-ac"
+cat > "$SANDBOX/halo/specs/red-multi-ac/spec.md" << 'RED_MULTI_SPEC'
+---
+id: red-multi-ac
+status: planned
+execution_mode: tdd
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Red Multi AC
+
+## Intent
+
+One red task covering two acceptance criteria.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestAC1 |
+| AC-2 | Get item | Returns item | TestAC2 |
+RED_MULTI_SPEC
+cat > "$SANDBOX/halo/specs/red-multi-ac/plan.md" << 'RED_MULTI_PLAN'
+# Plan: Red Multi AC
+
+## Source
+
+- Spec: `halo/specs/red-multi-ac/spec.md`
+- Execution mode: tdd
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Out-of-scope: export behavior.
+
+## Tasks
+
+- [ ] RED-1: Add failing tests for AC-1 and AC-2
+  - Ref: AC-1, AC-2
+  - Expected failure: handler implements neither create nor get yet
+  - Test file: `internal/handler/item_test.go`
+  - Verification: `go test ./internal/handler -run TestAC`
+  - Done when:
+    - [ ] Both expected failures are captured in task evidence.
+
+- [ ] T1: Add create behavior
+  - Ref: AC-1
+  - Mode: tdd
+  - Scope: Implement the smallest create path needed for AC-1.
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC1_CreateItem`
+  - Evidence:
+    - Brief: `.halo/sdd/red-multi-ac/T1/brief.md`
+    - Review package: `.halo/sdd/red-multi-ac/T1/review-package.md`
+  - Done when:
+    - [ ] AC-1 passes focused verification and evidence exists.
+
+- [ ] T2: Add get behavior
+  - Ref: AC-2
+  - Mode: tdd
+  - Scope: Implement the smallest get path needed for AC-2.
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC2_GetItem`
+  - Evidence:
+    - Brief: `.halo/sdd/red-multi-ac/T2/brief.md`
+    - Review package: `.halo/sdd/red-multi-ac/T2/review-package.md`
+  - Done when:
+    - [ ] AC-2 passes focused verification and evidence exists.
+RED_MULTI_PLAN
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" red-multi-ac T1 \
+  --ac=AC-1 \
+  --test=TestAC1_CreateItem \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestAC1_CreateItem" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestAC1_CreateItem" \
+  --green-exit=0 \
+  --green-summary="focused AC test passes" \
+  --refactor=none >/dev/null 2>&1
+RED_MULTI_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" red-multi-ac RED-1 >/tmp/halo-red-multi-ac.log 2>&1 || RED_MULTI_EXIT=$?
+if [[ $RED_MULTI_EXIT -ne 0 ]] && grep -q "RED-1 missing matching TDD cycle evidence" /tmp/halo-red-multi-ac.log; then
+  pass "task-complete requires cycle evidence for every AC of a red task"
+else
+  fail "task-complete accepted a red task with partial AC cycle evidence"
+  tail -10 /tmp/halo-red-multi-ac.log
+fi
+
+echo ""
+
 mkdir -p "$SANDBOX/halo/specs/bad-plan"
 cat > "$SANDBOX/halo/specs/bad-plan/spec.md" << 'BAD_SPEC'
 ---
@@ -1116,7 +1404,13 @@ else
   [[ -f "$SUMMARY_LEARN_DRAFT" ]] && cat "$SUMMARY_LEARN_DRAFT"
 fi
 
-TRANSITION_COUNT_FINAL=$(find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null | wc -l | tr -d ' ')
+TRANSITION_COUNT_FINAL=$(
+  find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
+    | while IFS= read -r file; do
+        yq -e '.spec_id == "modern-feature"' "$file" >/dev/null 2>&1 && echo "$file"
+      done \
+    | wc -l | tr -d ' '
+)
 VERIFIED_TRANSITION_EVENT="$(
   find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
