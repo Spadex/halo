@@ -1257,6 +1257,114 @@ else
   tail -10 /tmp/halo-red-multi-ac.log
 fi
 
+mkdir -p "$SANDBOX/halo/specs/red-many-ac"
+cat > "$SANDBOX/halo/specs/red-many-ac/spec.md" << 'RED_MANY_SPEC'
+---
+id: red-many-ac
+status: planned
+execution_mode: tdd
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Red Many AC
+
+## Intent
+
+One red task covering four acceptance criteria recorded in a single evidence file.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestAC1 |
+| AC-2 | Get item | Returns item | TestAC2 |
+| AC-3 | List items | Returns list | TestAC3 |
+| AC-4 | Delete item | Returns 204 | TestAC4 |
+RED_MANY_SPEC
+cat > "$SANDBOX/halo/specs/red-many-ac/plan.md" << 'RED_MANY_PLAN'
+# Plan: Red Many AC
+
+## Source
+
+- Spec: `halo/specs/red-many-ac/spec.md`
+- Execution mode: tdd
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Out-of-scope: export behavior.
+
+## Tasks
+
+- [ ] RED-1: Add failing tests for AC-1, AC-2, AC-3 and AC-4
+  - Ref: AC-1, AC-2, AC-3, AC-4
+  - Expected failure: handler implements none of the four paths yet
+  - Test file: `internal/handler/item_test.go`
+  - Verification: `go test ./internal/handler -run TestAC`
+  - Done when:
+    - [ ] All expected failures are captured in task evidence.
+
+- [ ] T1: Add the four handler behaviors
+  - Ref: AC-1, AC-2, AC-3, AC-4
+  - Mode: tdd
+  - Scope: Implement the smallest paths needed for AC-1 through AC-4.
+  - Files: `internal/handler/item.go`
+  - Verification: `TestAC`
+  - Evidence:
+    - Brief: `.halo/sdd/red-many-ac/T1/brief.md`
+    - Review package: `.halo/sdd/red-many-ac/T1/review-package.md`
+  - Done when:
+    - [ ] AC-1 through AC-4 pass focused verification and evidence exists.
+RED_MANY_PLAN
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" red-many-ac T1 \
+  --ac=AC-1 \
+  --ac=AC-2 \
+  --ac=AC-3 \
+  --ac=AC-4 \
+  --test=TestAC \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestAC" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestAC" \
+  --green-exit=0 \
+  --green-summary="focused AC tests pass" \
+  --refactor=none >/dev/null 2>&1
+
+# A yq that streams `.ac_ids[]?` one line at a time makes an early-exiting pipe
+# consumer deterministic: the reader is gone before yq writes the tail, so any
+# `yq ... | grep -q` reader turns a legitimate match into SIGPIPE under pipefail.
+SLOW_YQ_BIN="$SANDBOX/.halo/slow-yq-bin"
+mkdir -p "$SLOW_YQ_BIN"
+cat > "$SLOW_YQ_BIN/yq" << SLOW_YQ
+#!/usr/bin/env bash
+REAL_YQ="$(command -v yq)"
+if [[ "\${1:-}" == "-r" && "\${2:-}" == ".ac_ids[]?" ]]; then
+  OUTPUT="\$("\$REAL_YQ" "\$@")" || exit \$?
+  while IFS= read -r line; do
+    printf '%s\n' "\$line"
+    sleep 0.05
+  done <<< "\$OUTPUT"
+  exit 0
+fi
+exec "\$REAL_YQ" "\$@"
+SLOW_YQ
+chmod +x "$SLOW_YQ_BIN/yq"
+
+RED_MANY_EXIT=0
+PATH="$SLOW_YQ_BIN:$PATH" bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" red-many-ac RED-1 \
+  >/tmp/halo-red-many-ac.log 2>&1 || RED_MANY_EXIT=$?
+if [[ $RED_MANY_EXIT -eq 0 ]] && grep -qE '^- \[x\] RED-1:' "$SANDBOX/halo/specs/red-many-ac/plan.md"; then
+  pass "task-complete accepts a red task whose ACs all live in one evidence file"
+else
+  fail "task-complete rejected a red task with complete multi-AC cycle evidence"
+  tail -10 /tmp/halo-red-many-ac.log
+fi
+
 echo ""
 
 mkdir -p "$SANDBOX/halo/specs/bad-plan"

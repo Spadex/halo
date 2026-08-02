@@ -104,15 +104,20 @@ valid_tdd_evidence() {
 }
 
 # Every AC the red task claims must have a red/green cycle recorded, not just one of them.
+# Read the ac_ids into a variable first: piping yq into an early-exiting reader such as
+# `grep -q` lets the reader close the pipe mid-stream, and the resulting SIGPIPE (141)
+# fails the whole pipeline under `set -o pipefail` even though the AC did match.
 red_task_has_cycle_evidence() {
-  local body="$1" ac evidence ac_count=0 matched
+  local body="$1" ac evidence evidence_acs ac_count=0 matched
   while IFS= read -r ac; do
     [[ -n "$ac" ]] || continue
     ac_count=$((ac_count + 1))
     matched=false
     while IFS= read -r evidence; do
       [[ -n "$evidence" ]] || continue
-      if valid_tdd_evidence "$evidence" && yq -r '.ac_ids[]?' "$evidence" 2>/dev/null | grep -qxF "$ac"; then
+      valid_tdd_evidence "$evidence" || continue
+      evidence_acs="$(yq -r '.ac_ids[]?' "$evidence" 2>/dev/null || true)"
+      if grep -qxF -- "$ac" <<< "$evidence_acs"; then
         matched=true
         break
       fi
