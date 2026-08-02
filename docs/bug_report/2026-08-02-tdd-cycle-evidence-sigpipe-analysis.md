@@ -1,7 +1,8 @@
 # 分析：red_task_has_cycle_evidence 的 SIGPIPE 误拒
 
-上报来源：target 项目交付 spec `layout-furnish` 的 TDD 收口实施报告「halo 框架缺陷上报」
-一节，上报日期 2026-08-02。上报者按纪律只上报不改框架代码，本文是 halo 侧的独立复核。
+上报原文：[`2026-08-02-tdd-cycle-evidence-sigpipe.md`](2026-08-02-tdd-cycle-evidence-sigpipe.md)
+（来自 target 项目交付 spec `layout-furnish` 的 TDD 收口实施报告，上报日期 2026-08-02）。
+上报者按纪律只上报不改框架代码，本文是 halo 侧的独立复核。
 
 涉及脚本：`harness-template/halo/kernel/orchestrator/sdd/task-complete.sh`。
 
