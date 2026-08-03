@@ -161,10 +161,16 @@ echo ""
 
 echo "── Task contract ──"
 TASK_COUNT=0
-AC_REFERENCES="$({ grep -oE 'AC-[0-9]+' "$PLAN_FILE" || true; } | sort -u | tr '\n' ' ')"
+# Both sides are narrowed to the ACs the spec declares in its AC table. A prose
+# mention of another spec's AC ("must not regress upstream-spec AC-14") is not this
+# spec's AC: demanding it appear in plan.md fails a correct plan, and echoing it in
+# the AC trace tells the implementer to go plan work this spec does not own. Fall
+# back to the whole-file scan when the spec has no AC table, so nothing is skipped.
+AC_REFERENCES="$(narrow_acs_to_declared "$(cat "$PLAN_FILE")" "$SPEC_FILE" | tr '\n' ' ')"
 SPEC_AC_REFERENCES=""
 if [[ -n "$SPEC_FILE" && -f "$SPEC_FILE" ]]; then
-  SPEC_AC_REFERENCES="$({ grep -oE 'AC-[0-9]+' "$SPEC_FILE" || true; } | sort -u)"
+  SPEC_AC_REFERENCES="$(spec_declared_acs "$SPEC_FILE" | sort -u)"
+  [[ -n "$SPEC_AC_REFERENCES" ]] || SPEC_AC_REFERENCES="$({ grep -oE 'AC-[0-9]+' "$SPEC_FILE" || true; } | sort -u)"
 fi
 SEEN_TASK_IDS=""
 EXPECTED_T=1

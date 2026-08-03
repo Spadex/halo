@@ -96,7 +96,10 @@ fi
 
 STATUS="$(frontmatter_value "status" "$SPEC_FILE")"
 MODE="$(frontmatter_value "execution_mode" "$SPEC_FILE")"
-AC_IDS="$({ grep -oE 'AC-[0-9]+' "$SPEC_FILE" || true; } | sort -u | tr '\n' ' ')"
+# Declared ACs only; a prose cross-reference to another spec's AC is not this
+# spec's AC. Fall back to the whole-file scan when the spec has no AC table.
+AC_IDS="$(spec_declared_acs "$SPEC_FILE" | sort -u | tr '\n' ' ')"
+[[ -n "${AC_IDS// /}" ]] || AC_IDS="$({ grep -oE 'AC-[0-9]+' "$SPEC_FILE" || true; } | sort -u | tr '\n' ' ')"
 TASK_TOTAL=0
 TASK_COMPLETE=0
 if [[ -f "$PLAN_FILE" ]]; then

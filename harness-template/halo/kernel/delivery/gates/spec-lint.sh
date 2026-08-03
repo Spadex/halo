@@ -128,8 +128,9 @@ echo "── AC numbering check ──"
 # Only each AC table row's first-cell AC counts as a declared AC. Prose
 # cross-references (e.g. "existing AC-3/7/8/9/10/11 must not regress", "see AC-13")
 # and in-cell references are NOT declarations, so they must not drive numbering,
-# count, or duplicate detection. This matches ac-coverage's "Spec AC count" source.
-TABLE_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | sed -E 's/^\| *(AC-[0-9]+).*/\1/' | sort)
+# count, or duplicate detection. `spec_declared_acs` is the shared definition;
+# duplicates are kept here on purpose because the duplicate-row check needs them.
+TABLE_ACS=$(spec_declared_acs "$SPEC" | sort)
 AC_NUMS=$(echo "$TABLE_ACS" | { grep -oE '[0-9]+' || true; } | sort -n | uniq)
 AC_COUNT=$(echo "$AC_NUMS" | grep -c . || true)
 

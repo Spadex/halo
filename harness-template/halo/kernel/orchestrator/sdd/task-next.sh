@@ -140,7 +140,9 @@ MODE="$(field_value "Mode|模式" "$BODY")"
 [[ -n "$MODE" ]] || MODE="$(execution_mode "$SPEC_FILE" "$PLAN_FILE")"
 SCOPE="$(field_value "Scope|范围" "$BODY")"
 VERIFICATION="$(field_value "Verification|验证方式" "$BODY")"
-AC_REFS="$(grep -oE 'AC-[0-9]+' <<< "$BODY" | sort -u | tr '\n' ' ' || true)"
+# Narrowed to the ACs this spec declares: reporting another spec's AC here sends
+# the implementer off producing evidence for an AC this task cannot own.
+AC_REFS="$(narrow_acs_to_declared "$BODY" "$SPEC_FILE" | tr '\n' ' ')"
 EVIDENCE_ROOT=".halo/sdd/$SPEC_ID/$TASK_ID"
 
 if [[ "$FORMAT" == "json" ]]; then
