@@ -59,6 +59,31 @@ Do not use `Eval` as a synonym for running tests. Verification runs commands; Ev
 - Learn is governed. New durable knowledge should have source, review, and promotion evidence when the harness provides it.
 - Shell is appropriate for install, CI, gates, deterministic lint, sync, and evidence generation. Semantic context selection and architectural judgment belong to the Agent and the spec skills.
 
+## Gate Rules
+
+A gate compares what a spec *claims* against the evidence it can *read from code*. The two
+sides are not symmetric, and treating them as symmetric is how gates acquire false failures.
+
+- **Filters on the code side must fail open, and must say so.** Dropping a row while
+  reading the spec means one fewer comparison. Dropping a line while reading code removes
+  the evidence that something exists, and the gate reports it as a defect that is not
+  there. Never move a validity predicate from the spec side to the code side unchanged:
+  `drift-check.sh` did exactly that with "a path must start with `/`", and every FastAPI
+  collection root (`@router.get("")`) turned into a reported drift. Every `continue` or
+  filter in code-side extraction carries a comment naming its failure direction.
+- **Reading a foreign framework's syntax means reading its variants.** Line-oriented
+  matching misses multi-line calls; one idiomatic shape is not the shape. The fixture must
+  enumerate the variants (`tests/smoke-test.sh` §7c) and a runnable project must exercise
+  them (`examples/py-fastapi/app/routers/`).
+- **Turning a `gate_skip "not yet implemented"` into a verdict is a high-risk change, not
+  a bugfix.** It converts a dimension the framework honestly reported as unverified into
+  an authoritative pass or fail. Before shipping that switch: a variant matrix fixture, a
+  both-directions assertion (drift is detected, then the gate passes once code catches
+  up), a runnable example under `examples/`, and the implementation's failure direction
+  stated in the commit message.
+- A dimension that was not compared is reported as NOT verified. `drift_count: 0` must
+  never be reachable from "nothing was checked".
+
 ## Common Tasks
 
 | Task | Edit |
@@ -91,6 +116,7 @@ bash -n init.sh install.sh tests/smoke-test.sh $(find harness-template prismspec
 shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find harness-template prismspec/bin -name '*.sh')
 bash tests/smoke-test.sh
 bash examples/go-gin-gorm/try-it.sh
+bash examples/py-fastapi/try-it.sh
 git diff --check
 ```
 

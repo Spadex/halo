@@ -294,6 +294,20 @@ normalize_path() {
   printf '%s' "$1" | sed -E -e 's/\{[^}]*\}/{}/g' -e 's/<[^>]*>/{}/g' -e 's#:[A-Za-z_][A-Za-z0-9_]*#{}#g' -e 's#/+$##'
 }
 
+# grep matches one line at a time, but `@router.get(\n  "/reports",\n)` and a multi-line
+# `APIRouter(\n  prefix="/x",\n)` are ordinary FastAPI/Express style. A registration or a
+# prefix that is never read becomes a reported drift, so each candidate file is matched
+# with its newlines folded to spaces — both patterns already allow whitespace after `(`.
+# Folding can only add matches, which under-reports drift; it can never drop one.
+grep_folded() {
+  local files="$1" pattern="$2" f
+  [[ -n "$files" ]] || return 0
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    tr '\n' ' ' < "$f" | grep -oE "$pattern" || true
+  done <<< "$files"
+}
+
 # Build "METHOD /normalised/path" lines from decorator/registration matches of the form
 # `@router.get("/x` or `router.get('/x`, expanded by every router prefix in the project.
 collect_code_routes() {
@@ -302,8 +316,14 @@ collect_code_routes() {
     [[ -n "$line" ]] || continue
     method="$(printf '%s' "$line" | sed -E 's/.*\.([A-Za-z]+)\(.*/\1/' | tr '[:lower:]' '[:upper:]')"
     path="$(printf '%s' "$line" | sed -E 's/.*[("'"'"'`]([^"'"'"'`]*)$/\1/')"
-    [[ "$path" == /* ]] || continue
-    printf '%s %s\n' "$method" "$(normalize_path "$path")"
+    # An empty decorator path is how a collection root is registered:
+    # `APIRouter(prefix="/model-sets")` + `@router.get("")` is GET /model-sets, with the
+    # prefix carrying the whole route. This filter reads code, not spec — dropping a line
+    # here removes evidence that a route exists and turns into a reported drift, so it has
+    # to fail open. Genuine non-paths (`axios.get("https://…")`) are still rejected, and an
+    # empty path is only ever expanded through a prefix, never emitted as a bare route.
+    [[ -z "$path" || "$path" == /* ]] || continue
+    [[ -z "$path" ]] || printf '%s %s\n' "$method" "$(normalize_path "$path")"
     while IFS= read -r prefix; do
       [[ -n "$prefix" ]] || continue
       printf '%s %s\n' "$method" "$(normalize_path "${prefix}${path}")"
@@ -356,17 +376,22 @@ else
         ROUTE_FILES=$(find_source_files "$PROJECT" "${ROUTE_GLOBS:-*.py}")
         DECORATOR_PAT='@[A-Za-z_][A-Za-z0-9_]*\.(get|post|put|patch|delete)\([[:space:]]*["'"'"'][^"'"'"']*'
         PREFIX_PAT='APIRouter\([^)]*prefix[[:space:]]*=[[:space:]]*["'"'"'][^"'"'"']*'
+        REGISTRATION_PAT='@[A-Za-z_][A-Za-z0-9_]*\.(get|post|put|patch|delete)\(|APIRouter\('
       else
         ROUTE_FILES=$(find_source_files "$PROJECT" "${ROUTE_GLOBS:-*.ts *.tsx *.js *.jsx *.mjs}")
         DECORATOR_PAT='\b[A-Za-z_][A-Za-z0-9_]*\.(get|post|put|patch|delete)\([[:space:]]*["'"'"'`][^"'"'"'`]*'
         PREFIX_PAT='\.use\([[:space:]]*["'"'"'`]/[^"'"'"'`]*'
+        REGISTRATION_PAT='\.(get|post|put|patch|delete|use)\('
       fi
 
       if [[ -z "$ROUTE_FILES" ]]; then
         gate_skip "No $FRAMEWORK source files found under $PROJECT (route drift NOT verified)"
       else
-        RAW_ROUTES="$(printf '%s\n' "$ROUTE_FILES" | tr '\n' '\0' | xargs -0 grep -hoE "$DECORATOR_PAT" 2>/dev/null || true)"
-        RAW_PREFIXES="$(printf '%s\n' "$ROUTE_FILES" | tr '\n' '\0' | xargs -0 grep -hoE "$PREFIX_PAT" 2>/dev/null | sed -E 's/.*["'"'"'`]//' | sort -u || true)"
+        # One bulk pass narrows to the files that register anything, so folding newlines
+        # per file does not cost a process per source file across a monorepo.
+        ROUTE_CANDIDATES="$(printf '%s\n' "$ROUTE_FILES" | tr '\n' '\0' | xargs -0 grep -lE "$REGISTRATION_PAT" 2>/dev/null || true)"
+        RAW_ROUTES="$(grep_folded "$ROUTE_CANDIDATES" "$DECORATOR_PAT")"
+        RAW_PREFIXES="$(grep_folded "$ROUTE_CANDIDATES" "$PREFIX_PAT" | sed -E 's/.*["'"'"'`]//' | sort -u)"
         CODE_ROUTES="$(collect_code_routes "$RAW_ROUTES" "$RAW_PREFIXES" | sort -u)"
 
         if [[ -z "$CODE_ROUTES" ]]; then

@@ -44,6 +44,11 @@ All notable changes to this project will be documented in this file.
 - Chinese-first project entrypoint via the root `README.md`; English documentation moved to `README.en.md`.
 - CI validation for PrismSpec skill frontmatter and PrismSpec shell scripts.
 - Root `AGENTS.md` to make the repository easier for coding agents to navigate.
+- `examples/py-fastapi/`, a runnable Python/FastAPI example that doubles as the route parser
+  regression guard, run by `tests/release-check.sh`. Its routers carry the registration shapes
+  real FastAPI projects use — empty-path collection root, `"/"` form, multi-line decorator,
+  multi-line router prefix — and `try-it.sh` asserts every spec route resolves, so a parser
+  that understands only one shape fails there instead of in a target project.
 
 ### Changed
 
@@ -55,6 +60,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- `drift-check.sh` no longer drops FastAPI/Express route registrations it cannot read on a
+  single line with a non-empty path. `APIRouter(prefix="/model-sets")` + `@router.get("")`
+  is how FastAPI registers a collection root — the decorator path is empty and the prefix
+  carries the whole URL — and the `path must start with /` guard dropped the registration
+  before prefix expansion, so a route that exists in code was reported as drift. Decorators
+  and `APIRouter(...)` calls spanning several lines were invisible for the same reason:
+  grep matches one line at a time. Both are now read, and the guard fails open. The
+  predicate came from the spec side, where dropping a row means one fewer comparison; on
+  the code side it removes the evidence a route exists and manufactures a failure.
+  `AGENTS.md` gains a `## Gate Rules` section so the direction is not re-inverted.
 - Spec auto-discovery no longer ranks candidates by file mtime. `git merge`, `checkout`, `rebase`,
   and `stash pop` rewrite mtime on every file they check out, so `ls -t` flipped the "current spec"
   after any git operation — including the merge that normally precedes final verification. The

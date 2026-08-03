@@ -25,8 +25,11 @@ bash prismspec/bin/eval-skills.sh --all
 section "Smoke test"
 bash tests/smoke-test.sh
 
-section "Runnable example"
+section "Runnable example (Go)"
 bash examples/go-gin-gorm/try-it.sh
+
+section "Runnable example (Python)"
+bash examples/py-fastapi/try-it.sh
 
 section "Whitespace"
 git diff --check

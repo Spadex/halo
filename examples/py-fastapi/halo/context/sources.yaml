@@ -1,0 +1,18 @@
+sources:
+  map: "halo/context/README.md"
+  external: "halo/context/external.md"
+  knowledge_dir: "halo/context/knowledge"
+  drafts_dir: "halo/context/drafts"
+  specs_dir: "halo/specs"
+
+policy:
+  precedence:
+    - user_instruction
+    - current_code
+    - tests
+    - schema
+    - project_knowledge
+    - historical_specs
+    - external_knowledge
+    - model_prior
+  conflict: record_in_context

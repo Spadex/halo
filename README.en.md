@@ -304,9 +304,11 @@ Halo currently provides a minimum trusted loop for repo-local AI Coding. It is s
 | Spec / Plan / Review / Verify artifacts | Available | `new.sh`, `guide.sh --json`, `lint.sh prismspec skillpack`. |
 | Delivery pipeline | Available | spec lint, AC coverage, drift check, and compliance gates. |
 | Go/Gin/GORM drift parser | Available | `examples/go-gin-gorm/try-it.sh`. |
+| Python/FastAPI drift parser | Available | `examples/py-fastapi/try-it.sh` — routes and error codes; SQLAlchemy DDL still reports NOT verified. |
 | Evidence summary/history/outcome | Available | `eval-runs/*.json`, Markdown summary/history, outcome link/report. |
 | Dashboard trend analysis | Planned | Static dashboard exists; trend analysis is still evolving. |
-| Node / Python drift parser | Planned | Future multi-language expansion. |
+| Node/Express drift parser | Partial | Route drift is implemented; no runnable example guards it yet. |
+| Prisma / Sequelize / SQLAlchemy DDL parser | Planned | Reported as NOT verified rather than claimed as compared. |
 | Multi-agent owner / lease model | Planned | Future team collaboration expansion. |
 
 Still evolving:
@@ -337,6 +339,7 @@ The first command validates the local repository loop. The second validates publ
 | [PrismSpec README](prismspec/README.md) | Standalone Spec Coding skill pack |
 | [Agent adapters](docs/adapters/) | Claude Code, Cursor, Aider, Superpowers, Agent Skills, and generic agents |
 | [Runnable example](examples/go-gin-gorm/) | End-to-end Go/Gin/GORM sample |
+| [Runnable example](examples/py-fastapi/) | End-to-end Python/FastAPI sample, also the route parser regression guard |
 | [Contributing](CONTRIBUTING.md) | Development, testing, and contribution guide |
 | [Support](SUPPORT.md) | Support scope, troubleshooting, and issue context |
 | [Security](SECURITY.md) | Security boundaries, vulnerability reporting, and release checks |

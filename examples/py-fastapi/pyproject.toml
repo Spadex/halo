@@ -1,0 +1,9 @@
+[project]
+name = "model-set-service"
+version = "0.1.0"
+description = "Halo FastAPI example — read by the gates, not installed or served"
+requires-python = ">=3.12"
+dependencies = ["fastapi>=0.110"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

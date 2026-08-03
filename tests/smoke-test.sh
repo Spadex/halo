@@ -2234,6 +2234,124 @@ else
   tail -20 /tmp/halo-drift-route-order.log
 fi
 
+# A collection root is registered as `@router.get("")` under `APIRouter(prefix="/x")`:
+# the decorator path is empty and the prefix carries the whole route. Dropping every
+# non-`/` decorator path dropped these, and a dropped code route is reported as drift.
+# This router deliberately contains no `@router.get("/")`: the trailing-segment leniency
+# in route_registered would let the `/` form mask the empty-path regression.
+DRIFT_ROOT_DIR="$SANDBOX/drift-fastapi-root"
+mkdir -p "$DRIFT_ROOT_DIR"
+cat > "$DRIFT_ROOT_DIR/routers.py" << 'PY'
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/model-sets", tags=["model-sets"])
+
+
+@router.get("")
+def list_model_sets():
+    return []
+
+
+@router.post("")
+def create_model_set():
+    return {}
+
+
+@router.get("/{set_id}")
+def get_model_set(set_id: str):
+    return {}
+PY
+DRIFT_ROOT_SPEC="$SANDBOX/drift-fastapi-root-spec.md"
+cat > "$DRIFT_ROOT_SPEC" << 'SPEC'
+# Spec: FastAPI 集合根路由
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | /model-sets | 列出模型集 |
+| POST | /model-sets | 创建模型集 |
+| GET | /model-sets/{set_id} | 读取模型集 |
+| DELETE | /model-sets/{set_id} | 删除模型集 |
+SPEC
+DRIFT_ROOT_JSON="$SANDBOX/halo/state/drift-fastapi-root.json"
+DRIFT_ROOT_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_ROOT_SPEC" "$DRIFT_ROOT_DIR" --json-out="$DRIFT_ROOT_JSON" >/tmp/halo-drift-fastapi-root.log 2>&1 || DRIFT_ROOT_EXIT=$?
+if [[ $DRIFT_ROOT_EXIT -eq 1 ]] \
+  && yq -e '.metrics.spec_routes == 4 and .metrics.drift_count == 1 and .metrics.checked.routes == true' "$DRIFT_ROOT_JSON" >/dev/null 2>&1; then
+  pass "drift-check treats empty-path FastAPI collection roots as registered"
+else
+  fail "drift-check drops empty-path FastAPI collection roots (exit=$DRIFT_ROOT_EXIT)"
+  tail -20 /tmp/halo-drift-fastapi-root.log
+fi
+
+cat >> "$DRIFT_ROOT_DIR/routers.py" << 'PY'
+
+
+@router.delete("/{set_id}")
+def delete_model_set(set_id: str):
+    return {}
+PY
+DRIFT_ROOT_CLEAN_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_ROOT_SPEC" "$DRIFT_ROOT_DIR" --json-out="$DRIFT_ROOT_JSON" >/tmp/halo-drift-fastapi-root.log 2>&1 || DRIFT_ROOT_CLEAN_EXIT=$?
+if [[ $DRIFT_ROOT_CLEAN_EXIT -eq 0 ]] \
+  && yq -e '.metrics.drift_count == 0 and .metrics.checked.routes == true' "$DRIFT_ROOT_JSON" >/dev/null 2>&1; then
+  pass "drift-check passes once a prefix-only FastAPI router is complete"
+else
+  fail "drift-check false positive on a prefix-only FastAPI router (exit=$DRIFT_ROOT_CLEAN_EXIT)"
+  tail -20 /tmp/halo-drift-fastapi-root.log
+fi
+
+# Decorators spanning several lines are ordinary FastAPI/Express style. grep works per
+# line, so the registration has to be read from the whole file. The single-line GET keeps
+# CODE_ROUTES non-empty, so a regression fails the assertions instead of turning the whole
+# dimension into a skip that would pass on exit 0.
+DRIFT_ML_DIR="$SANDBOX/drift-fastapi-multiline"
+mkdir -p "$DRIFT_ML_DIR"
+cat > "$DRIFT_ML_DIR/routers.py" << 'PY'
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/api", tags=["reports"])
+
+
+@router.get("/reports")
+def list_reports():
+    return []
+
+
+@router.post(
+    "/reports",
+    status_code=201,
+)
+def create_report():
+    return {}
+
+
+@router.delete(
+    "/reports/{report_id}",
+)
+def delete_report(report_id: str):
+    return {}
+PY
+DRIFT_ML_SPEC="$SANDBOX/drift-fastapi-multiline-spec.md"
+cat > "$DRIFT_ML_SPEC" << 'SPEC'
+# Spec: 多行装饰器路由
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | /api/reports | 列出报表 |
+| POST | /api/reports | 创建报表 |
+| DELETE | /api/reports/{report_id} | 删除报表 |
+SPEC
+DRIFT_ML_JSON="$SANDBOX/halo/state/drift-fastapi-multiline.json"
+DRIFT_ML_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_ML_SPEC" "$DRIFT_ML_DIR" --json-out="$DRIFT_ML_JSON" >/tmp/halo-drift-fastapi-multiline.log 2>&1 || DRIFT_ML_EXIT=$?
+if [[ $DRIFT_ML_EXIT -eq 0 ]] \
+  && yq -e '.metrics.spec_routes == 3 and .metrics.drift_count == 0 and .metrics.checked.routes == true' "$DRIFT_ML_JSON" >/dev/null 2>&1; then
+  pass "drift-check reads multi-line FastAPI route decorators"
+else
+  fail "drift-check drops multi-line FastAPI route decorators (exit=$DRIFT_ML_EXIT)"
+  tail -20 /tmp/halo-drift-fastapi-multiline.log
+fi
+
 yq -i ".project.language = \"$DRIFT_ORIG_LANG\"" "$SANDBOX/halo/manifest.yaml"
 yq -i ".drift.routes.framework = \"$DRIFT_ORIG_FRAMEWORK\"" "$SANDBOX/halo/manifest.yaml"
 
@@ -2296,6 +2414,8 @@ py-ac-coverage/
 drift-no-code/
 drift-error-codes/
 drift-fastapi/
+drift-fastapi-root/
+drift-fastapi-multiline/
 go.mod
 *.md
 IGNORE
@@ -2320,7 +2440,8 @@ else
   [[ -f "$REVIEW_PKG_OUT" ]] && tail -30 "$REVIEW_PKG_OUT"
 fi
 git -C "$SANDBOX" checkout -q main >/dev/null 2>&1
-rm -f /tmp/halo-drift-error-code.log /tmp/halo-drift-route-order.log /tmp/halo-drift-fastapi.log /tmp/halo-compliance-zh.log
+rm -f /tmp/halo-drift-error-code.log /tmp/halo-drift-route-order.log /tmp/halo-drift-fastapi.log \
+  /tmp/halo-drift-fastapi-root.log /tmp/halo-drift-fastapi-multiline.log /tmp/halo-compliance-zh.log
 echo ""
 
 # ── 8. Context knowledge backend ──
