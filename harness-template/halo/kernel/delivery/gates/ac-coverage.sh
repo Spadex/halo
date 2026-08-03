@@ -137,7 +137,11 @@ build_foreign_owned() {
 }
 FOREIGN_OWNED=$(build_foreign_owned | sort -u)
 
-SPEC_ACS=$({ grep -E '^\| *AC-[0-9]+ *\|' "$SPEC" || true; } | { grep -o 'AC-[0-9]*' || true; } | sort -t- -k2 -n | uniq)
+# Take only each row's first cell. Scanning the whole row let an in-cell
+# cross-reference ("| AC-3 | … | differs from upstream-spec AC-14 |") enter this
+# spec's AC set, inflating Spec AC count and failing coverage for an AC this spec
+# never declared.
+SPEC_ACS=$(spec_declared_acs "$SPEC" | sort -t- -k2 -n | uniq)
 SPEC_COUNT=$(echo "$SPEC_ACS" | grep -c . || true)
 
 if [[ "$SPEC_COUNT" -eq 0 ]]; then

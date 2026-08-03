@@ -103,12 +103,15 @@ valid_tdd_evidence() {
   yq -e '.kind == "tdd-evidence" and .status == "pass" and (.red.exit_code | tonumber) != 0 and (.green.exit_code | tonumber) == 0 and ((.ac_ids // []) | length > 0)' "$file" >/dev/null 2>&1
 }
 
-# Every AC the red task claims must have a red/green cycle recorded, not just one of them.
+# Every AC the red task covers must have a red/green cycle recorded, not just one of
+# them. Takes the already-narrowed AC list (see narrow_acs_to_declared) rather than
+# the raw task body: an AC mentioned in prose but not declared by this spec has no
+# cycle to record here, and demanding one blocks a correct task forever.
 # Read the ac_ids into a variable first: piping yq into an early-exiting reader such as
 # `grep -q` lets the reader close the pipe mid-stream, and the resulting SIGPIPE (141)
 # fails the whole pipeline under `set -o pipefail` even though the AC did match.
 red_task_has_cycle_evidence() {
-  local body="$1" ac evidence evidence_acs ac_count=0 matched
+  local covered="$1" ac evidence evidence_acs ac_count=0 matched
   while IFS= read -r ac; do
     [[ -n "$ac" ]] || continue
     ac_count=$((ac_count + 1))
@@ -123,7 +126,7 @@ red_task_has_cycle_evidence() {
       fi
     done < <(find "$EVIDENCE_ROOT" -path '*/tdd-evidence.json' -type f -print 2>/dev/null | sort)
     [[ "$matched" == "true" ]] || return 1
-  done < <(grep -oE 'AC-[0-9]+' <<< "$body" | sort -u || true)
+  done <<< "$covered"
   [[ "$ac_count" -gt 0 ]]
 }
 
@@ -209,7 +212,10 @@ if [[ "$TASK_ID" == T* ]]; then
     valid_tdd_evidence "$TASK_DIR/tdd-evidence.json" || fail_complete "$TASK_ID missing or invalid tdd-evidence.json"
   fi
 else
-  red_task_has_cycle_evidence "$BODY" || fail_complete "$TASK_ID missing matching TDD cycle evidence"
+  COVERED_ACS="$(narrow_acs_to_declared "$BODY" "$SPEC_FILE")"
+  [[ -n "${COVERED_ACS//[[:space:]]/}" ]] \
+    || fail_complete "$TASK_ID references no AC declared in $(rel_path "$SPEC_FILE")"
+  red_task_has_cycle_evidence "$COVERED_ACS" || fail_complete "$TASK_ID missing matching TDD cycle evidence"
 fi
 
 mark_task_complete "$TASK_ID" "$PLAN_FILE"

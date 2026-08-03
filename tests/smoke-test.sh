@@ -1365,6 +1365,129 @@ else
   tail -10 /tmp/halo-red-many-ac.log
 fi
 
+# A spec that cross-references an UPSTREAM spec's AC-14 — in prose, inside its own
+# AC table cell, and in a red task body — while declaring only AC-1..AC-3. Those
+# mentions are not this spec's ACs and must not reach any gate decision.
+mkdir -p "$SANDBOX/halo/specs/cross-spec-ac"
+cat > "$SANDBOX/halo/specs/cross-spec-ac/spec.md" << 'CROSS_SPEC'
+---
+id: cross-spec-ac
+status: planned
+execution_mode: tdd
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Cross Spec AC
+
+## Intent
+
+Declare AC-1..AC-3 while pointing at upstream-spec AC-14 for contrast.
+
+## Non-Goals
+
+- Re-verifying upstream-spec AC-14; that stays owned by the upstream spec.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestXsAC1 |
+| AC-2 | Get item | Returns item | TestXsAC2 |
+| AC-3 | List items | Returns a list, unlike upstream-spec AC-14 | TestXsAC3 |
+CROSS_SPEC
+cat > "$SANDBOX/halo/specs/cross-spec-ac/plan.md" << 'CROSS_PLAN'
+# Plan: Cross Spec AC
+
+## Source
+
+- Spec: `halo/specs/cross-spec-ac/spec.md`
+- Execution mode: tdd
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Out-of-scope: upstream-spec AC-14, already covered by the upstream spec.
+
+## Tasks
+
+- [ ] RED-1: Add failing tests for AC-1, AC-2 and AC-3
+  - Ref: AC-1, AC-2, AC-3
+  - Expected failure: handler implements none of the three paths yet
+  - Discriminating power: contrast the list shape against upstream-spec AC-14
+  - Test file: `internal/handler/item_test.go`
+  - Verification: `go test ./internal/handler -run TestXsAC`
+  - Done when:
+    - [ ] All expected failures are captured in task evidence.
+
+- [ ] T1: Add the three handler behaviors
+  - Ref: AC-1, AC-2, AC-3
+  - Mode: tdd
+  - Scope: Implement the smallest paths needed for AC-1 through AC-3.
+  - Files: `internal/handler/item.go`
+  - Verification: `TestXsAC`
+  - Evidence:
+    - Brief: `.halo/sdd/cross-spec-ac/T1/brief.md`
+    - Review package: `.halo/sdd/cross-spec-ac/T1/review-package.md`
+  - Done when:
+    - [ ] AC-1 through AC-3 pass focused verification and evidence exists.
+CROSS_PLAN
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" cross-spec-ac T1 \
+  --ac=AC-1 \
+  --ac=AC-2 \
+  --ac=AC-3 \
+  --test=TestXsAC \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestXsAC" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestXsAC" \
+  --green-exit=0 \
+  --green-summary="focused AC tests pass" \
+  --refactor=none >/dev/null 2>&1
+
+# task-next runs first: completing RED-1 below would move the pointer to T1.
+CROSS_NEXT_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" cross-spec-ac --json 2>/dev/null || true)"
+if grep -q '"task_id": "RED-1"' <<< "$CROSS_NEXT_JSON" \
+  && grep -q '"ac_refs": \["AC-1", "AC-2", "AC-3"\]' <<< "$CROSS_NEXT_JSON"; then
+  pass "task-next reports only this spec's declared ACs in ac_refs"
+else
+  fail "task-next leaked a cross-spec AC into ac_refs"
+  { grep '"ac_refs"' <<< "$CROSS_NEXT_JSON" || true; }
+fi
+
+CROSS_PLAN_LINT_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" cross-spec-ac \
+  >/tmp/halo-cross-plan-lint.log 2>&1 || CROSS_PLAN_LINT_EXIT=$?
+if [[ $CROSS_PLAN_LINT_EXIT -eq 0 ]] && ! grep -q 'AC-14' /tmp/halo-cross-plan-lint.log; then
+  pass "plan-lint does not require another spec's AC to be planned"
+else
+  fail "plan-lint demanded a cross-spec AC appear in plan.md"
+  tail -10 /tmp/halo-cross-plan-lint.log
+fi
+
+CROSS_AC_OUTPUT="$(bash "$SANDBOX/halo/kernel/delivery/gates/ac-coverage.sh" \
+  "$SANDBOX/halo/specs/cross-spec-ac/spec.md" "$SANDBOX" 2>&1 || true)"
+if grep -q 'Spec AC count: 3' <<< "$CROSS_AC_OUTPUT"; then
+  pass "ac-coverage counts only declared ACs, not in-cell cross-references"
+else
+  fail "ac-coverage counted a cross-spec AC as this spec's AC"
+  { grep 'Spec AC count' <<< "$CROSS_AC_OUTPUT" || true; }
+fi
+
+CROSS_COMPLETE_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" cross-spec-ac RED-1 \
+  >/tmp/halo-cross-spec-ac.log 2>&1 || CROSS_COMPLETE_EXIT=$?
+if [[ $CROSS_COMPLETE_EXIT -eq 0 ]] && grep -qE '^- \[x\] RED-1:' "$SANDBOX/halo/specs/cross-spec-ac/plan.md"; then
+  pass "task-complete ignores another spec's AC mentioned in a red task body"
+else
+  fail "task-complete demanded cycle evidence for a cross-spec AC reference"
+  tail -10 /tmp/halo-cross-spec-ac.log
+fi
+
 echo ""
 
 mkdir -p "$SANDBOX/halo/specs/bad-plan"

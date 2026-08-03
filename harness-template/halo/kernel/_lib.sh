@@ -164,6 +164,38 @@ find_spec() {
 }
 
 # ══════════════════════════════════
+# AC declaration source
+# ══════════════════════════════════
+
+# The single authoritative source of "which ACs does this spec declare": the first
+# cell of each AC table row. Everything else that mentions AC-N — prose, a
+# cross-reference to another spec's AC ("see layout-furnish AC-14"), or a reference
+# inside another row's cell — is a MENTION, not a declaration, and must never drive
+# a gate decision. Emits one AC id per line in file order, unsorted and not deduped;
+# callers sort/uniq as their own check needs (spec-lint needs the duplicates kept).
+spec_declared_acs() {
+  local spec="${1:-}"
+  [[ -n "$spec" && -f "$spec" ]] || return 0
+  { grep -E '^\| *AC-[0-9]+ *\|' "$spec" || true; } | sed -E 's/^\| *(AC-[0-9]+).*/\1/'
+}
+
+# The ACs a piece of plan text actually claims: every AC-N token in it, narrowed to
+# the ACs the spec declares. Plan prose legitimately mentions another spec's AC
+# ("contrast with upstream-spec AC-14"); treating that as a claim of this spec makes
+# gates demand evidence, planning, or coverage for an AC this spec does not own.
+# When no AC table is available (no spec.md, or a spec that does not use the table
+# shape) there is nothing to narrow against, so fall back to the raw token set
+# rather than silently emptying the gate.
+narrow_acs_to_declared() {
+  local text="$1" spec="${2:-}" declared mentioned
+  mentioned="$({ grep -oE 'AC-[0-9]+' <<< "$text" || true; } | sort -u)"
+  [[ -n "$mentioned" ]] || return 0
+  declared="$(spec_declared_acs "$spec" | sort -u)"
+  [[ -n "$declared" ]] || { printf '%s\n' "$mentioned"; return 0; }
+  grep -xF -f <(printf '%s\n' "$declared") <<< "$mentioned" || true
+}
+
+# ══════════════════════════════════
 # CLI help
 # ══════════════════════════════════
 
