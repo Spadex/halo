@@ -2197,11 +2197,67 @@ echo ""
 
 # ── 8. Context knowledge backend ──
 echo "── 8. Context knowledge backend ──"
-LIST_OUTPUT=$(bash "$SANDBOX/halo/kernel/context/backends/knowledge.sh" --list 2>&1)
+KNOWLEDGE_SH="$SANDBOX/halo/kernel/context/backends/knowledge.sh"
+KNOWLEDGE_DIR="$SANDBOX/halo/context/knowledge"
+LIST_OUTPUT=$(bash "$KNOWLEDGE_SH" --list 2>&1)
 if echo "$LIST_OUTPUT" | grep -q "Context Knowledge Files"; then
   pass "knowledge backend --list works"
 else
   fail "knowledge backend --list failed"
+fi
+
+# Search-path assertions below match with `[[ == * * ]]` rather than `echo "$var" | grep -q`.
+# The large-file case deliberately produces output past the pipe buffer, which is exactly
+# the SIGPIPE condition being tested — asserting through a pipe would reintroduce it here.
+SEARCH_ONE=$(bash "$KNOWLEDGE_SH" regressions 2>&1 || true)
+if [[ "$SEARCH_ONE" == *"pitfalls.md"* ]]; then
+  pass "knowledge search matches a single keyword"
+else
+  fail "knowledge search missed a single keyword"
+fi
+
+# `regressions` appears only in pitfalls.md and `boundaries` only in architecture.md, so a
+# quoted two-word argument must return both files, in either word order. Agent-facing docs
+# spell this argument `<keywords>`, so a single quoted string is what callers actually pass.
+SEARCH_QUOTED=$(bash "$KNOWLEDGE_SH" "regressions boundaries" 2>&1 || true)
+SEARCH_REVERSED=$(bash "$KNOWLEDGE_SH" "boundaries regressions" 2>&1 || true)
+if [[ "$SEARCH_QUOTED" == *"pitfalls.md"* && "$SEARCH_QUOTED" == *"architecture.md"* \
+   && "$SEARCH_REVERSED" == *"pitfalls.md"* && "$SEARCH_REVERSED" == *"architecture.md"* ]]; then
+  pass "knowledge search splits a quoted multi-word argument"
+else
+  fail "knowledge search did not split a quoted multi-word argument"
+fi
+
+SEARCH_ARGS=$(bash "$KNOWLEDGE_SH" regressions boundaries 2>&1 || true)
+if [[ "$SEARCH_ARGS" == *"pitfalls.md"* && "$SEARCH_ARGS" == *"architecture.md"* ]]; then
+  pass "knowledge search keeps OR semantics across separate arguments"
+else
+  fail "knowledge search lost OR semantics across separate arguments"
+fi
+
+# A knowledge file past the 64KB pipe buffer with its keyword near the top. Feeding file
+# content through a pipe into `grep -q` lets grep close the pipe on the first match, and
+# the resulting SIGPIPE fails the pipeline under pipefail — reporting the match as a miss.
+awk 'BEGIN {
+  print "# Large Context"
+  print ""
+  print "Marker term: zzunique-large-marker"
+  for (i = 0; i < 3000; i++) print "Filler line pushing this file past the pipe buffer boundary."
+}' > "$KNOWLEDGE_DIR/large-context.md"
+SEARCH_LARGE=$(bash "$KNOWLEDGE_SH" zzunique-large-marker 2>&1 || true)
+if [[ "$SEARCH_LARGE" == *"large-context.md"* ]]; then
+  pass "knowledge search matches inside a file larger than the pipe buffer"
+else
+  fail "knowledge search lost a match in a large file"
+fi
+rm -f "$KNOWLEDGE_DIR/large-context.md"
+
+# Keywords are literal text, not patterns: `.` must not wildcard-match `regressions`.
+SEARCH_LITERAL=$(bash "$KNOWLEDGE_SH" "regressi.ns" 2>&1 || true)
+if [[ "$SEARCH_LITERAL" == *"No matching context knowledge"* ]]; then
+  pass "knowledge search treats keywords as literal text"
+else
+  fail "knowledge search treated a keyword as a regex"
 fi
 echo ""
 

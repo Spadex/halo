@@ -75,6 +75,16 @@ All notable changes to this project will be documented in this file.
 - `plan-lint.sh` placeholder detection no longer fires on REST path parameters (`{set_id}`),
   f-strings, or a line containing both `<` and `>` as comparisons, and now does detect the Chinese
   template placeholders (`{条件}`) that the previous ASCII-only pattern could not match.
+- `knowledge.sh` splits a quoted multi-word argument (`knowledge.sh "vite IPv6"`) on whitespace
+  instead of matching it as one literal substring. Agent-facing docs spell this argument
+  `<keywords>`, so a single quoted string is what callers actually pass, and it previously
+  matched only when every word sat adjacent on the same line.
+- `knowledge.sh` reads each knowledge file directly instead of piping its content into `grep -q`.
+  The early exit of `grep -q` raised SIGPIPE, and under the `set -o pipefail` inherited from
+  `_lib.sh` that turned a real match inside a file larger than the pipe buffer into a reported
+  miss — the same failure mode fixed earlier in `task-complete.sh`.
+- `knowledge.sh` matches keywords literally (`grep -F`), so a `.` in a keyword no longer
+  wildcard-matches and an unbalanced `[` no longer makes grep error out into silence.
 - PrismSpec guide now requires actual verification evidence and no longer treats review packages as verification output.
 - Public contribution docs now use Halo naming and current paths.
 - CI now runs the Go/Gin/GORM example and release readiness check in addition to smoke tests.
