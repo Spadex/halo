@@ -60,6 +60,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- `tests/smoke-test.sh` no longer aborts at random. A `while` loop exits with the status of
+  its last iteration, so `find … | while …; do yq -e … && echo "$file"; done | wc -l`
+  returned non-zero whenever the file find happened to list last did not match. Under
+  `set -euo pipefail` that failed the pipeline, failed the command substitution, and killed
+  the run mid-way with no failing assertion printed — roughly one run in three, decided by
+  directory order. The four transition-event loops use `if` so their status no longer
+  depends on the match. Present since `2878de3`; the three sibling sites were masked by a
+  trailing `|| true`, which is why only the counting one ever surfaced.
 - `drift-check.sh` no longer drops FastAPI/Express route registrations it cannot read on a
   single line with a non-empty path. `APIRouter(prefix="/model-sets")` + `@router.get("")`
   is how FastAPI registers a collection root — the decorator path is empty and the prefix
