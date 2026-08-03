@@ -26,7 +26,15 @@ done
 
 SPEC="${POSITIONAL[0]:-}"
 if [[ -z "$SPEC" ]]; then
-  SPEC=$(find_spec) || { echo "⚠️  No spec file found, skipping"; exit 0; }
+  # An ambiguous auto-discovery must not degrade into "no spec found, skipping":
+  # that would turn a deliberate refusal to guess into a silently skipped gate.
+  SPEC_RC=0
+  SPEC=$(find_spec) || SPEC_RC=$?
+  if [[ "$SPEC_RC" -eq 2 ]]; then
+    echo "❌ Spec auto-discovery is ambiguous — pass the spec path explicitly"; exit 1
+  elif [[ "$SPEC_RC" -ne 0 ]]; then
+    echo "⚠️  No spec file found, skipping"; exit 0
+  fi
 fi
 PROJECT="${POSITIONAL[1]:-$PROJECT_ROOT}"
 
