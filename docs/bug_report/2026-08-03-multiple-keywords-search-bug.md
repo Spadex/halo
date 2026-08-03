@@ -1,0 +1,1 @@
+halo/kernel/context/backends/knowledge.sh 多关键词检索失效：单词 IPv6、vite、派生缓存 都能命中pitfalls.md，但空格分隔的 vite IPv6（两词在同一文件同一段）返回 No matching context knowledge found，两种词序都不行。helper 的 usage 写作 <keywords>（复数）却不支持多词，检索侧有漏召回风险——未来 agent 用组合词查知识会查不到实际存在的条目。
