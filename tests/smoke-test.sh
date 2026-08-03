@@ -1947,6 +1947,254 @@ fi
 rm -f /tmp/halo-ac-json.log /tmp/halo-drift-json.log /tmp/halo-compliance-json.log /tmp/halo-pipeline-gate-json.log /tmp/halo-pipeline-escalation.log /tmp/halo-pipeline-custom-category.log /tmp/halo-failure-category-lint.log /tmp/halo-failure-category-lint-invalid.log
 echo ""
 
+# ── 7c. Gate coverage honesty and non-Go language support ──
+echo "── 7c. Gate coverage honesty and language support ──"
+
+DRIFT_ORIG_LANG=$(yq -r '.project.language' "$SANDBOX/halo/manifest.yaml")
+DRIFT_ORIG_FRAMEWORK=$(yq -r '.drift.routes.framework' "$SANDBOX/halo/manifest.yaml")
+DRIFT_EMPTY_CODE="$SANDBOX/drift-no-code"
+mkdir -p "$DRIFT_EMPTY_CODE"
+
+# A spec whose only error-code row is the template placeholder. Every drift dimension
+# must be reported as "not verified", never folded into "no drift".
+DRIFT_EMPTY_SPEC="$SANDBOX/drift-empty-spec.md"
+cat > "$DRIFT_EMPTY_SPEC" << 'SPEC'
+# Spec: No machine-checkable contracts
+
+## 5.1 错误码
+
+| 错误码 | 触发条件 | 副作用 | 是否可重试 |
+|---|---|---|---|
+| {ERROR_CODE} | {条件} | {有 / 无} | yes / no |
+SPEC
+DRIFT_EMPTY_JSON="$SANDBOX/halo/state/drift-empty.json"
+DRIFT_EMPTY_OUT=$(bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_EMPTY_SPEC" "$DRIFT_EMPTY_CODE" --json-out="$DRIFT_EMPTY_JSON" 2>&1) || true
+if yq -e '.metrics.spec_error_codes == 0 and .metrics.checks_skipped >= 3 and .metrics.checked.error_codes == false and .metrics.checked.routes == false and .metrics.checked.ddl == false' "$DRIFT_EMPTY_JSON" >/dev/null 2>&1 \
+  && grep -q "NOT verified" <<< "$DRIFT_EMPTY_OUT"; then
+  pass "drift-check reports skipped dimensions as not verified"
+else
+  fail "drift-check cannot distinguish skipped from clean"
+  echo "$DRIFT_EMPTY_OUT" | tail -20
+fi
+
+# String error codes in a Python project: the spec table first column is an upper
+# snake-case enum, and the constants live in .py files, not .go files.
+DRIFT_PY_DIR="$SANDBOX/drift-error-codes"
+mkdir -p "$DRIFT_PY_DIR"
+cat > "$DRIFT_PY_DIR/errors.py" << 'PY'
+from enum import Enum
+
+
+class ErrorCode(str, Enum):
+    REFERENCE_NOT_FOUND = "REFERENCE_NOT_FOUND"
+PY
+DRIFT_CODE_SPEC="$SANDBOX/drift-error-code-spec.md"
+cat > "$DRIFT_CODE_SPEC" << 'SPEC'
+# Spec: 字符串错误码
+
+## 5.3 错误码
+
+| 错误码 | 触发条件 | 副作用 | 是否可重试 |
+|---|---|---|---|
+| REFERENCE_NOT_FOUND | 引用目标不存在 | 无 | no |
+| REFERENCE_IN_USE | 目标仍被引用 | 无 | no |
+SPEC
+yq -i '.project.language = "python"' "$SANDBOX/halo/manifest.yaml"
+DRIFT_CODE_JSON="$SANDBOX/halo/state/drift-error-code.json"
+DRIFT_CODE_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_CODE_SPEC" "$DRIFT_PY_DIR" --json-out="$DRIFT_CODE_JSON" >/tmp/halo-drift-error-code.log 2>&1 || DRIFT_CODE_EXIT=$?
+if [[ $DRIFT_CODE_EXIT -eq 1 ]] \
+  && yq -e '.metrics.spec_error_codes == 2 and .metrics.drift_count == 1 and .metrics.checked.error_codes == true' "$DRIFT_CODE_JSON" >/dev/null 2>&1; then
+  pass "drift-check detects missing string error code in python source"
+else
+  fail "drift-check missed string error code drift (exit=$DRIFT_CODE_EXIT)"
+  tail -20 /tmp/halo-drift-error-code.log
+fi
+
+cat >> "$DRIFT_PY_DIR/errors.py" << 'PY'
+    REFERENCE_IN_USE = "REFERENCE_IN_USE"
+PY
+DRIFT_CODE_CLEAN_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_CODE_SPEC" "$DRIFT_PY_DIR" --json-out="$DRIFT_CODE_JSON" >/tmp/halo-drift-error-code.log 2>&1 || DRIFT_CODE_CLEAN_EXIT=$?
+if [[ $DRIFT_CODE_CLEAN_EXIT -eq 0 ]] \
+  && yq -e '.metrics.drift_count == 0 and .metrics.checked.error_codes == true' "$DRIFT_CODE_JSON" >/dev/null 2>&1; then
+  pass "drift-check passes once every string error code is defined"
+else
+  fail "drift-check false positive on defined string error codes (exit=$DRIFT_CODE_CLEAN_EXIT)"
+  tail -20 /tmp/halo-drift-error-code.log
+fi
+
+# FastAPI route drift: init.sh detects and writes this framework, so the gate must check it.
+yq -i '.drift.routes.framework = "fastapi"' "$SANDBOX/halo/manifest.yaml"
+DRIFT_FASTAPI_DIR="$SANDBOX/drift-fastapi"
+mkdir -p "$DRIFT_FASTAPI_DIR"
+cat > "$DRIFT_FASTAPI_DIR/routers.py" << 'PY'
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/api", tags=["model-sets"])
+
+
+@router.get("/model-sets")
+def list_model_sets():
+    return []
+
+
+@router.post("/model-sets")
+def create_model_set():
+    return {}
+PY
+DRIFT_FASTAPI_SPEC="$SANDBOX/drift-fastapi-spec.md"
+cat > "$DRIFT_FASTAPI_SPEC" << 'SPEC'
+# Spec: FastAPI 路由
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | /api/model-sets | 列出模型集 |
+| POST | /api/model-sets | 创建模型集 |
+| DELETE | /api/model-sets/{set_id} | 删除模型集 |
+SPEC
+DRIFT_FASTAPI_JSON="$SANDBOX/halo/state/drift-fastapi.json"
+DRIFT_FASTAPI_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_FASTAPI_SPEC" "$DRIFT_FASTAPI_DIR" --json-out="$DRIFT_FASTAPI_JSON" >/tmp/halo-drift-fastapi.log 2>&1 || DRIFT_FASTAPI_EXIT=$?
+if [[ $DRIFT_FASTAPI_EXIT -eq 1 ]] \
+  && yq -e '.metrics.spec_routes == 3 and .metrics.drift_count == 1 and .metrics.checked.routes == true' "$DRIFT_FASTAPI_JSON" >/dev/null 2>&1; then
+  pass "drift-check detects unregistered FastAPI route"
+else
+  fail "drift-check missed FastAPI route drift (exit=$DRIFT_FASTAPI_EXIT)"
+  tail -20 /tmp/halo-drift-fastapi.log
+fi
+
+cat >> "$DRIFT_FASTAPI_DIR/routers.py" << 'PY'
+
+
+@router.delete("/model-sets/{set_id}")
+def delete_model_set(set_id: str):
+    return {}
+PY
+DRIFT_FASTAPI_CLEAN_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_FASTAPI_SPEC" "$DRIFT_FASTAPI_DIR" --json-out="$DRIFT_FASTAPI_JSON" >/tmp/halo-drift-fastapi.log 2>&1 || DRIFT_FASTAPI_CLEAN_EXIT=$?
+if [[ $DRIFT_FASTAPI_CLEAN_EXIT -eq 0 ]] \
+  && yq -e '.metrics.drift_count == 0 and .metrics.checked.routes == true' "$DRIFT_FASTAPI_JSON" >/dev/null 2>&1; then
+  pass "drift-check passes once every FastAPI route is registered"
+else
+  fail "drift-check false positive on registered FastAPI routes (exit=$DRIFT_FASTAPI_CLEAN_EXIT)"
+  tail -20 /tmp/halo-drift-fastapi.log
+fi
+
+# Same routes, but the spec puts the path in the first cell and the method in the second.
+# Column order must not be an undeclared contract.
+DRIFT_ROUTE_SPEC="$SANDBOX/drift-route-order-spec.md"
+cat > "$DRIFT_ROUTE_SPEC" << 'SPEC'
+# Spec: 路由表列序
+
+## 5.1 接口契约
+
+| 端点 | 方法 | 说明 |
+|---|---|---|
+| /api/model-sets | GET | 列出模型集 |
+| /api/model-sets | POST | 创建模型集 |
+| /api/model-sets/{set_id} | DELETE | 删除模型集 |
+SPEC
+DRIFT_ROUTE_JSON="$SANDBOX/halo/state/drift-route-order.json"
+DRIFT_ROUTE_EXIT=0
+bash "$SANDBOX/halo/kernel/delivery/gates/drift-check.sh" "$DRIFT_ROUTE_SPEC" "$DRIFT_FASTAPI_DIR" --json-out="$DRIFT_ROUTE_JSON" >/tmp/halo-drift-route-order.log 2>&1 || DRIFT_ROUTE_EXIT=$?
+if [[ $DRIFT_ROUTE_EXIT -eq 0 ]] \
+  && yq -e '.metrics.spec_routes == 3 and .metrics.drift_count == 0 and .metrics.checked.routes == true' "$DRIFT_ROUTE_JSON" >/dev/null 2>&1; then
+  pass "drift-check locates route table columns by header name"
+else
+  fail "drift-check route extraction depends on column position (exit=$DRIFT_ROUTE_EXIT)"
+  tail -20 /tmp/halo-drift-route-order.log
+fi
+
+yq -i ".project.language = \"$DRIFT_ORIG_LANG\"" "$SANDBOX/halo/manifest.yaml"
+yq -i ".drift.routes.framework = \"$DRIFT_ORIG_FRAMEWORK\"" "$SANDBOX/halo/manifest.yaml"
+
+# Compliance source trace must recognise the Chinese source categories used by the
+# default spec template shipped with the framework.
+COMPLIANCE_ZH_SPEC="$SANDBOX/compliance-zh-spec.md"
+cat > "$COMPLIANCE_ZH_SPEC" << 'SPEC'
+# Spec: 中文上下文依据
+
+## 3. 上下文依据
+
+| 来源 | 已采用事实或约束 | 对方案的影响 |
+|---|---|---|
+| 用户输入 | 需要模型集能力 | 决定交付范围 |
+| 代码 / 测试 | 已有 model 表 | 复用既有结构 |
+| 项目知识 | dev DB 必须处于 alembic head | 决定迁移策略 |
+| 待确认 | None | 无 |
+SPEC
+COMPLIANCE_ZH_JSON="$SANDBOX/halo/state/compliance-zh.json"
+bash "$SANDBOX/halo/kernel/delivery/gates/compliance.sh" "$COMPLIANCE_ZH_SPEC" --json-out="$COMPLIANCE_ZH_JSON" >/tmp/halo-compliance-zh.log 2>&1 || true
+if yq -e '(.findings[] | select(.check == "source_trace") | .status) == "pass"' "$COMPLIANCE_ZH_JSON" >/dev/null 2>&1; then
+  pass "compliance recognises Chinese source categories"
+else
+  fail "compliance source trace misses Chinese source categories"
+  tail -20 /tmp/halo-compliance-zh.log
+fi
+
+# plan-lint placeholder detection must not fire on REST path parameters.
+PLACEHOLDER_SPEC_DIR="$SANDBOX/halo/specs/placeholder-probe"
+mkdir -p "$PLACEHOLDER_SPEC_DIR"
+cp "$SANDBOX/halo/specs/modern-feature/spec.md" "$PLACEHOLDER_SPEC_DIR/spec.md"
+sed 's#Scope: Implement the smallest create path needed for AC-1.#Scope: Implement POST /model-sets/{set_id}/members and keep members < 100 while > 0.#' \
+  "$SANDBOX/halo/specs/modern-feature/plan.md" > "$PLACEHOLDER_SPEC_DIR/plan.md"
+PLACEHOLDER_OUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" "halo/specs/placeholder-probe/plan.md" 2>&1) || true
+if ! grep -q "unresolved placeholder" <<< "$PLACEHOLDER_OUT"; then
+  pass "plan-lint accepts REST path parameters and comparison operators"
+else
+  fail "plan-lint flags REST path parameters as unresolved placeholders"
+  grep "unresolved placeholder" <<< "$PLACEHOLDER_OUT" | head -5
+fi
+
+sed 's#Scope: Implement the smallest get path needed for AC-2.#Scope: {SCOPE_TBD} and see <spec-id>.#' \
+  "$SANDBOX/halo/specs/modern-feature/plan.md" > "$PLACEHOLDER_SPEC_DIR/plan-residual.md"
+PLACEHOLDER_RESIDUAL_OUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" "halo/specs/placeholder-probe/plan-residual.md" 2>&1) || true
+if grep -q "unresolved placeholder" <<< "$PLACEHOLDER_RESIDUAL_OUT"; then
+  pass "plan-lint still flags real template placeholders"
+else
+  fail "plan-lint no longer detects template placeholders"
+  echo "$PLACEHOLDER_RESIDUAL_OUT" | tail -10
+fi
+
+# review-package must cover committed work, not only the working tree.
+# The .gitignore keeps the installed harness out of the untracked listing, the way a
+# real project would; without it every framework file would count as untracked.
+cat > "$SANDBOX/.gitignore" << 'IGNORE'
+.halo/
+halo/
+prismspec/
+py-ac-coverage/
+drift-no-code/
+drift-error-codes/
+drift-fastapi/
+go.mod
+*.md
+IGNORE
+REVIEW_PKG_SRC="$SANDBOX/review-pkg-src.txt"
+echo "baseline line" > "$REVIEW_PKG_SRC"
+git -C "$SANDBOX" add review-pkg-src.txt >/dev/null 2>&1
+git -C "$SANDBOX" -c user.email=smoke@halo.test -c user.name=smoke commit -q -m "review package baseline" >/dev/null 2>&1
+git -C "$SANDBOX" branch -M main >/dev/null 2>&1
+git -C "$SANDBOX" checkout -q -b review-package-branch >/dev/null 2>&1
+echo "committed change line" >> "$REVIEW_PKG_SRC"
+git -C "$SANDBOX" add review-pkg-src.txt >/dev/null 2>&1
+git -C "$SANDBOX" -c user.email=smoke@halo.test -c user.name=smoke commit -q -m "review package change" >/dev/null 2>&1
+echo "untracked content" > "$SANDBOX/review-pkg-untracked.txt"
+REVIEW_PKG_OUT=$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/review-package.sh" modern-feature branch 2>&1) || true
+if [[ -f "$REVIEW_PKG_OUT" ]] \
+  && grep -q "committed change line" "$REVIEW_PKG_OUT" \
+  && grep -q "review-pkg-untracked.txt" "$REVIEW_PKG_OUT" \
+  && grep -q "untracked content" "$REVIEW_PKG_OUT"; then
+  pass "review-package includes committed and untracked changes"
+else
+  fail "review-package produced an empty diff on a clean working tree"
+  [[ -f "$REVIEW_PKG_OUT" ]] && tail -30 "$REVIEW_PKG_OUT"
+fi
+git -C "$SANDBOX" checkout -q main >/dev/null 2>&1
+rm -f /tmp/halo-drift-error-code.log /tmp/halo-drift-route-order.log /tmp/halo-drift-fastapi.log /tmp/halo-compliance-zh.log
+echo ""
+
 # ── 8. Context knowledge backend ──
 echo "── 8. Context knowledge backend ──"
 LIST_OUTPUT=$(bash "$SANDBOX/halo/kernel/context/backends/knowledge.sh" --list 2>&1)

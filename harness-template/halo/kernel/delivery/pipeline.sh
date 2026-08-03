@@ -296,8 +296,10 @@ else
 fi
 
 HAS_CODE=false
-LANG=$(get_language)
-case "$LANG" in
+# PROJECT_LANG, not LANG: LANG is the locale environment variable, and overwriting it with
+# a project language leaves every child process (awk, grep, sort) in an invalid locale.
+PROJECT_LANG=$(get_language)
+case "$PROJECT_LANG" in
   go)     [[ -n "$(find "$PROJECT_ROOT" -maxdepth 5 -name '*.go' -not -path '*/vendor/*' 2>/dev/null | head -1)" ]] && HAS_CODE=true || true ;;
   node)   [[ -f "$PROJECT_ROOT/package.json" ]] && HAS_CODE=true ;;
   python) [[ -n "$(find "$PROJECT_ROOT" -maxdepth 5 -name '*.py' 2>/dev/null | head -1)" ]] && HAS_CODE=true || true ;;

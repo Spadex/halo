@@ -133,7 +133,10 @@ fi
 
 echo ""
 echo "── Source trace check ──"
-if grep -qiE '\| *(user|code|test|schema|contract|knowledge|external) *\|' "${SEARCH_FILES[@]}" 2>/dev/null; then
+# Chinese categories are listed alongside the English ones because the default spec
+# template ships a Chinese Context Basis table (`| 用户输入 | ... |`). Without them the
+# framework warns on every spec written from its own template.
+if grep -qiE '\| *(user|code|test|schema|contract|knowledge|external|用户输入|用户决策|用户|代码( ?/ ?测试)?|测试|契约|模式|项目知识|知识|历史 ?spec|外部依赖|外部|待确认) *\|' "${SEARCH_FILES[@]}" 2>/dev/null; then
   echo "  ✅ Context basis records source categories"
   record_finding "source_trace" "pass" "context basis records source categories"
 else

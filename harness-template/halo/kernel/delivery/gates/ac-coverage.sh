@@ -34,7 +34,9 @@ TEST_DIR="${TEST_DIR_ARG:-$PROJECT_ROOT}"
 
 [[ -f "$SPEC" ]] || { echo "Spec file not found: $SPEC"; exit 1; }
 
-LANG=$(get_language)
+# PROJECT_LANG, not LANG: LANG is the locale environment variable, and overwriting it with
+# a project language leaves every child process (awk, grep, sort) in an invalid locale.
+PROJECT_LANG=$(get_language)
 GATE_FINDINGS=()
 
 json_escape() {
@@ -67,7 +69,7 @@ write_gate_json() {
     printf '  "gate": "ac-coverage",\n'
     printf '  "status": "%s",\n' "$(json_escape "$status")"
     printf '  "spec_file": "%s",\n' "$(json_escape "${SPEC#$PROJECT_ROOT/}")"
-    printf '  "language": "%s",\n' "$(json_escape "$LANG")"
+    printf '  "language": "%s",\n' "$(json_escape "$PROJECT_LANG")"
     printf '  "metrics": {\n'
     printf '    "ac_total": %s,\n' "${SPEC_COUNT:-0}"
     printf '    "ac_covered": %s,\n' "${COVERED_COUNT:-0}"
@@ -87,10 +89,10 @@ write_gate_json() {
   } > "$out"
 }
 
-echo "🔍 AC Coverage: $(basename "$SPEC") [$LANG]"
+echo "🔍 AC Coverage: $(basename "$SPEC") [$PROJECT_LANG]"
 echo ""
 
-case "$LANG" in
+case "$PROJECT_LANG" in
   go)
     FUNC_REGEX='func Test(AC|_AC)([0-9]+)'
     ;;
@@ -101,7 +103,7 @@ case "$LANG" in
     FUNC_REGEX='def test_ac([0-9]+)'
     ;;
   *)
-    echo "⚠️  Unknown language: $LANG, using Go defaults"
+    echo "⚠️  Unknown language: $PROJECT_LANG, using Go defaults"
     FUNC_REGEX='func Test(AC|_AC)([0-9]+)'
     ;;
 esac
@@ -111,7 +113,7 @@ esac
 # unlike a bare AC number it is spec-local, so it cannot collide across specs.
 # Node test titles are free-form strings, not stable identifiers, so no token is
 # extracted for node; those ACs use the numeric fallback below.
-case "$LANG" in
+case "$PROJECT_LANG" in
   go)                          DECL_TOKEN_REGEX='Test[A-Za-z0-9_]+' ;;
   python)                      DECL_TOKEN_REGEX='test_[a-z0-9_]+' ;;
   node|javascript|typescript)  DECL_TOKEN_REGEX='' ;;
@@ -146,7 +148,7 @@ fi
 
 echo "📋 Spec AC count: $SPEC_COUNT"
 
-case "$LANG" in
+case "$PROJECT_LANG" in
   node|javascript|typescript)
     TEST_FILES=$(find "$TEST_DIR" \( -path '*/node_modules/*' -o -path '*/.halo/*' -o -path '*/halo/*' -o -path '*/prismspec/*' \) -prune -o \( -name "*.test.ts" -o -name "*.test.js" -o -name "*.spec.ts" -o -name "*.spec.js" \) -type f -print 2>/dev/null || true)
     ;;

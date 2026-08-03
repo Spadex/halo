@@ -55,6 +55,26 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- `drift-check.sh` no longer reports an unchecked dimension as a clean one. Gate JSON gains
+  `metrics.checks_run`, `metrics.checks_skipped`, and `metrics.checked.{ddl,routes,error_codes,seed_sql}`,
+  and the verdict line names the dimensions that were NOT verified.
+- `drift-check.sh` error code drift now reads upper snake-case codes (`REFERENCE_IN_USE`) from the
+  error code table, not only numeric ones, and scans source files by project language instead of
+  hardcoded `*.go`. The default spec template ships `| {ERROR_CODE} | … |`, so the numeric-only
+  reader silently skipped every spec written from the framework's own template.
+- `drift-check.sh` locates the route table method/path columns by header name instead of fixed
+  column position, and implements route drift detection for FastAPI and Express — both of which
+  `init.sh` already detects and writes into the manifest.
+- `drift-check.sh`, `ac-coverage.sh`, and `pipeline.sh` no longer assign the project language to
+  `LANG`, which is the locale environment variable and left every child process in an invalid locale.
+- `review-package.sh` now covers committed work via `--base=<ref>` (default: merge base with the
+  repository's default branch), staged changes, and untracked file content. A project that commits
+  per task — the SDD discipline the framework itself prescribes — previously got an empty package.
+- `compliance.sh` source trace recognises the Chinese source categories used by the default spec
+  template, which previously produced a permanent warning on every spec written from that template.
+- `plan-lint.sh` placeholder detection no longer fires on REST path parameters (`{set_id}`),
+  f-strings, or a line containing both `<` and `>` as comparisons, and now does detect the Chinese
+  template placeholders (`{条件}`) that the previous ASCII-only pattern could not match.
 - PrismSpec guide now requires actual verification evidence and no longer treats review packages as verification output.
 - Public contribution docs now use Halo naming and current paths.
 - CI now runs the Go/Gin/GORM example and release readiness check in addition to smoke tests.
