@@ -799,7 +799,7 @@ fi
 PLANNED_TRANSITION_EVENT="$(
   find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
-        yq -e '.kind == "spec-transition" and .from_status == "drafted" and .to_status == "planned"' "$file" >/dev/null 2>&1 && echo "$file"
+        if yq -e '.kind == "spec-transition" and .from_status == "drafted" and .to_status == "planned"' "$file" >/dev/null 2>&1; then echo "$file"; fi
       done \
     | tail -1 || true
 )"
@@ -959,7 +959,7 @@ fi
 IMPLEMENTED_TRANSITION_EVENT="$(
   find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
-        yq -e '.kind == "spec-transition" and .from_status == "planned" and .to_status == "implemented"' "$file" >/dev/null 2>&1 && echo "$file"
+        if yq -e '.kind == "spec-transition" and .from_status == "planned" and .to_status == "implemented"' "$file" >/dev/null 2>&1; then echo "$file"; fi
       done \
     | tail -1 || true
 )"
@@ -1635,17 +1635,22 @@ else
   [[ -f "$SUMMARY_LEARN_DRAFT" ]] && cat "$SUMMARY_LEARN_DRAFT"
 fi
 
+# A `while` loop exits with the status of its last iteration, so `yq -e … && echo`
+# returned 1 whenever the file find happened to list last did not match. Under the
+# `set -euo pipefail` at the top of this file that failed the whole pipeline, failed the
+# command substitution, and killed the run mid-way — a coin flip on find's directory
+# order, not an assertion failure. `if` keeps the loop status independent of the match.
 TRANSITION_COUNT_FINAL=$(
   find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
-        yq -e '.spec_id == "modern-feature"' "$file" >/dev/null 2>&1 && echo "$file"
+        if yq -e '.spec_id == "modern-feature"' "$file" >/dev/null 2>&1; then echo "$file"; fi
       done \
-    | wc -l | tr -d ' '
+    | wc -l | tr -d ' ' || true
 )
 VERIFIED_TRANSITION_EVENT="$(
   find "$SANDBOX/halo/state/spec-transitions" -name '*.json' -type f -print 2>/dev/null \
     | while IFS= read -r file; do
-        yq -e '.kind == "spec-transition" and .from_status == "implemented" and .to_status == "verified"' "$file" >/dev/null 2>&1 && echo "$file"
+        if yq -e '.kind == "spec-transition" and .from_status == "implemented" and .to_status == "verified"' "$file" >/dev/null 2>&1; then echo "$file"; fi
       done \
     | tail -1 || true
 )"
