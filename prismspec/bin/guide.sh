@@ -101,15 +101,51 @@ active_from_manifest() {
   return 1
 }
 
+# Same two ranking keys as harness-template/halo/kernel/spec-select.sh: an in-flight
+# spec outranks a verified one, then the newest front matter updated_at wins. Kept
+# inline because prismspec must resolve specs in a standalone host that has no halo
+# kernel to delegate to. File mtime is not used: git merge/checkout/rebase rewrite it
+# on every checked-out file, which silently flips the "current spec" after a merge.
+rank_specs_by_frontmatter() {
+  local root="$1" file
+  find "$root" -name spec.md -type f -not -path '*/.locks/*' 2>/dev/null | sort | while IFS= read -r file; do
+    [[ -n "$file" ]] || continue
+    awk -v path="$file" '
+      NR == 1 && $0 == "---" { fm = 1; next }
+      fm && $0 == "---" { exit }
+      fm && /^[ \t]*status[ \t]*:/ { s = $0; sub(/^[^:]*:[ \t]*/, "", s); gsub(/["'\''`]/, "", s) }
+      fm && /^[ \t]*updated_at[ \t]*:/ { u = $0; sub(/^[^:]*:[ \t]*/, "", u); gsub(/["'\''`]/, "", u) }
+      END { printf "%d|%s|%s\n", (s == "verified" ? 1 : 0), (u == "" ? "0000-00-00T00:00:00Z" : u), path }
+    ' "$file"
+  done | sort -t'|' -k1,1n -k2,2r -k3,3
+}
+
 latest_spec_id() {
-  local latest
-  latest=$(find "$SPEC_ROOT" -name spec.md -type f -not -path '*/.locks/*' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1 || true)
+  local latest=""
+  if [[ -f "$ROOT/halo/kernel/spec-select.sh" ]]; then
+    # Under the halo host there is exactly one implementation of "which spec is
+    # current" — the kernel's. stderr is dropped here on purpose: guide.sh is an
+    # advisory router called constantly, and its --json output already reports
+    # spec_source for anyone who needs the provenance.
+    # shellcheck source=../../harness-template/halo/kernel/spec-select.sh
+    source "$ROOT/halo/kernel/spec-select.sh"
+    latest="$(spec_select "$SPEC_ROOT" 2>/dev/null || true)"
+  else
+    latest="$(rank_specs_by_frontmatter "$SPEC_ROOT" | head -1 | cut -d'|' -f3)"
+  fi
   [[ -n "$latest" ]] || return 1
   dirname "$latest" | sed "s#^$SPEC_ROOT/##"
 }
 
-if [[ -z "$SPEC_ID" ]]; then
-  SPEC_ID="$(active_from_manifest || latest_spec_id || true)"
+SPEC_SOURCE="none"
+if [[ -n "$SPEC_ID" ]]; then
+  SPEC_SOURCE="explicit"
+elif SPEC_ID="$(active_from_manifest)"; then
+  SPEC_SOURCE="manifest-active"
+elif SPEC_ID="$(latest_spec_id)"; then
+  SPEC_SOURCE="auto"
+else
+  SPEC_ID=""
 fi
 
 SPEC_DIR=""
@@ -407,6 +443,7 @@ if [[ "$JSON" == "true" ]]; then
   printf '{\n'
   printf '  "host": "%s",\n' "$HOST"
   printf '  "spec_id": "%s",\n' "$SPEC_ID"
+  printf '  "spec_source": "%s",\n' "$SPEC_SOURCE"
   printf '  "status": "%s",\n' "$STATUS"
   printf '  "scaffolded": %s,\n' "$SCAFFOLDED"
   printf '  "stage": "%s",\n' "$STAGE"

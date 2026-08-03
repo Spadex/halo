@@ -1842,9 +1842,14 @@ PROMOTE_EXIT=0
 bash "$SANDBOX/halo/kernel/context/learn-draft.sh" promote "$ESCALATION_LEARN_DRAFT" --require-review --to="$PROMOTE_TARGET" >/tmp/halo-learn-promote.log 2>&1 || PROMOTE_EXIT=$?
 PROMOTED_DRAFT="$SANDBOX/halo/context/drafts/promoted/$(basename "$ESCALATION_LEARN_DRAFT")"
 PROMOTE_EVENT=$(find "$SANDBOX/halo/state/learn-promotions" -type f -name '*.json' -print | head -1)
+# pitfalls.md is table-shaped, so promotion must land as table rows. The old
+# `## Promoted Learn Draft` section landed after the trailing `## Do Not Repeat`
+# section, outside the table it was meant to extend.
 if [[ $PROMOTE_EXIT -eq 0 ]] \
   && [[ -f "$PROMOTED_DRAFT" ]] \
-  && grep -q "Promoted Learn Draft" "$PROMOTE_TARGET" \
+  && ! grep -q "Promoted Learn Draft" "$PROMOTE_TARGET" \
+  && [[ "$(awk '/^## Do Not Repeat/{exit} /^\| /{n++} END{print n+0}' "$PROMOTE_TARGET")" -gt 1 ]] \
+  && awk '/^## Do Not Repeat/{exit} /^\| /{print}' "$PROMOTE_TARGET" | grep -q 'context/drafts/promoted/' \
   && [[ -n "$PROMOTE_EVENT" ]] \
   && yq -e '.kind == "learn-promotion" and .action == "promote" and .target == "halo/context/knowledge/pitfalls.md" and .failure_category == "ac_gap" and .default_action == "add_or_map_tests"' "$PROMOTE_EVENT" >/dev/null 2>&1; then
   pass "learn-draft promotes draft with audit event"
@@ -2398,6 +2403,203 @@ if echo "$UNLOCK_OUTPUT" | grep -q "Released"; then
   pass "spec-lock release works"
 else
   fail "spec-lock release failed"
+fi
+echo ""
+
+# ── 9b. Spec auto-discovery ranks on front matter, not file mtime ──
+# Regression: `ls -t` picked whichever spec.md a git merge/checkout happened to
+# rewrite last, so the whole toolchain verified an unrelated spec and produced a
+# structurally complete eval run whose spec_file, spec_hash and AC coverage all
+# belonged to that other spec — with no warning printed anywhere.
+echo "── 9b. Spec auto-discovery ──"
+DISCOVERY_ROOT="$SANDBOX/discovery"
+write_discovery_spec() {
+  local dir="$1" id="$2" status="$3" updated="$4"
+  mkdir -p "$DISCOVERY_ROOT/$dir"
+  {
+    echo "---"
+    echo "id: $id"
+    echo "status: $status"
+    [[ -n "$updated" ]] && echo "updated_at: $updated"
+    echo "---"
+    echo ""
+    echo "# $id"
+  } > "$DISCOVERY_ROOT/$dir/spec.md"
+}
+
+rm -rf "$DISCOVERY_ROOT"
+write_discovery_spec current current implemented "2026-08-03T13:52:14Z"
+write_discovery_spec merged merged verified "2026-08-03T05:15:58Z"
+# Simulate `git merge` checking the other spec out: newest mtime, oldest content.
+touch "$DISCOVERY_ROOT/merged/spec.md"
+DISCOVERY_PICK=$(bash "$SANDBOX/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT" 2>/dev/null || true)
+if [[ "$DISCOVERY_PICK" == "$DISCOVERY_ROOT/current/spec.md" ]]; then
+  pass "spec auto-discovery ignores mtime rewritten by git checkout"
+else
+  fail "spec auto-discovery picked $DISCOVERY_PICK, expected current/spec.md"
+fi
+
+DISCOVERY_STDERR=$(bash "$SANDBOX/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT" 2>&1 >/dev/null || true)
+if grep -q "selected" <<< "$DISCOVERY_STDERR" && grep -q "not selected" <<< "$DISCOVERY_STDERR"; then
+  pass "spec auto-discovery announces the selection and what it beat"
+else
+  fail "spec auto-discovery selected silently"
+fi
+
+# A terminal (verified) spec must not outrank an in-flight one on timestamp alone.
+write_discovery_spec merged merged verified "2026-08-09T23:59:59Z"
+DISCOVERY_PICK=$(bash "$SANDBOX/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT" 2>/dev/null || true)
+if [[ "$DISCOVERY_PICK" == "$DISCOVERY_ROOT/current/spec.md" ]]; then
+  pass "spec auto-discovery prefers in-flight spec over verified one"
+else
+  fail "spec auto-discovery let a verified spec win on timestamp"
+fi
+
+# Same lifecycle class, same timestamp: genuinely undecidable, so refuse to guess.
+write_discovery_spec merged merged implemented "2026-08-03T13:52:14Z"
+DISCOVERY_TIE_EXIT=0
+DISCOVERY_TIE_OUT=$(bash "$SANDBOX/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT" 2>&1) || DISCOVERY_TIE_EXIT=$?
+if [[ "$DISCOVERY_TIE_EXIT" -eq 2 ]] && grep -q -- "--spec=" <<< "$DISCOVERY_TIE_OUT"; then
+  pass "spec auto-discovery refuses to guess on an exact tie"
+else
+  fail "spec auto-discovery guessed on an exact tie (exit $DISCOVERY_TIE_EXIT)"
+fi
+
+# No semantic signal anywhere: fall back to mtime, but say so.
+rm -rf "$DISCOVERY_ROOT"
+write_discovery_spec older older drafted ""
+write_discovery_spec newer newer drafted ""
+touch "$DISCOVERY_ROOT/newer/spec.md"
+DISCOVERY_FALLBACK_OUT=$(bash "$SANDBOX/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT" 2>&1 >/dev/null || true)
+DISCOVERY_PICK=$(bash "$SANDBOX/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT" 2>/dev/null || true)
+if [[ "$DISCOVERY_PICK" == "$DISCOVERY_ROOT/newer/spec.md" ]] && grep -q "mtime" <<< "$DISCOVERY_FALLBACK_OUT"; then
+  pass "spec auto-discovery falls back to mtime and flags it"
+else
+  fail "spec auto-discovery mtime fallback invalid"
+fi
+
+# End to end: the pipeline must verify the spec the content says is current, and must
+# record that nobody named it.
+rm -rf "$SANDBOX/halo/specs/zz-merged"
+DISCOVERY_EVAL="$SANDBOX/halo/state/discovery-eval.json"
+cp -R "$SANDBOX/halo/specs/modern-feature" "$SANDBOX/halo/specs/zz-merged"
+yq -i '.id = "zz-merged"' --front-matter=process "$SANDBOX/halo/specs/zz-merged/spec.md" 2>/dev/null || true
+touch "$SANDBOX/halo/specs/zz-merged/spec.md"
+DISCOVERY_PIPE_OUT=$(bash "$SANDBOX/halo/kernel/delivery/pipeline.sh" --only=spec-lint --json-out="$DISCOVERY_EVAL" 2>&1 || true)
+if grep -q "source=auto" <<< "$DISCOVERY_PIPE_OUT" \
+  && [[ -f "$DISCOVERY_EVAL" ]] \
+  && yq -e '.spec_source == "auto"' "$DISCOVERY_EVAL" >/dev/null 2>&1; then
+  pass "pipeline prints and records how the spec was chosen"
+else
+  fail "pipeline did not record spec_source"
+  tail -20 <<< "$DISCOVERY_PIPE_OUT"
+fi
+
+DISCOVERY_EXPLICIT_EVAL="$SANDBOX/halo/state/discovery-eval-explicit.json"
+bash "$SANDBOX/halo/kernel/delivery/pipeline.sh" --only=spec-lint \
+  --spec="$SANDBOX/halo/specs/modern-feature/spec.md" \
+  --json-out="$DISCOVERY_EXPLICIT_EVAL" >/tmp/halo-discovery-explicit.log 2>&1 || true
+if yq -e '.spec_source == "explicit"' "$DISCOVERY_EXPLICIT_EVAL" >/dev/null 2>&1; then
+  pass "pipeline records an explicitly pinned spec as explicit"
+else
+  fail "pipeline mislabels an explicit --spec= run"
+  tail -20 /tmp/halo-discovery-explicit.log
+fi
+
+# guide.sh keeps its own copy of the ranking for the standalone host; under the halo
+# host it must delegate, so both paths agree on the same tree.
+if [[ -f "$REPO_DIR/prismspec/bin/guide.sh" ]]; then
+  mkdir -p "$SANDBOX/prismspec/bin"
+  cp "$REPO_DIR/prismspec/bin/guide.sh" "$SANDBOX/prismspec/bin/guide.sh"
+  GUIDE_JSON=$(cd "$SANDBOX" && bash prismspec/bin/guide.sh --json 2>/dev/null || true)
+  KERNEL_PICK=$(cd "$SANDBOX" && bash halo/kernel/spec-select.sh halo/specs 2>/dev/null || true)
+  KERNEL_PICK_ID=$(basename "$(dirname "$KERNEL_PICK")")
+  if [[ -n "$KERNEL_PICK_ID" ]] \
+    && yq -e ".spec_id == \"$KERNEL_PICK_ID\" and .spec_source == \"auto\"" <<< "$GUIDE_JSON" >/dev/null 2>&1; then
+    pass "guide.sh resolves the same spec as the kernel selector"
+  else
+    fail "guide.sh and the kernel selector disagree on the current spec"
+    echo "$GUIDE_JSON" | head -5
+  fi
+fi
+rm -rf "$SANDBOX/halo/specs/zz-merged"
+echo ""
+
+# ── 9c. Learn draft promotion respects the target file's shape ──
+# Regression: promote always appended a `## Promoted Learn Draft` section to EOF, so
+# on the framework's own table-shaped knowledge files the lesson landed outside the
+# table (after the trailing `## Do Not Repeat` section) and knowledge-lint could not
+# see it, because the file already carries a Source column at file level.
+echo "── 9c. Learn draft promotion shape ──"
+SHAPE_DRAFT="$SANDBOX/halo/context/drafts/shape-check.md"
+cat > "$SHAPE_DRAFT" <<'MD'
+---
+run_id: "shape-check"
+failure_category: "unknown"
+default_action: "review"
+---
+
+# Knowledge Draft
+
+## Lesson Candidate
+
+- Alembic head must match before commit
+- Escape the | pipe inside table text
+
+## Review Checklist
+MD
+SHAPE_TARGET="$SANDBOX/halo/context/knowledge/shape-table.md"
+cat > "$SHAPE_TARGET" <<'MD'
+---
+owner: "project"
+verified_at: "2026-06-28"
+applies_to: ["pitfalls"]
+---
+
+# Shape Table
+
+| Pitfall | Trigger | Guidance | Source |
+|---------|---------|----------|--------|
+
+## Do Not Repeat
+
+- keep one-offs out of here
+MD
+SHAPE_EXIT=0
+SHAPE_OUT=$(bash "$SANDBOX/halo/kernel/context/learn-draft.sh" promote "$SHAPE_DRAFT" --to="$SHAPE_TARGET" 2>&1) || SHAPE_EXIT=$?
+SHAPE_TABLE_ROWS=$(awk '/^## Do Not Repeat/{exit} /^\| /{n++} END{print n+0}' "$SHAPE_TARGET")
+if [[ $SHAPE_EXIT -eq 0 ]] \
+  && [[ "$SHAPE_TABLE_ROWS" -eq 3 ]] \
+  && ! grep -q "Promoted Learn Draft" "$SHAPE_TARGET" \
+  && grep -q 'Escape the \\| pipe' "$SHAPE_TARGET" \
+  && grep -q "row(s) added to knowledge table" <<< "$SHAPE_OUT"; then
+  pass "learn-draft promotes into a table target as rows"
+else
+  fail "learn-draft table promotion invalid (rows=$SHAPE_TABLE_ROWS)"
+  tail -10 <<< "$SHAPE_OUT"
+fi
+
+if bash "$SANDBOX/halo/kernel/context/knowledge-lint.sh" --target="halo/context/knowledge/shape-table.md" --strict >/tmp/halo-shape-lint.log 2>&1; then
+  pass "table promotion keeps knowledge-lint clean"
+else
+  fail "table promotion broke knowledge-lint"
+  tail -10 /tmp/halo-shape-lint.log
+fi
+
+# Section-shaped targets keep the original append behavior.
+SECTION_DRAFT="$SANDBOX/halo/context/drafts/shape-section.md"
+sed 's/shape-check/shape-section/' "$SANDBOX/halo/context/drafts/promoted/shape-check.md" > "$SECTION_DRAFT"
+SECTION_TARGET="$SANDBOX/halo/context/knowledge/shape-section.md"
+printf -- '---\nowner: "project"\nverified_at: "2026-06-28"\napplies_to: ["notes"]\n---\n\n# Notes\n\n**Source**: seed\n' > "$SECTION_TARGET"
+SECTION_EXIT=0
+SECTION_OUT=$(bash "$SANDBOX/halo/kernel/context/learn-draft.sh" promote "$SECTION_DRAFT" --to="$SECTION_TARGET" 2>&1) || SECTION_EXIT=$?
+if [[ $SECTION_EXIT -eq 0 ]] \
+  && grep -q "## Promoted Learn Draft" "$SECTION_TARGET" \
+  && grep -q "section appended" <<< "$SECTION_OUT"; then
+  pass "learn-draft keeps section append for section-shaped targets"
+else
+  fail "learn-draft section promotion regressed"
+  tail -10 <<< "$SECTION_OUT"
 fi
 echo ""
 

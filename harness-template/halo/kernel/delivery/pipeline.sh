@@ -283,16 +283,36 @@ echo ""
 resolve_failure_categories_file
 
 HAS_SPEC=false
+SPEC_SOURCE="none"
+SPEC_SOURCE_DETAIL=""
 SPEC_FILE="${USER_SPEC:-}"
 if [[ -n "$SPEC_FILE" ]] && [[ -f "$SPEC_FILE" ]]; then
   HAS_SPEC=true
-  export SPEC_FILE
-elif spec=$(find_spec 2>/dev/null); then
-  HAS_SPEC=true
-  SPEC_FILE="$spec"
+  SPEC_SOURCE="explicit"
   export SPEC_FILE
 else
-  SPEC_FILE=""
+  # stderr is not suppressed: it carries which spec auto-discovery picked and what it
+  # beat. An auto-discovered spec is a guess, and a run that verified the wrong spec
+  # looks exactly like a real pass unless the run says nobody named the spec.
+  spec_rc=0
+  resolved="$(find_spec_with_source)" || spec_rc=$?
+  if [[ "$spec_rc" -eq 2 ]]; then
+    echo "❌ Spec auto-discovery is ambiguous — rerun with --spec=<path> or set specs.active"
+    exit 1
+  elif [[ "$spec_rc" -eq 0 && -n "$resolved" ]]; then
+    HAS_SPEC=true
+    SPEC_SOURCE="${resolved%%|*}"
+    resolved="${resolved#*|}"
+    SPEC_SOURCE_DETAIL="${resolved%%|*}"
+    SPEC_FILE="${resolved#*|}"
+    export SPEC_FILE
+  else
+    SPEC_FILE=""
+  fi
+fi
+if [[ "$HAS_SPEC" == "true" ]]; then
+  echo "Spec: ${SPEC_FILE#$PROJECT_ROOT/} (source=$SPEC_SOURCE${SPEC_SOURCE_DETAIL:+, $SPEC_SOURCE_DETAIL})"
+  echo ""
 fi
 
 HAS_CODE=false
@@ -454,6 +474,7 @@ write_learn_draft() {
     printf 'run_id: "%s"\n' "$(json_escape "$RUN_ID")"
     printf 'created_at: "%s"\n' "$(json_escape "$RUN_ENDED_AT")"
     printf 'spec_file: "%s"\n' "$(json_escape "$spec_rel")"
+    printf 'spec_source: "%s"\n' "$(json_escape "$SPEC_SOURCE")"
     printf 'failed_step: "%s"\n' "$(json_escape "$FAILED_STEP")"
     printf 'failure_category: "%s"\n' "$(json_escape "$FAILED_CATEGORY")"
     printf 'default_action: "%s"\n' "$(json_escape "$FAILED_DEFAULT_ACTION")"
@@ -555,6 +576,11 @@ write_eval_json() {
     printf '  "language": "%s",\n' "$(json_escape "$(get_language)")"
     printf '  "git_sha": "%s",\n' "$(json_escape "$git_sha")"
     printf '  "spec_file": "%s",\n' "$(json_escape "$spec_rel")"
+    # How the spec was chosen, not just which one. `auto` means nobody named the spec
+    # and the harness ranked candidates; a reader auditing this run must be able to
+    # tell that apart from an explicitly pinned one without rerunning anything.
+    printf '  "spec_source": "%s",\n' "$(json_escape "$SPEC_SOURCE")"
+    printf '  "spec_source_detail": "%s",\n' "$(json_escape "$SPEC_SOURCE_DETAIL")"
     printf '  "spec_hash": "%s",\n' "$(json_escape "$spec_hash")"
     printf '  "agent": "%s",\n' "$(json_escape "$agent_name")"
     printf '  "kernel_version": "%s",\n' "$(json_escape "$kernel_version")"

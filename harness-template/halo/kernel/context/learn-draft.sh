@@ -79,6 +79,44 @@ lesson_candidate() {
   ' "$file" | sed '/^[[:space:]]*$/d'
 }
 
+# Knowledge files ship as tables — the default promote target
+# halo/context/knowledge/pitfalls.md is `| Pitfall | Trigger | Guidance | Source |`
+# followed by a `## Do Not Repeat` section. Appending a `## Promoted Learn Draft`
+# block to end-of-file therefore drops the lesson OUTSIDE the table, after that
+# trailing section, and knowledge-lint cannot see it because the file already has a
+# Source column at file level. Detect the target's shape and write a row instead.
+#
+# Emits the 1-based line number of the first table's header row, or nothing.
+table_header_line() {
+  local file="$1"
+  awk '
+    NR > 1 && $0 ~ /^[[:space:]]*\|[-:| \t]+$/ && $0 ~ /-/ && prev ~ /^[[:space:]]*\|/ {
+      print NR - 1
+      exit
+    }
+    { prev = $0 }
+  ' "$file"
+}
+
+# Last line of that table body, so rows land inside the table rather than at EOF.
+# Falls back to the separator line when the table has no rows yet.
+table_last_row_line() {
+  local file="$1" header="$2"
+  awk -v h="$header" '
+    NR < h + 2 { next }
+    /^[[:space:]]*\|/ { last = NR; next }
+    { exit }
+    END { print (last ? last : h + 1) }
+  ' "$file"
+}
+
+table_columns() {
+  local file="$1" header="$2"
+  sed -n "${header}p" "$file" | awk -F'|' '{
+    for (i = 2; i < NF; i++) { c = $i; gsub(/^[ \t]+|[ \t]+$/, "", c); print c }
+  }'
+}
+
 safe_draft_path() {
   local path="$1" abs
   [[ -n "$path" ]] || { echo "Usage: learn-draft.sh <promote|discard> <draft.md>"; exit 1; }
@@ -166,18 +204,63 @@ case "$ACTION" in
     [[ -n "$LESSON" ]] || { echo "Draft has no Lesson Candidate section: $DRAFT_REL"; exit 1; }
 
     mkdir -p "$(dirname "$TARGET_ABS")" "$(dirname "$ARCHIVE_ABS")"
-    {
-      printf '\n## Promoted Learn Draft: %s\n\n' "$RUN_ID"
-      printf '**Source draft**: `%s`  \n' "$ARCHIVE_REL"
-      printf '**Promoted at**: `%s`  \n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      printf '**Failure category**: `%s`  \n' "${FAILURE_CATEGORY:-unknown}"
-      printf '**Default action**: `%s`  \n\n' "${DEFAULT_ACTION:-unknown}"
-      printf '%s\n' "$LESSON"
-      printf '\n'
-    } >> "$TARGET_ABS"
+    HEADER_LINE=""
+    [[ -f "$TARGET_ABS" ]] && HEADER_LINE="$(table_header_line "$TARGET_ABS")"
+    SHAPE_NOTE=""
+    if [[ -n "$HEADER_LINE" ]]; then
+      COLUMNS="$(table_columns "$TARGET_ABS" "$HEADER_LINE")"
+      COL_COUNT="$(printf '%s\n' "$COLUMNS" | grep -c . || true)"
+      SOURCE_COL="$({ printf '%s\n' "$COLUMNS" | grep -niE '^(source|来源|出处)$' || true; } | head -1 | cut -d: -f1)"
+      INSERT_AFTER="$(table_last_row_line "$TARGET_ABS" "$HEADER_LINE")"
+      ROWS_FILE="$(mktemp)"
+      ROW_COUNT=0
+      while IFS= read -r candidate; do
+        [[ -n "$candidate" ]] || continue
+        text="$(sed -E 's/^[[:space:]]*[-*][[:space:]]+//' <<< "$candidate")"
+        # An unescaped pipe in the lesson text would silently add a column to the row.
+        text="${text//|/\\|}"
+        row=""
+        for ((col = 1; col <= COL_COUNT; col++)); do
+          if [[ "$col" -eq 1 ]]; then
+            row+="| $text "
+          elif [[ -n "$SOURCE_COL" && "$col" -eq "$SOURCE_COL" ]]; then
+            row+="| \`$ARCHIVE_REL\` "
+          else
+            row+="| — "
+          fi
+        done
+        printf '%s|\n' "$row" >> "$ROWS_FILE"
+        ROW_COUNT=$((ROW_COUNT + 1))
+      done <<< "$LESSON"
+      TMP_TARGET="$(mktemp)"
+      # Rows are read from a file, not passed through awk -v: awk expands backslash
+      # escapes in -v values, which would undo the pipe escaping above.
+      awk -v n="$INSERT_AFTER" -v rowfile="$ROWS_FILE" '
+        { print }
+        NR == n { while ((getline line < rowfile) > 0) print line; close(rowfile) }
+      ' "$TARGET_ABS" > "$TMP_TARGET"
+      mv "$TMP_TARGET" "$TARGET_ABS"
+      rm -f "$ROWS_FILE"
+      SHAPE_NOTE=" ($ROW_COUNT row(s) added to knowledge table)"
+      # Promotion metadata is deliberately NOT written into the knowledge file here:
+      # run id, failure category, and timestamp already live in the audit event under
+      # halo/state/learn-promotions/ and in the archived draft. Knowledge files hold
+      # the lesson, not the adjudication that produced it.
+    else
+      {
+        printf '\n## Promoted Learn Draft: %s\n\n' "$RUN_ID"
+        printf '**Source draft**: `%s`  \n' "$ARCHIVE_REL"
+        printf '**Promoted at**: `%s`  \n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        printf '**Failure category**: `%s`  \n' "${FAILURE_CATEGORY:-unknown}"
+        printf '**Default action**: `%s`  \n\n' "${DEFAULT_ACTION:-unknown}"
+        printf '%s\n' "$LESSON"
+        printf '\n'
+      } >> "$TARGET_ABS"
+      SHAPE_NOTE=" (section appended)"
+    fi
     mv "$DRAFT_ABS" "$ARCHIVE_ABS"
     write_event_json "promote" "$DRAFT_REL" "$ARCHIVE_REL" "$TARGET_REL" "" "$RUN_ID" "$FAILURE_CATEGORY" "$DEFAULT_ACTION" "$EVENT_FILE"
-    echo "✅ Promoted learn draft → $TARGET_REL"
+    echo "✅ Promoted learn draft → ${TARGET_REL}${SHAPE_NOTE}"
     echo "🧾 Event: $(rel_path "$EVENT_FILE")"
     if [[ -x "$PROJECT_ROOT/halo/kernel/context/knowledge-lint.sh" ]]; then
       bash "$PROJECT_ROOT/halo/kernel/context/knowledge-lint.sh" --target="$TARGET_REL" || true

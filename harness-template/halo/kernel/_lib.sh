@@ -127,7 +127,21 @@ run_cmd() {
 # Spec discovery
 # ══════════════════════════════════
 
-find_spec() {
+if [[ ! -f "$_LIB_DIR/spec-select.sh" ]]; then
+  echo "Missing kernel file: $_LIB_DIR/spec-select.sh"
+  echo "  Upgrade the project kernel: bash install.sh --upgrade"
+  exit 1
+fi
+# shellcheck source=./spec-select.sh
+source "$_LIB_DIR/spec-select.sh"
+
+# Emits "<source>|<detail>|<path>" so callers can record HOW the spec was chosen, not
+# just which one. Provenance matters because an auto-discovered spec is a guess: an
+# eval run that silently verified the wrong spec is indistinguishable from a real pass
+# unless the run records that nobody named the spec.
+#   source : explicit | manifest-active | auto
+#   return : 0 resolved · 1 nothing to resolve · 2 ambiguous auto-discovery
+_resolve_spec() {
   local spec_dir
   spec_dir=$(manifest_get ".specs.dir")
   spec_dir="${spec_dir:-halo/specs}"
@@ -136,31 +150,41 @@ find_spec() {
   active_spec=$(manifest_get ".specs.active")
 
   if [[ -n "$spec_file" ]] && [[ -f "$spec_file" ]]; then
-    echo "$spec_file"
+    echo "explicit|caller-supplied|$spec_file"
     return 0
   fi
 
   if [[ -n "$active_spec" ]]; then
     if [[ -f "$PROJECT_ROOT/$active_spec" ]]; then
-      echo "$PROJECT_ROOT/$active_spec"
+      echo "manifest-active|specs.active=$active_spec|$PROJECT_ROOT/$active_spec"
       return 0
     fi
     if [[ -f "$PROJECT_ROOT/$spec_dir/$active_spec/spec.md" ]]; then
-      echo "$PROJECT_ROOT/$spec_dir/$active_spec/spec.md"
+      echo "manifest-active|specs.active=$active_spec|$PROJECT_ROOT/$spec_dir/$active_spec/spec.md"
       return 0
     fi
   fi
 
-  if [[ -d "$PROJECT_ROOT/$spec_dir" ]]; then
-    local latest
-    latest=$(find "$PROJECT_ROOT/$spec_dir" -name 'spec.md' -type f -not -path '*/.locks/*' -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -1)
-    if [[ -n "$latest" ]]; then
-      echo "$latest"
-      return 0
-    fi
+  local selected rc=0
+  selected="$(spec_select "$PROJECT_ROOT/$spec_dir")" || rc=$?
+  if [[ "$rc" -eq 0 && -n "$selected" ]]; then
+    echo "auto|${SPEC_SELECT_DETAIL}|$selected"
+    return 0
   fi
-
+  [[ "$rc" -eq 2 ]] && return 2
   return 1
+}
+
+find_spec_with_source() {
+  _resolve_spec
+}
+
+find_spec() {
+  local resolved rc=0
+  resolved="$(_resolve_spec)" || rc=$?
+  [[ "$rc" -eq 0 ]] || return "$rc"
+  resolved="${resolved#*|}"
+  printf '%s\n' "${resolved#*|}"
 }
 
 # ══════════════════════════════════

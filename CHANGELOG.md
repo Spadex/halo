@@ -55,6 +55,27 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Spec auto-discovery no longer ranks candidates by file mtime. `git merge`, `checkout`, `rebase`,
+  and `stash pop` rewrite mtime on every file they check out, so `ls -t` flipped the "current spec"
+  after any git operation — including the merge that normally precedes final verification. The
+  whole toolchain (`pipeline.sh` and four gates via `find_spec`, plus `prismspec/bin/guide.sh`)
+  then verified an unrelated spec and wrote a structurally complete eval run whose `spec_file`,
+  `spec_hash`, and AC coverage all belonged to that other spec, with nothing printed anywhere.
+  New `halo/kernel/spec-select.sh` ranks on front matter instead: in-flight specs outrank
+  `verified` ones, then the newest `updated_at` wins. It announces the selection and the
+  candidates it beat, refuses to guess on an exact tie, and falls back to mtime only when no spec
+  declares `updated_at` — saying so when it does.
+- `pipeline.sh` prints the resolved spec with how it was chosen, and eval run JSON gains
+  `spec_source` (`explicit` / `manifest-active` / `auto`) and `spec_source_detail`;
+  `guide.sh --json` gains `spec_source`. An auto-discovered spec is a guess, and a run that
+  verified the wrong spec is otherwise indistinguishable from a real pass.
+- `learn-draft.sh promote` now writes into table-shaped knowledge files as table rows. The shipped
+  default target `halo/context/knowledge/pitfalls.md` is a `| Pitfall | Trigger | Guidance | Source |`
+  table followed by `## Do Not Repeat`, so appending a `## Promoted Learn Draft` section to EOF put
+  the lesson outside the table it was meant to extend — and `knowledge-lint.sh` could not see it,
+  because the file already carries a `Source` column at file level. Promotion metadata is no longer
+  copied into the knowledge file; it already lives in the audit event under
+  `halo/state/learn-promotions/`. Section-shaped targets keep the previous append behavior.
 - `drift-check.sh` no longer reports an unchecked dimension as a clean one. Gate JSON gains
   `metrics.checks_run`, `metrics.checks_skipped`, and `metrics.checked.{ddl,routes,error_codes,seed_sql}`,
   and the verdict line names the dimensions that were NOT verified.

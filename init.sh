@@ -217,6 +217,7 @@ copy_tree_files_if_not_exists() {
 }
 
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/_lib.sh" "halo/kernel/_lib.sh"
+copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/spec-select.sh" "halo/kernel/spec-select.sh"
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/doctor.sh" "halo/kernel/doctor.sh"
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/capabilities.sh" "halo/kernel/capabilities.sh"
 copy_if_not_exists "$HARNESS_TEMPLATE_DIR/halo/kernel/orchestrator/templates/spec-template.md" "halo/kernel/orchestrator/templates/spec-template.md"
