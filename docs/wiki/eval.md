@@ -173,7 +173,7 @@ bash halo/kernel/delivery/eval-query.sh outcomes --sink-dir=halo/state/eval-sink
 | pipeline pass rate | 完整流水线通过率。 |
 | first-pass pass rate | 首次运行即通过比例。 |
 | AC coverage | AC 被测试追踪的比例。 |
-| drift count | 规约与代码漂移数量。 |
+| drift count | 规约与代码漂移数量。需与 `checks_run` / `checks_skipped` 一起读：未比对的维度不计入漂移，也不代表一致。 |
 | retry count | 修复轮数。 |
 | escalation count | 超出重试预算次数。 |
 | review verdict | pass / fail / cannot_verify 分布。 |
@@ -216,7 +216,7 @@ CI 是 Evidence / Eval 的天然执行环境：
 |-----|------|--------|
 | outcome attribution 仍是线索级 | 已有 outcome report、central sink 和静态 dashboard，但还不能做因果判定。 | 先增强 report 和 query 的复盘维度。 |
 | dashboard 仍是静态文件 | 已有 CLI/JSON 查询，但缺少交互过滤和跨项目趋势视图。 | 增加趋势视图与过滤能力。 |
-| drift parser 覆盖有限 | 当前 Go 示例较完整，Node/Python 等栈还需要更多 parser。 | 结合真实项目逐步扩展。 |
+| DDL drift parser 覆盖有限 | route 与 error code 漂移已跨语言，DDL 仍只支持 GORM。 | 结合真实项目逐步扩展 ORM parser。 |
 
 ## 演进顺序
 

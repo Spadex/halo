@@ -57,7 +57,7 @@ Halo 当前已经达到“可试点的 repo-local AI Coding harness”阶段：�
 
 | Gap | 影响 | 建议 |
 |-----|------|------|
-| drift 主要覆盖 Go/Gin/GORM | 多语言说服力不足 | Node/Express/Prisma 与 Python/FastAPI parser |
+| DDL drift 仅覆盖 GORM | 非 Go 栈的 schema 漂移无法自动比对 | SQLAlchemy / Prisma / Sequelize model parser |
 | 插件协议偏命令字符串 | 难治理输入输出和版本 | plugin manifest/schema/versioning |
 | 多 Agent 协作较轻 | 只解决基础文件锁和规则导入 | owner + lease + state |
 | shell 复杂度会增长 | 长期维护成本上升 | 保留 bash facade，复杂解析迁移到小工具 |
@@ -129,8 +129,7 @@ Halo 当前已经达到“可试点的 repo-local AI Coding harness”阶段：�
 
 - plugin manifest schema。
 - gate input/output contract。
-- Node/Express/Prisma drift parser。
-- Python/FastAPI/SQLAlchemy drift parser。
+- Prisma / Sequelize / SQLAlchemy DDL drift parser（route drift 已覆盖 Express 与 FastAPI）。
 - adapter compatibility tests。
 
 验收：

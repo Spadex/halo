@@ -211,7 +211,14 @@ while IFS= read -r line; do
     require_task_pattern "$task_id" "$body" '(Review package|评审包)[[:space:]]*[:：]' "missing Evidence Review package"
     require_task_pattern "$task_id" "$body" '(Done when|完成条件)[[:space:]]*[:：]' "missing Done when"
   fi
-  if grep -Eiq '\b(TODO|TBD|FIXME)\b|<[^>]+>|\{[A-Za-z_][A-Za-z0-9_-]*\}' <<< "$body"; then
+  # Template placeholders are upper snake-case (`{ERROR_CODE}`), Chinese (`{条件}`), or
+  # angle-bracketed slugs (`<spec-id>`). Lower-case brace tokens are excluded on purpose:
+  # they collide with REST path parameters (`{set_id}`) and f-strings, and the old
+  # `\{[A-Za-z_][A-Za-z0-9_-]*\}` branch could not match the Chinese placeholders the
+  # framework's own templates actually ship. `<[^>]+>` is likewise narrowed so that a
+  # line containing both `<` and `>` as comparisons is not read as a bracket pair.
+  if grep -Eiq '\b(TODO|TBD|FIXME)\b' <<< "$body" \
+    || grep -Eq '<[A-Za-z][A-Za-z0-9_.-]*>|\{[A-Z][A-Z0-9_]*\}|\{[^{}]*[^ -~][^{}]*\}' <<< "$body"; then
     fail_msg "$task_id contains unresolved placeholder text"
   fi
 done < <(task_lines "$PLAN_FILE")

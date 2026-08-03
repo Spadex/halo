@@ -456,8 +456,13 @@ drift:
   routes:
     framework: ${FRAMEWORK}
     router_pattern: '${ROUTER_PATTERN}'
+    # Optional space-separated globs. Defaults to the project language convention.
+    file_glob: ""
   error_codes:
+    # Used for numeric error codes. Upper snake-case codes are matched as literals instead.
     const_pattern: '(Code|Err)[A-Za-z]+ *= *[0-9]+'
+    # Optional space-separated globs. Defaults to the project language convention.
+    file_glob: ""
 
 pipeline:
   # Verification contract. Use pipeline.sh --json-out to produce eval evidence.
