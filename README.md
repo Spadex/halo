@@ -305,9 +305,11 @@ Halo 当前已经具备 **repo-local AI Coding control plane 的最小可信闭�
 | Spec / Plan / Review / Verify artifacts | Available | `new.sh`、`guide.sh --json`、`lint.sh prismspec skillpack` |
 | Delivery pipeline | Available | spec lint、AC coverage、drift check、compliance gates |
 | Go/Gin/GORM drift parser | Available | `examples/go-gin-gorm/try-it.sh` |
+| Python/FastAPI drift parser | Available | `examples/py-fastapi/try-it.sh`（路由与错误码；SQLAlchemy DDL 仍报 NOT verified） |
 | Evidence summary/history/outcome | Available | `eval-runs/*.json`、Markdown summary/history、outcome link/report |
 | Dashboard trend analysis | Planned | static dashboard 已有，趋势分析仍在演进 |
-| Node / Python drift parser | Planned | 作为后续多语言扩展 |
+| Node/Express drift parser | Partial | 路由 drift 已实装，尚无可运行示例作为回归护栏 |
+| Prisma / Sequelize / SQLAlchemy DDL parser | Planned | 目前一律报 NOT verified，不冒充已比对 |
 | Multi-agent owner / lease model | Planned | 作为团队协作扩展 |
 
 仍在演进：
@@ -337,7 +339,8 @@ HALO_CHECK_REMOTE_INSTALL=1 bash tests/release-check.sh
 | [五板块工作台](docs/wiki/workflow-blocks.md) | Clarify / Spec / Build / Review / Verify 的产品契约 |
 | [PrismSpec README](prismspec/README.md) | 独立 Spec Coding skill pack |
 | [Agent adapters](docs/adapters/) | Claude Code、Cursor、Aider、Superpowers、Agent Skills 等适配说明 |
-| [示例项目](examples/go-gin-gorm/) | 可运行示例 |
+| [示例项目](examples/go-gin-gorm/) | 可运行示例（Go/Gin/GORM） |
+| [示例项目](examples/py-fastapi/) | 可运行示例（Python/FastAPI），兼作路由解析回归护栏 |
 | [贡献指南](CONTRIBUTING.md) | 开发、测试、贡献规范 |
 | [支持说明](SUPPORT.md) | 支持范围、排障信息和 issue 所需上下文 |
 | [安全策略](SECURITY.md) | 安全边界、漏洞披露和发布前安全检查 |

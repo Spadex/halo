@@ -23,8 +23,9 @@ shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find harn
 # Integration smoke test
 bash tests/smoke-test.sh
 
-# Runnable example and release readiness check
+# Runnable examples and release readiness check
 bash examples/go-gin-gorm/try-it.sh
+bash examples/py-fastapi/try-it.sh
 bash tests/release-check.sh
 ```
 
