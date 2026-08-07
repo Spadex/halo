@@ -20,8 +20,9 @@ run_bats_suite() {
   local dir="$SCRIPT_DIR/$name"
   local count=0
   if [[ -d "$dir" ]]; then
-    # find 输出仅计数，不依赖顺序（fail direction: 数错只会把非空当空跳过，
-    # bats --recursive 自身仍会发现用例；不会凭空报绿）
+    # find 输出仅用于计数，不依赖顺序（fail direction: find 报错时 pipefail 会中止
+    # 整个 runner → 非零退出 → CI 红，属 fail-closed；count=0 的 skip 分支只在
+    # 目录确实为空/不存在时走到，不会把失败伪装成跳过）
     count=$(find "$dir" -name '*.bats' -type f | wc -l | tr -d ' ')
   fi
   if [[ "$count" -eq 0 ]]; then

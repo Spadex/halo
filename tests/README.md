@@ -19,11 +19,11 @@ tests/vendor/bats-core/bin/bats tests/unit/fixtures.bats -f "make_spec"  # 按�
 | 目录 | 职责 |
 |------|------|
 | `unit/` | 契约单测：被多个门禁共享的谓词（`_lib.sh` 等）的直接测试 |
-| `regression/` | 回归语料库：一份 bug 报告 = 一个 `.bats` 文件 |
-| `e2e/` | 端到端：init → spec → plan → 门禁 → 证据 黄金路径 |
-| `meta/` | 原则守护 lint：把 AGENTS.md Gate Rules 变成机器断言 |
+| `regression/` | 回归语料库：一份 bug 报告 = 一个 `.bats` 文件 （批次 1 起）|
+| `e2e/` | 端到端：init → spec → plan → 门禁 → 证据 黄金路径 （批次 4 起）|
+| `meta/` | 原则守护 lint：把 AGENTS.md Gate Rules 变成机器断言 （批次 3 起）|
 | `helpers/` | `common.bash`（沙箱）、`fixtures.bash`（spec/plan 构造函数） |
-| `fixtures/` | 静态语法变体 fixture，按框架分目录 |
+| `fixtures/` | 静态语法变体 fixture，按框架分目录 （随迁移批次填充）|
 | `vendor/` | bats-core / bats-support / bats-assert（git submodule，锁版本） |
 
 `smoke-test.sh` 是迁移中的存量：**已冻结，只删不加**。新测试一律写 bats。
