@@ -164,6 +164,10 @@ Planning 将 `spec.md` 转成 `plan.md`。好的 plan 不是任务清单堆砌�
 
 `plan.md` 必须覆盖 `spec.md` 中的每个 AC。TDD mode 必须先生成 `RED-{n}` red-test tasks，再生成 `T{n}` implementation tasks；red task 记录预期失败、测试文件和验证命令，implementation task 记录对应的 evidence 位置。
 
+每个任务的「覆盖验收：」字段行（英文 plan 可写 `Covers:`）是任务门禁认定覆盖 AC 的唯一声明源：该行至少要写一个 `AC-{n}` 编号才生效——生效时正文散文提及任何 AC（包括「本任务不覆盖 AC-9」这类否定句）都不构成证据义务；缺失该行、或该行不含任何 AC 编号（如「覆盖验收：见下文」）时，门禁回退为整段正文扫描，仅为兼容旧 plan 保留，plan-lint 会对此告警。plan 定稿后可用 `task-next.sh <spec-id> --all --json` 一次预览每个任务将被门禁认定的 `ac_refs`，在 plan 期修正错配，而不是在收口期对抗门禁。
+
+任务较多时，建议在 plan 定稿时附「执行拓扑」段：批次划分、每批一个评审点（改动面重叠或后置任务建立在前置代码上的任务必须同批评审）、哪些任务下放独立子代理实施（默认下放、串行逐个派发）。依赖与改动面在 plan 阶段看得最清楚，拓扑左移后 implement 期照图执行。
+
 ## Implementation
 
 Implementation 只执行 `plan.md` 中的下一片任务。
@@ -174,7 +178,9 @@ Implementation 只执行 `plan.md` 中的下一片任务。
 bash halo/kernel/orchestrator/sdd/task-next.sh <spec-id> --json
 ```
 
-它返回下一项未完成任务或 `status=complete`。Agent 不应该凭最近修改时间或自然语言猜测下一项任务。
+它返回下一项未完成任务或 `status=complete`。Agent 不应该凭最近修改时间或自然语言猜测下一项任务。`--task=<id>` 查询指定任务（不过滤勾选状态），`--all` 列出全部任务及各自的 `ac_refs` 与完成状态，用于 plan 期预检与执行期审计。
+
+子代理可用时，任务实施默认下放独立 implementer（按 plan 顺序串行逐个派发），主会话只做编排、收口与评审调度；上下文单调膨胀的会话里，留在主会话执行的每个任务都会抬高后续所有往返的成本。评审按评审点派发，低耦合的纯测试批可后台派发，但评审结论返回前不得对被评审任务执行 `task-complete`。超长会话可在阶段边界把结论落盘后 `/clear`——阶段工件本就为断点续跑设计。
 
 任务完成后，应使用 `task-complete.sh` 勾选对应 task，而不是直接编辑 checkbox：
 

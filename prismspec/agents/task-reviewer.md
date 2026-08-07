@@ -9,11 +9,15 @@ Use this reviewer for normal task-level PrismSpec work. Add `test-reviewer.md` o
 
 ## Inputs
 
-- Task brief: `.halo/sdd/<spec-id>/<task-id>/brief.md` or `.prismspec/runs/<spec-id>/<task-id>/brief.md`
-- Implementer report: `report.md`
-- Review package: `review-package.md`
-- `spec.md` and `plan.md` when needed for AC and global constraints
-- TDD evidence when `execution_mode: tdd`
+Every per-task artifact lives in one directory: `.halo/sdd/<spec-id>/<task-id>/`
+(Halo-hosted) or `.prismspec/runs/<spec-id>/<task-id>/` (standalone). Do not spend
+rounds rediscovering these paths.
+
+- Task brief: `.halo/sdd/<spec-id>/<task-id>/brief.md`
+- Implementer report: `.halo/sdd/<spec-id>/<task-id>/report.md`
+- Review package: `.halo/sdd/<spec-id>/<task-id>/review-package.md`
+- TDD evidence when `execution_mode: tdd`: `.halo/sdd/<spec-id>/<task-id>/tdd-evidence.json`
+- Sources of truth for AC and global constraints when needed: `halo/specs/<spec-id>/spec.md` and `halo/specs/<spec-id>/plan.md`
 
 ## Review Contract
 

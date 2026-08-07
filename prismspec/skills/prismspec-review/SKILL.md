@@ -9,7 +9,7 @@ description: Reviews PrismSpec implementation evidence, review-package.md files,
 
 Review is the independent quality gate between implementation and verification. Treat implementer reports as claims, inspect the diff and evidence, and record a verdict before the run claims verified completion.
 
-This skill aligns with Superpowers task review discipline: use one skeptical read-only reviewer per task or run, return spec-compliance and code-quality verdicts, and do not tell the reviewer what to ignore. PrismSpec adds AC traceability, Halo evidence paths, a human-readable `review.md`, and a machine sidecar `review-summary.json` for pipeline/eval ingestion.
+This skill aligns with Superpowers task review discipline: use one skeptical read-only reviewer per review point — a single task, a batch of coupled tasks, or the whole run — return spec-compliance and code-quality verdicts, and do not tell the reviewer what to ignore. Batching coupled tasks into one review point trades none of the depth: one reviewer, one context rebuild, one regression run covering the batch. PrismSpec adds AC traceability, Halo evidence paths, a human-readable `review.md`, and a machine sidecar `review-summary.json` for pipeline/eval ingestion.
 
 ## Inputs
 
@@ -122,7 +122,7 @@ Keep stable machine values such as `pass`, `fail`, `cannot_verify`, file paths, 
 - `cannot_verify` is treated as pass.
 - Review starts without `spec.md`, `plan.md`, or task evidence.
 - Feedback is implemented before it is understood.
-- Multiple review items are batched without focused verification.
+- Multiple accepted feedback fixes are implemented as one batch without per-fix verification (batching the *review point* over coupled tasks is fine; batching *fixes* without testing each is not).
 
 ## Verification
 

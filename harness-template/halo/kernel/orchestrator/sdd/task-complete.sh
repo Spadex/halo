@@ -104,17 +104,19 @@ valid_tdd_evidence() {
 }
 
 # Every AC the red task covers must have a red/green cycle recorded, not just one of
-# them. Takes the already-narrowed AC list (see narrow_acs_to_declared) rather than
-# the raw task body: an AC mentioned in prose but not declared by this spec has no
-# cycle to record here, and demanding one blocks a correct task forever.
+# them. Takes the already-narrowed AC list (see task_covered_acs) rather than the raw
+# task body: an AC mentioned in prose but not declared by this spec has no cycle to
+# record here, and demanding one blocks a correct task forever.
+# Emits the ACs that lack a cycle, one per line; empty output means all covered ACs
+# have evidence. The caller decides pass/fail, so the failure message can name the
+# exact ACs instead of a bare boolean.
 # Read the ac_ids into a variable first: piping yq into an early-exiting reader such as
 # `grep -q` lets the reader close the pipe mid-stream, and the resulting SIGPIPE (141)
 # fails the whole pipeline under `set -o pipefail` even though the AC did match.
-red_task_has_cycle_evidence() {
-  local covered="$1" ac evidence evidence_acs ac_count=0 matched
+red_task_missing_acs() {
+  local covered="$1" ac evidence evidence_acs matched
   while IFS= read -r ac; do
     [[ -n "$ac" ]] || continue
-    ac_count=$((ac_count + 1))
     matched=false
     while IFS= read -r evidence; do
       [[ -n "$evidence" ]] || continue
@@ -125,9 +127,8 @@ red_task_has_cycle_evidence() {
         break
       fi
     done < <(find "$EVIDENCE_ROOT" -path '*/tdd-evidence.json' -type f -print 2>/dev/null | sort)
-    [[ "$matched" == "true" ]] || return 1
+    [[ "$matched" == "true" ]] || printf '%s\n' "$ac"
   done <<< "$covered"
-  [[ "$ac_count" -gt 0 ]]
 }
 
 mark_task_complete() {
@@ -151,6 +152,18 @@ json_escape() {
   printf '%s' "$value"
 }
 
+# Render a newline-separated AC list as a JSON array, e.g. ["AC-1", "AC-2"].
+# Same element formatting as task-next.sh json_ac_refs.
+json_ac_array() {
+  local acs="$1" ac out="" sep=""
+  while IFS= read -r ac; do
+    [[ -n "$ac" ]] || continue
+    out="${out}${sep}\"$(json_escape "$ac")\""
+    sep=", "
+  done <<< "$acs"
+  printf '[%s]' "$out"
+}
+
 json_result() {
   local status="$1" message="$2"
   printf '{\n'
@@ -160,6 +173,8 @@ json_result() {
   printf '  "spec_id": "%s",\n' "$(json_escape "$SPEC_ID")"
   printf '  "task_id": "%s",\n' "$(json_escape "$TASK_ID")"
   printf '  "plan_file": "%s",\n' "$(json_escape "$PLAN_REL")"
+  printf '  "covered_acs": %s,\n' "$(json_ac_array "$COVERED_ACS")"
+  printf '  "missing_acs": %s,\n' "$(json_ac_array "$MISSING_ACS")"
   printf '  "message": "%s"\n' "$(json_escape "$message")"
   printf '}\n'
 }
@@ -181,6 +196,10 @@ SPEC_ID="$(basename "$SPEC_DIR")"
 PLAN_REL="$(rel_path "$PLAN_FILE")"
 EVIDENCE_ROOT="$PROJECT_ROOT/.halo/sdd/$SPEC_ID"
 MODE="unknown"
+# json_result reads these unconditionally; early fail_complete calls run before the
+# RED gate assigns them, so they must exist under `set -u`.
+COVERED_ACS=""
+MISSING_ACS=""
 
 case "$TASK_ID" in
   T[0-9]*|RED-[0-9]*) ;;
@@ -212,10 +231,12 @@ if [[ "$TASK_ID" == T* ]]; then
     valid_tdd_evidence "$TASK_DIR/tdd-evidence.json" || fail_complete "$TASK_ID missing or invalid tdd-evidence.json"
   fi
 else
-  COVERED_ACS="$(narrow_acs_to_declared "$BODY" "$SPEC_FILE")"
+  COVERED_ACS="$(task_covered_acs "$BODY" "$SPEC_FILE")"
   [[ -n "${COVERED_ACS//[[:space:]]/}" ]] \
     || fail_complete "$TASK_ID references no AC declared in $(rel_path "$SPEC_FILE")"
-  red_task_has_cycle_evidence "$COVERED_ACS" || fail_complete "$TASK_ID missing matching TDD cycle evidence"
+  MISSING_ACS="$(red_task_missing_acs "$COVERED_ACS")"
+  [[ -z "$MISSING_ACS" ]] \
+    || fail_complete "$TASK_ID missing matching TDD cycle evidence (covered: $(tr '\n' ' ' <<< "$COVERED_ACS" | sed 's/ $//'); missing: $(tr '\n' ' ' <<< "$MISSING_ACS" | sed 's/ $//'))"
 fi
 
 mark_task_complete "$TASK_ID" "$PLAN_FILE"

@@ -219,6 +219,46 @@ narrow_acs_to_declared() {
   grep -xF -f <(printf '%s\n' "$declared") <<< "$mentioned" || true
 }
 
+# The coverage-declaration lines of one plan task body. A plan task declares the ACs
+# it covers on a structured field line (the shape prismspec-planning mandates):
+#   - 覆盖验收：AC-1, AC-2
+#   - Covers: AC-1
+# Only these two labels count. Anything else that mentions AC-N in the body — prose,
+# a negation ("本任务不覆盖 AC-9"), a cross-reference — is a mention, not a claim.
+# Failure direction: fail-open. A line this grep misses (typo'd label, odd indent)
+# only sends the caller back to the whole-body scan; it never narrows the gate to an
+# empty set on its own.
+ac_declaration_lines() {
+  local body="$1"
+  { grep -iE '^[[:space:]]+-[[:space:]]+(覆盖验收|Covers)[[:space:]]*[:：]' <<< "$body" || true; }
+}
+
+# True exactly when task_covered_acs will read only the declaration lines: the body
+# carries a declaration line with at least one AC token. plan-lint warns on the
+# negation of THIS predicate — the two must never drift apart, or lint stays silent
+# on a task whose gate silently falls back to the whole-body scan (e.g. a
+# declaration line that says "见下文" and prose that mentions an AC).
+task_has_ac_declaration() {
+  local body="$1" decl
+  decl="$(ac_declaration_lines "$body")"
+  [[ -n "$decl" ]] && grep -qE 'AC-[0-9]+' <<< "$decl"
+}
+
+# The ACs one plan task actually claims to cover. When the body carries a declaration
+# line with at least one AC token, the declaration lines are the only source (union
+# across lines); prose mentions stop creating evidence obligations. Without such a
+# line — legacy plans, or a declaration line with no AC token on it — fall back to
+# the whole-body scan so the gate never silently empties. Both paths narrow to the
+# ACs this spec declares (see narrow_acs_to_declared).
+task_covered_acs() {
+  local body="$1" spec="${2:-}"
+  if task_has_ac_declaration "$body"; then
+    narrow_acs_to_declared "$(ac_declaration_lines "$body")" "$spec"
+  else
+    narrow_acs_to_declared "$body" "$spec"
+  fi
+}
+
 # ══════════════════════════════════
 # CLI help
 # ══════════════════════════════════
