@@ -58,6 +58,8 @@ Do not use `Eval` as a synonym for running tests. Verification runs commands; Ev
 - Context is not a bulk loader. Treat `halo/context/README.md` as the agent-readable map; treat scripts as optional helpers.
 - Learn is governed. New durable knowledge should have source, review, and promotion evidence when the harness provides it.
 - Shell is appropriate for install, CI, gates, deterministic lint, sync, and evidence generation. Semantic context selection and architectural judgment belong to the Agent and the spec skills.
+- Bug handling follows `tests/README.md`: report under `docs/bug_report/`, regression case under `tests/regression/`, red-then-green, shipped in the same commit as the fix.
+- `tests/smoke-test.sh` is frozen: new tests are written as bats cases under `tests/`; smoke-test only shrinks as batches migrate.
 
 ## Gate Rules
 
@@ -109,12 +111,12 @@ Before changing docs or skills, check:
 
 ## Verification
 
-Run these before reporting completion:
+Run these before reporting completion (first time: `git submodule update --init`):
 
 ```bash
-bash -n init.sh install.sh tests/smoke-test.sh $(find harness-template prismspec/bin -name '*.sh')
-shellcheck --severity=warning init.sh install.sh tests/smoke-test.sh $(find harness-template prismspec/bin -name '*.sh')
-bash tests/smoke-test.sh
+bash -n init.sh install.sh tests/run.sh tests/smoke-test.sh tests/helpers/*.bash $(find harness-template prismspec/bin -name '*.sh')
+shellcheck --severity=warning init.sh install.sh tests/run.sh tests/smoke-test.sh tests/helpers/*.bash $(find harness-template prismspec/bin -name '*.sh')
+bash tests/run.sh
 bash examples/go-gin-gorm/try-it.sh
 bash examples/py-fastapi/try-it.sh
 git diff --check
