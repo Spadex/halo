@@ -32,7 +32,7 @@ TDD mode is intentionally strict: write the test first, watch it fail for the ex
 5. Execute according to mode:
    - `plan`: implement the task, add tests for behavior changes or meaningful regression risk.
    - `tdd`: write and run the red test first, confirm the expected failure, implement green, then refactor.
-6. When subagents are available and tasks are independent, prefer the Subagent Execution Loop below.
+6. When subagents are available, execute tasks through the Subagent Execution Loop below by default; keep a task in the main session only for the reasons the loop names.
 7. Run focused verification for the task.
 8. Write an implementer report in the task evidence directory with commit range, files changed, tests run, and concerns.
 9. Generate a review package when helpers exist.
@@ -46,7 +46,16 @@ TDD mode is intentionally strict: write the test first, watch it fail for the ex
 
 ## Subagent Execution Loop
 
-Use this loop when subagents are available and the task can be isolated:
+When subagents are available this loop is the default execution form, for RED and T
+tasks alike. The main session's context grows monotonically; every task executed
+inline makes every later round of every later task pay for its history. Keep a task
+in the main session only when the split would hurt — a shared-file write conflict,
+or critical in-flight knowledge no artifact can carry — or when the task is too
+small to repay the dispatch cost; record a one-line reason in the progress ledger
+when you do. A dependency chain is not a reason to stay inline: dispatch tasks one
+at a time in plan order (serially, not in parallel) and the chain is preserved.
+Closeout writes (`plan.md` checkboxes, evidence-ledger updates, `task-complete.sh`)
+always return to the controller between dispatches.
 
 1. Create or read the progress ledger at `.halo/sdd/<spec-id>/progress.md` or `.prismspec/runs/<spec-id>/progress.md`.
 2. Record the base commit before dispatching the implementer.
@@ -62,7 +71,7 @@ Use this loop when subagents are available and the task can be isolated:
 8. Append one ledger line: `Task <id>: complete (commits <base>..<head>, review <verdict>)`.
 9. After all tasks, run a final whole-branch review before verification when the diff is non-trivial.
 
-Do not paste full prior-task history into later dispatches. File paths and the current task brief are the handoff.
+Do not paste full prior-task history into later dispatches. File paths and the current task brief are the handoff; when a prerequisite task's findings matter (fixture layout, boundary traps), point the dispatch at that task's `report.md` instead of retelling it.
 
 ## TDD Cycle
 
@@ -92,12 +101,43 @@ Do not paste full diffs into prompts or summaries when a review package exists.
 
 Task review is a gate, not a rewrite session.
 
-- Use a single task-scoped reviewer that returns both spec-compliance and code-quality verdicts.
+- Use a single reviewer per review point. A review point may cover one task or a
+  batch of coupled tasks; each review point pays a fixed cost (context rebuild, full
+  regression, diff walk), so plan review points per batch rather than per task.
+  Batch boundary rule: tasks whose changed files overlap, or where a later task
+  builds on an earlier task's code, must share one review point — every defect is
+  caught before the next batch starts. Take the boundaries from the plan's execution
+  topology when it has one, instead of deciding ad hoc.
+- The reviewer returns both spec-compliance and code-quality verdicts.
 - The reviewer is read-only and must not mutate the working tree, index, HEAD, or branch.
 - The reviewer must treat the implementer report as claims, not proof.
 - The controller must not tell the reviewer what to ignore or pre-rate severity.
 - Use `cannot_verify` when the review package or evidence is insufficient.
 - Critical and Important findings block task completion; Minor findings may be recorded for final triage.
+- Dispatch form: for a batch that only adds test files and touches no production
+  code (a typical RED batch), the review may run in the background while the
+  controller advances the next task, provided the execution environment supports
+  it. Hard precondition: no reviewed task is marked complete before its review
+  verdict returns. A batch that touches production code waits synchronously — its
+  review can force rework of code the next task would build on.
+- Dispatch prompt: name the artifact paths outright; the paths follow one fixed
+  pattern per task, so the reviewer should never spend rounds rediscovering them:
+  - Reviewer contract: `prismspec/agents/task-reviewer.md`
+  - Task artifacts: `.halo/sdd/<spec-id>/<task-id>/{brief.md, report.md, review-package.md, tdd-evidence.json}` (or the `.prismspec/runs/<spec-id>/<task-id>/` twin)
+  - Sources of truth: `halo/specs/<spec-id>/spec.md` and `plan.md`
+
+### Review Fail Triage
+
+When a review returns `fail`, split the findings into two kinds before deciding the
+next step:
+
+- **Implementation defect** — fixable in code, tests, or evidence: fix it, then
+  re-dispatch the review. Normal path.
+- **Spec-level disagreement** — the fix would change `spec.md` AC or invariant
+  wording, or two review rounds point at the same item: stop and ask the user to
+  decide. Do not fix a version and try another round; repeated reviews against a
+  spec disagreement burn full review cycles without converging. This is the
+  escalation path of the `plan-mandated` label in `task-reviewer.md`.
 
 ## Scope Rules
 

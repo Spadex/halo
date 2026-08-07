@@ -217,6 +217,15 @@ while IFS= read -r line; do
     require_task_pattern "$task_id" "$body" '(Review package|评审包)[[:space:]]*[:：]' "missing Evidence Review package"
     require_task_pattern "$task_id" "$body" '(Done when|完成条件)[[:space:]]*[:：]' "missing Done when"
   fi
+  # A task without an effective coverage declaration still gates on the whole-body
+  # AC scan, where any prose mention of a declared AC becomes an evidence obligation.
+  # The condition is the shared predicate task_has_ac_declaration — a declaration
+  # line carrying no AC token falls back exactly like a missing line and must warn
+  # the same way. Warn, not fail: legacy plans predate the declaration line and must
+  # keep passing unchanged.
+  if ! task_has_ac_declaration "$body"; then
+    warn_msg "$task_id has no 覆盖验收/Covers line with AC ids; task gates fall back to whole-body AC scan"
+  fi
   # Template placeholders are upper snake-case (`{ERROR_CODE}`), Chinese (`{条件}`), or
   # angle-bracketed slugs (`<spec-id>`). Lower-case brace tokens are excluded on purpose:
   # they collide with REST path parameters (`{set_id}`) and f-strings, and the old

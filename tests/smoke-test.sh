@@ -1488,6 +1488,287 @@ else
   tail -10 /tmp/halo-cross-spec-ac.log
 fi
 
+# A plan whose tasks carry structured 覆盖验收/Covers declaration lines. With a
+# declaration line present it is the only coverage claim: prose mentions — including
+# the negation "本任务不覆盖 AC-3" — create no evidence obligation, while every
+# declared AC still demands its cycle evidence. Both directions are asserted below.
+# The whole-body fallback for plans WITHOUT declaration lines stays guarded by the
+# red-multi-ac and cross-spec-ac fixtures above (Ref:-style bodies).
+mkdir -p "$SANDBOX/halo/specs/decl-line-ac"
+cat > "$SANDBOX/halo/specs/decl-line-ac/spec.md" << 'DECL_SPEC'
+---
+id: decl-line-ac
+status: planned
+execution_mode: tdd
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Declaration Line AC
+
+## Intent
+
+Tasks declare covered ACs on a structured line; prose mentions stay mentions.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestDeclAC1 |
+| AC-2 | Get item | Returns item | TestDeclAC2 |
+| AC-3 | List items | Returns list | TestDeclAC3 |
+DECL_SPEC
+cat > "$SANDBOX/halo/specs/decl-line-ac/plan.md" << 'DECL_PLAN'
+# Plan: Declaration Line AC
+
+## Source
+
+- Spec: `halo/specs/decl-line-ac/spec.md`
+- Execution mode: tdd
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+- Out-of-scope: export behavior.
+
+## Tasks
+
+- [ ] RED-1: Add failing tests for the create and get paths
+  - 覆盖验收：AC-1, AC-2
+  - 预期失败：处理器尚未实现创建与读取路径。注意：本任务不覆盖 AC-3，AC-3 由 RED-2 处理。
+  - 测试文件：`internal/handler/item_test.go`
+  - 验证方式：`go test ./internal/handler -run TestDeclAC`
+  - 完成条件：
+    - [ ] 预期失败已记录到对应任务证据。
+
+- [ ] RED-2: Add failing test for the list path
+  - Covers: AC-3, AC-14
+  - 预期失败：处理器尚未实现列表路径，与 upstream-spec AC-14 的返回形状对照。
+  - 测试文件：`internal/handler/item_list_test.go`
+  - 验证方式：`go test ./internal/handler -run TestDeclList`
+  - 完成条件：
+    - [ ] 预期失败已记录到对应任务证据。
+
+- [ ] T1: Implement the three handler paths
+  - 覆盖验收：AC-1, AC-2, AC-3
+  - 模式：tdd
+  - 范围：实现满足 AC-1 至 AC-3 的最小路径。
+  - 涉及文件：`internal/handler/item.go`
+  - 验证方式：`go test ./internal/handler -run TestDecl`
+  - 证据：
+    - 任务简报：`.halo/sdd/decl-line-ac/T1/brief.md`
+    - 评审包：`.halo/sdd/decl-line-ac/T1/review-package.md`
+  - 完成条件：
+    - [ ] AC-1 至 AC-3 通过聚焦验证且证据存在。
+DECL_PLAN
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" decl-line-ac RED-1 \
+  --ac=AC-1 \
+  --test=TestDeclAC1 \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestDeclAC1" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestDeclAC1" \
+  --green-exit=0 \
+  --green-summary="focused AC test passes" \
+  --refactor=none >/dev/null 2>&1
+DECL_RED1_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" decl-line-ac RED-1 \
+  >/tmp/halo-decl-red1.log 2>&1 || DECL_RED1_EXIT=$?
+if [[ $DECL_RED1_EXIT -ne 0 ]] \
+  && grep -q "RED-1 missing matching TDD cycle evidence" /tmp/halo-decl-red1.log \
+  && grep -q "missing: AC-2" /tmp/halo-decl-red1.log; then
+  pass "task-complete failure names the exact ACs lacking cycle evidence"
+else
+  fail "task-complete failure does not name the missing ACs"
+  tail -5 /tmp/halo-decl-red1.log
+fi
+
+DECL_RED1_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" decl-line-ac RED-1 --json 2>/dev/null || true)"
+if echo "$DECL_RED1_JSON" | yq -e '.status == "fail" and (.covered_acs | length == 2) and .covered_acs[0] == "AC-1" and .covered_acs[1] == "AC-2" and (.missing_acs | length == 1) and .missing_acs[0] == "AC-2"' >/dev/null 2>&1; then
+  pass "task-complete --json carries covered_acs and missing_acs arrays"
+else
+  fail "task-complete --json lacks structured covered/missing AC fields"
+  echo "$DECL_RED1_JSON"
+fi
+
+# AC-2 evidence lands under another task's directory on purpose: the RED gate scans
+# the whole spec evidence tree, not just the task's own directory.
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" decl-line-ac T1 \
+  --ac=AC-2 \
+  --test=TestDeclAC2 \
+  --test-file=internal/handler/item_test.go \
+  --red-command="go test ./internal/handler -run TestDeclAC2" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestDeclAC2" \
+  --green-exit=0 \
+  --green-summary="focused AC test passes" \
+  --refactor=none >/dev/null 2>&1
+DECL_RED1_PASS_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" decl-line-ac RED-1 \
+  >/tmp/halo-decl-red1-pass.log 2>&1 || DECL_RED1_PASS_EXIT=$?
+if [[ $DECL_RED1_PASS_EXIT -eq 0 ]] && grep -qE '^- \[x\] RED-1:' "$SANDBOX/halo/specs/decl-line-ac/plan.md"; then
+  pass "prose AC mention creates no obligation when a declaration line exists"
+else
+  fail "task-complete demanded evidence for a prose-mentioned AC despite a declaration line"
+  tail -5 /tmp/halo-decl-red1-pass.log
+fi
+
+DECL_RED2_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" decl-line-ac --task=RED-2 --json 2>/dev/null || true)"
+if echo "$DECL_RED2_JSON" | yq -e '.kind == "task-next" and .status == "selected" and .complete == false and (.ac_refs | length == 1) and .ac_refs[0] == "AC-3"' >/dev/null 2>&1; then
+  pass "task-next --task reports declaration-line ACs narrowed to this spec"
+else
+  fail "task-next --task leaked a cross-spec AC from the declaration line"
+  echo "$DECL_RED2_JSON"
+fi
+
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/tdd-evidence.sh" decl-line-ac RED-2 \
+  --ac=AC-3 \
+  --test=TestDeclAC3 \
+  --test-file=internal/handler/item_list_test.go \
+  --red-command="go test ./internal/handler -run TestDeclAC3" \
+  --red-exit=1 \
+  --red-summary="handler not implemented" \
+  --green-command="go test ./internal/handler -run TestDeclAC3" \
+  --green-exit=0 \
+  --green-summary="focused AC test passes" \
+  --refactor=none >/dev/null 2>&1
+DECL_RED2_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-complete.sh" decl-line-ac RED-2 \
+  >/tmp/halo-decl-red2.log 2>&1 || DECL_RED2_EXIT=$?
+if [[ $DECL_RED2_EXIT -eq 0 ]] && grep -qE '^- \[x\] RED-2:' "$SANDBOX/halo/specs/decl-line-ac/plan.md"; then
+  pass "task-complete narrows a declaration line to this spec's declared ACs"
+else
+  fail "task-complete demanded cycle evidence for a cross-spec AC on a declaration line"
+  tail -5 /tmp/halo-decl-red2.log
+fi
+
+DECL_ALL_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" decl-line-ac --all --json 2>/dev/null || true)"
+if echo "$DECL_ALL_JSON" | yq -e '.kind == "task-list" and (.tasks | length == 3) and .tasks[0].task_id == "RED-1" and .tasks[0].complete == true and .tasks[2].task_id == "T1" and .tasks[2].complete == false' >/dev/null 2>&1; then
+  pass "task-next --all lists every task with completion state and ac_refs"
+else
+  fail "task-next --all did not list all tasks with completion state"
+  echo "$DECL_ALL_JSON"
+fi
+
+DECL_NF_EXIT=0
+DECL_NF_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" decl-line-ac --task=T99 --json 2>/dev/null)" || DECL_NF_EXIT=$?
+if [[ $DECL_NF_EXIT -ne 0 ]] && echo "$DECL_NF_JSON" | yq -e '.status == "not-found"' >/dev/null 2>&1; then
+  pass "task-next --task reports not-found with a non-zero exit"
+else
+  fail "task-next --task did not fail cleanly on an unknown task id"
+  echo "$DECL_NF_JSON"
+fi
+
+DECL_NEXT_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" decl-line-ac --json 2>/dev/null || true)"
+if echo "$DECL_NEXT_JSON" | yq -e '.kind == "task-next" and .status == "next" and .task_id == "T1"' >/dev/null 2>&1; then
+  pass "task-next default next-task selection is unchanged by the new flags"
+else
+  fail "task-next default selection regressed"
+  echo "$DECL_NEXT_JSON"
+fi
+
+DECL_LINT_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" decl-line-ac \
+  >/tmp/halo-decl-lint.log 2>&1 || DECL_LINT_EXIT=$?
+if [[ $DECL_LINT_EXIT -eq 0 ]] && ! grep -q 'no 覆盖验收/Covers line' /tmp/halo-decl-lint.log; then
+  pass "plan-lint passes a declaration-line plan without fallback warnings"
+else
+  fail "plan-lint warned or failed on a fully declared plan"
+  tail -10 /tmp/halo-decl-lint.log
+fi
+
+RMA_LINT_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" red-multi-ac \
+  >/tmp/halo-rma-lint.log 2>&1 || RMA_LINT_EXIT=$?
+if [[ $RMA_LINT_EXIT -eq 0 ]] && grep -q 'no 覆盖验收/Covers line' /tmp/halo-rma-lint.log; then
+  pass "plan-lint warns without failing when tasks lack a declaration line"
+else
+  fail "plan-lint fallback warning missing or turned into a failure"
+  tail -10 /tmp/halo-rma-lint.log
+fi
+
+DECL_EMPTY_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" decl-line-ac --task= \
+  >/tmp/halo-decl-empty-task.log 2>&1 || DECL_EMPTY_EXIT=$?
+if [[ $DECL_EMPTY_EXIT -ne 0 ]] && grep -q 'Invalid task id' /tmp/halo-decl-empty-task.log; then
+  pass "task-next rejects an empty --task= value instead of ignoring it"
+else
+  fail "task-next silently ignored an empty --task= value"
+  tail -3 /tmp/halo-decl-empty-task.log
+fi
+
+# A declaration line that carries no AC token ("见下方补充说明") falls back exactly
+# like a missing line: the gate scans the whole body, and plan-lint must warn — the
+# author believes the line is in effect while the gate reads their prose.
+mkdir -p "$SANDBOX/halo/specs/decl-warn-ac"
+cat > "$SANDBOX/halo/specs/decl-warn-ac/spec.md" << 'DECLWARN_SPEC'
+---
+id: decl-warn-ac
+status: planned
+execution_mode: plan
+mode_source: model-selected
+approval: inferred
+owner: smoke
+created_at: 2026-06-26T00:00:00Z
+updated_at: 2026-06-26T00:00:00Z
+---
+
+# Spec: Declaration Warn AC
+
+## Intent
+
+A declaration line without AC ids must warn and fall back to the whole-body scan.
+
+## Acceptance Criteria
+
+| # | When | Then | Verification |
+|---|------|------|--------------|
+| AC-1 | Create item | Returns 201 | TestWarnAC1 |
+DECLWARN_SPEC
+cat > "$SANDBOX/halo/specs/decl-warn-ac/plan.md" << 'DECLWARN_PLAN'
+# Plan: Declaration Warn AC
+
+## Source
+
+- Spec: `halo/specs/decl-warn-ac/spec.md`
+- Execution mode: plan
+
+## Global Constraints
+
+- Versions / dependencies: use existing Go module.
+
+## Tasks
+
+- [ ] T1: Add create behavior
+  - 覆盖验收：以下条目补充说明
+  - 模式：plan
+  - 范围：实现满足 AC-1 的最小创建路径。
+  - 涉及文件：`internal/handler/item.go`
+  - 验证方式：`go test ./internal/handler -run TestWarnAC1`
+  - 证据：
+    - 任务简报：`.halo/sdd/decl-warn-ac/T1/brief.md`
+    - 评审包：`.halo/sdd/decl-warn-ac/T1/review-package.md`
+  - 完成条件：
+    - [ ] AC-1 通过聚焦验证且证据存在。
+DECLWARN_PLAN
+DECLWARN_LINT_EXIT=0
+bash "$SANDBOX/halo/kernel/orchestrator/sdd/plan-lint.sh" decl-warn-ac \
+  >/tmp/halo-declwarn-lint.log 2>&1 || DECLWARN_LINT_EXIT=$?
+DECLWARN_TASK_JSON="$(bash "$SANDBOX/halo/kernel/orchestrator/sdd/task-next.sh" decl-warn-ac --task=T1 --json 2>/dev/null || true)"
+if [[ $DECLWARN_LINT_EXIT -eq 0 ]] && grep -q 'no 覆盖验收/Covers line' /tmp/halo-declwarn-lint.log \
+  && echo "$DECLWARN_TASK_JSON" | yq -e '(.ac_refs | length == 1) and .ac_refs[0] == "AC-1"' >/dev/null 2>&1; then
+  pass "declaration line without AC ids warns and falls back to the whole-body scan"
+else
+  fail "empty declaration line: warn missing, lint failed, or gate did not fall back"
+  tail -10 /tmp/halo-declwarn-lint.log
+  echo "$DECLWARN_TASK_JSON"
+fi
+
 echo ""
 
 mkdir -p "$SANDBOX/halo/specs/bad-plan"

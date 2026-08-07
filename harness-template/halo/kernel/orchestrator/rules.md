@@ -66,18 +66,21 @@ bash halo/kernel/orchestrator/sdd/spec-state-lint.sh <spec-id>
 - Every behavior task must reference at least one AC.
 - Every task must name scope, touched files/contracts, verification command, evidence path, and done conditions.
 - Use thin vertical slices when possible.
+- Declare each task's covered ACs on its `覆盖验收：`/`Covers:` line; task gates read only that line when present, and prose AC mentions create no evidence obligations.
 - Upgrade `plan -> tdd` when planning reveals bug-fix, permission, security, money, state-machine, migration, concurrency, idempotency, or regression risk.
 - Do not silently downgrade `tdd -> plan`.
 
-Run when available:
+Run when available (`--all` previews every task's gate-recognized AC set — fix mismatches now, not at closeout):
 
 ```bash
 bash halo/kernel/orchestrator/sdd/plan-lint.sh <spec-id>
+bash halo/kernel/orchestrator/sdd/task-next.sh <spec-id> --all --json
 bash halo/kernel/orchestrator/sdd/spec-status.sh <spec-id> planned --from=drafted
 ```
 
 ### Implementation
 
+- When subagents are available, dispatch task implementation to an isolated implementer by default — one task at a time, serially, in plan order — and keep the main session as the orchestrator for dispatch, closeout, and review scheduling (details: the Subagent Execution Loop in the prismspec-implementation skill). Inspecting a specific task uses `--task=<id>`.
 - Resolve the next task from artifacts:
 
 ```bash
@@ -88,6 +91,15 @@ bash halo/kernel/orchestrator/sdd/task-next.sh <spec-id> --json
 - In Plan Mode, add tests for behavior changes or write an explicit no-test rationale.
 - In TDD Mode, write the red test first, make it fail for the expected reason, then implement green and refactor.
 - Generate task brief and review package when helpers exist.
+- Batch independent tool calls into one round: reads, status checks, and other non-dependent commands go out together, not one per round.
+- Run the fixed closeout sequence as a single `&&`-chained command instead of one round per step — each step is idempotent, so on failure re-run the whole chain and read the failing step's exit output:
+
+```bash
+bash halo/kernel/orchestrator/sdd/review-package.sh <spec-id> <task-id> \
+  && bash halo/kernel/orchestrator/sdd/task-complete.sh <spec-id> <task-id> --json \
+  && bash halo/kernel/orchestrator/sdd/task-evidence-lint.sh <spec-id>
+```
+
 - Mark tasks complete only through evidence-gated helper:
 
 ```bash
@@ -109,9 +121,11 @@ bash halo/kernel/orchestrator/sdd/spec-status.sh <spec-id> implemented --from=pl
 Review is read-only evidence checking before final verification.
 
 - Read `spec.md`, `plan.md`, task evidence, review packages, and changed files.
-- Use one skeptical reviewer that returns `pass`, `fail`, or `cannot_verify` across spec compliance, code quality, test coverage, and risk.
+- Use one skeptical reviewer per review point that returns `pass`, `fail`, or `cannot_verify` across spec compliance, code quality, test coverage, and risk. A review point may cover a batch of coupled tasks; tasks whose changes overlap or build on each other share one review point.
 - Treat missing evidence as `cannot_verify`.
 - Do not tell the reviewer what to ignore.
+- Never mark a task complete before its review verdict returns.
+- On `fail`, triage first: implementation defects are fixed and re-reviewed; a disagreement whose fix would change `spec.md` AC or invariant wording — or the same item failing two rounds — goes to the user for decision instead of another review round.
 
 Record review evidence when available:
 
