@@ -315,7 +315,7 @@ tests/fixtures/compliance/
 | find-3 | `specs.active resolves a spec id with source manifest-active` | `yq -i '.specs.active="alpha"'` → `<root>/halo/specs/alpha/spec.md`，source `manifest-active` |
 | find-4 | `specs.active resolves a path with source manifest-active` | `.specs.active="halo/specs/alpha/spec.md"` → 同上 |
 | find-5 | `an explicit SPEC_FILE outranks specs.active` | 两者指向不同 spec → 选 explicit |
-| find-6 | `auto discovery resolves a single candidate and reports the ranking basis` | source `auto`；detail 含 `status=` 与 `updated_at=` |
+| find-6 | `auto discovery resolves a single candidate with source auto` | source `auto`；解析出的路径就是那个唯一候选。**不对 detail 内容做断言**——见 O-14 |
 | find-7 | `find_spec returns 1 and prints nothing when no spec exists` | `assert_failure 1`；`assert_output ""` |
 | find-8 | `find_spec returns 2 when two candidates tie on status and updated_at` | 两个 `make_spec`；`assert_failure 2` |
 | find-9 | `a unique updated_at breaks the tie and resolves with rc 0` | sed 改其中一个的 `updated_at` 为更晚值；`assert_success`；选中较新者 |
@@ -329,7 +329,7 @@ tests/fixtures/compliance/
 
 - [ ] Step 1 写文件（`setup_file`: `halo_require_tools; halo_template_install`；`setup`: `halo_sandbox_clone`；定义 `lib_run` 并附「为什么必须走子进程」的注释）
 - [ ] Step 2 `bash tests/run.sh unit` → 31 tests 0 failures
-- [ ] Step 3 可归因性抽查：`tests/vendor/bats-core/bin/bats tests/unit/lib-find-spec.bats -f "ambiguous"` 只跑 2 条且绿
+- [ ] Step 3 可归因性抽查：`tests/vendor/bats-core/bin/bats tests/unit/lib-find-spec.bats -f "ambiguous"` 只跑 find-12 **1 条**且绿（两个 `@test` 名里只有它含 `ambiguous`）
 - [ ] Step 4 Commit — `Add find_spec contract tests covering all three resolution sources`
 
 ---
@@ -585,7 +585,7 @@ plan_with_scope() { # <替换串>
 | disc-6 | `a spec without updated_at ranks below one that has it` | 一有一无，选中有的那个（`spec-select.sh:72` 的沉底哨兵） | **新增**：analysis §1 的显式边界（「缺 updated_at 排到最低而非最高——元数据失修是最弱的候选资格」），旧断言未覆盖 |
 | disc-7 | `spec-select.sh resolves without yq or a manifest on PATH` | `env PATH=/usr/bin:/bin` 下跑，`assert_success` | **新增**：`spec-select.sh:6-8` 的设计约束无断言 |
 | disc-8 | `an empty specs root returns 1, not an empty selection` | `assert_failure 1`；`assert_output ""` | **新增（边界）** |
-| disc-9 | `pipeline records an auto-discovered spec as source auto` | 沙箱里单个 `make_spec`；stdout 含 `source=auto`；eval JSON `.spec_source=="auto"` 且 `.spec_source_detail` 非空 | 旧 `:2388`（**加强**） |
+| disc-9 | `pipeline records an auto-discovered spec as source auto` | 沙箱里单个 `make_spec`；stdout 含 `source=auto`；eval JSON `.spec_source=="auto"`。**不断言 `.spec_source_detail`**——它在 auto 路径恒为空，见 O-14；也**不许**反过来断言它为空（那是把缺陷固化成期望值） | 旧 `:2388` |
 | disc-10 | `pipeline records an explicitly pinned spec as source explicit` | `.spec_source=="explicit"` | 旧 `:2401` |
 | disc-11 | `guide.sh and the kernel selector resolve the same spec` | `guide.sh --json` 的 `.spec_id` 等于 `basename $(dirname $(spec-select.sh halo/specs))`，且 `.spec_source=="auto"` | 旧 `:2416`（**加强**） |
 
@@ -903,6 +903,7 @@ git diff --check
 | O-10 | `spec-select.sh` ↔ `prismspec/bin/guide.sh:109-121` | 排序算法有两份实现（kernel 版 + guide.sh 的 standalone 内联副本），根因 H 的活体样本。halo 宿主下 guide.sh 委托给 kernel（`:125-132`），所以内联副本**在本仓的任何测试路径上都不会被执行**——disc-11 只能证明「委托生效」，证明不了「两份算法等价」。要真正守住需要一个 standalone 宿主的 e2e 场景 | 批次 3 meta-lint 重复定义检测 + 批次 4 e2e |
 | O-11 | `smoke-test.sh:1853` | `rm -f` 行残留两个死条目（`/tmp/halo-drift-json.log`、`/tmp/halo-compliance-json.log`），加上批次 1 遗留的 `/tmp/halo-ac-json.log` 共三个。冻结纪律下不改 | 批次 4 删除 smoke-test 时消失 |
 | O-12 | `smoke-test.sh:1526-1527` | `── 7. AC-coverage gate ──` 标题在本批次后仍不消失（`:1547+` 的块仍在其下）。**这更正了批次 1 的 O-6** | 批次 3 迁完 §7 残余时消失 |
+| O-14 | `_lib.sh:169`（命令替换）+ `spec-select.sh:87/106/116`（赋值点） | **auto 发现的来源依据进不了证据链。** `spec_select` 靠全局变量 `SPEC_SELECT_DETAIL` 回传排序依据，但 `_lib.sh:169` 用 `selected="$(spec_select …)"` 调它——命令替换恒开子 shell，赋值到不了父进程，于是 `:171` 发出的永远是 `auto\|\|<path>`。`pipeline.sh:306` 正从这个字段读 `SPEC_SOURCE_DETAIL`，所以 **eval JSON 里 auto 发现的 `spec_source_detail` 恒为空**；`explicit` 与 `manifest-active` 的 detail 是内联硬编码的，不受影响——唯独最要紧的 auto 路径是碎的。#15 复核那句「这条让『谁指定了这个 spec』进入证据链」在此失效。<br>**为什么此前没被发现**：旧 smoke-test §9b 只断言 `.spec_source == "auto"`，从没碰过 detail。<br>**发现路径**：批次 2 Task 2 写 `find_spec` 契约单测时撞出（属「自查发现、无上报原文」一类，批次 3 补 analysis 时正文须写清）。<br>**它挡住的断言**：find-6 与 disc-9 均已退回为不断言 detail 内容（**且不许反向断言为空**）。排序依据本身并非无人可测——`spec-select.sh:118` 仍打到 stderr，由 disc-2 覆盖，碎的只是 `find_spec` 输出这条管道。<br>**修复难点**：`spec_select` 用全局变量回传，而 `_lib.sh` 必须用命令替换取 stdout 的路径；`prismspec/bin/guide.sh` 也是调用方，改返回契约要一并看它。 | 批次 3，需独立走完整 SOP（analysis + 双向回归 + 修复同批提交） |
 | O-13 | `compliance.sh:148` | 来源类别正则是一条 200 字符的单行 `grep -qiE`，中英混排 20+ 个 token，无换行无注释分组。它是根因 E 的直接补丁，也是最容易在「简化」中被削掉一半而无人察觉的地方。csr-1/2/3 只能守住「中文能过、英文能过、垃圾不能过」三个点，守不住具体哪几个 token | 批次 3 契约单测（按 token 逐条参数化） |
 
 ---
