@@ -480,7 +480,7 @@ git diff --check
 | `harness-template/` 零改动 | ⚠️ 一处，有充分理由 | `1a9773e` 修了 CI 抓到的 `init.sh` 缺陷（不在 `harness-template/` 下，是根目录安装器）。除此之外 kernel 零改动，变异全部回滚 |
 | 静态检查全绿 | ✅ | `bash -n` + `shellcheck --severity=warning` 覆盖 run.sh / smoke-test.sh / helpers |
 | 命名与 SOP 落地 | ✅ | `docs/bug_report/INDEX.md`；7 个 regression 文件均带三行文件头；`tests/README.md` 已写入命名规则、三档分界线、变异测试协议、批次 3 待办 |
-| CI 双平台绿 | 待推送后确认 | 批次 0 的修复已验证过双平台（run 31924319231） |
+| CI 双平台绿 | ✅ | [run 31929074385](https://github.com/Spadex/halo/actions/runs/31929074385)（`test`，ubuntu + macos）与 [run 31929074382](https://github.com/Spadex/halo/actions/runs/31929074382)（`CI`）均绿 |
 
 ### 与计划的偏离
 
