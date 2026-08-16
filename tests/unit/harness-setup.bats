@@ -48,3 +48,9 @@ setup() {
   run yq -r '.project.language' "$SANDBOX/halo/manifest.yaml"
   assert_output "python"
 }
+
+@test "framework override lands in the sandbox manifest" {
+  halo_set_framework fastapi
+  run yq -r '.drift.routes.framework' "$SANDBOX/halo/manifest.yaml"
+  assert_output "fastapi"
+}

@@ -83,3 +83,9 @@ halo_install_fixture() { # <fixture_rel_dir> [dest=$SANDBOX]
 halo_set_language() { # <lang>
   yq -i ".project.language = \"$1\"" "$SANDBOX/halo/manifest.yaml"
 }
+
+# 改当前沙箱 manifest 的 drift.routes.framework。
+# 无需还原：理由同 halo_set_language（bats 每条用例一个独立沙箱副本，改动不会外溢）。
+halo_set_framework() { # <framework>
+  yq -i ".drift.routes.framework = \"$1\"" "$SANDBOX/halo/manifest.yaml"
+}
