@@ -121,7 +121,11 @@ DETECTED_VERSION=""
 if [[ -f "go.mod" ]]; then
   DETECTED_LANG="go"
   DETECTED_NAME=$(head -1 go.mod | awk '{print $2}' | awk -F/ '{print $NF}')
-  DETECTED_VERSION=$(go version 2>/dev/null | awk '{print $3}' | sed 's/go/>=/')
+  # Fail open: an unavailable toolchain probe is not an error, it just means we
+  # keep the default constraint. Without the fallback, pipefail propagates the
+  # probe's non-zero status out of the substitution and set -e kills init
+  # silently (see tests/regression/2026-08-16-init-detection-probe-pipefail.bats).
+  DETECTED_VERSION=$(go version 2>/dev/null | awk '{print $3}' | sed 's/go/>=/' || echo "")
   grep -q "gin-gonic/gin" go.mod 2>/dev/null && DETECTED_FRAMEWORK="gin"
   grep -q "labstack/echo" go.mod 2>/dev/null && DETECTED_FRAMEWORK="echo"
   grep -q "go-chi/chi" go.mod 2>/dev/null && DETECTED_FRAMEWORK="chi"
@@ -150,7 +154,9 @@ elif [[ -f "pyproject.toml" ]] || [[ -f "requirements.txt" ]]; then
   grep -qi "sqlalchemy" "$src" 2>/dev/null && DETECTED_ORM="sqlalchemy"
 elif [[ -f "Cargo.toml" ]]; then
   DETECTED_LANG="rust"
-  DETECTED_NAME=$(grep '^name' Cargo.toml | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+  # Fail open, same reason as the go probe above: a Cargo.toml without a name
+  # line must not abort init.
+  DETECTED_NAME=$(grep '^name' Cargo.toml 2>/dev/null | head -1 | sed 's/.*= *"\(.*\)"/\1/' || echo "unknown")
 elif [[ -f "pom.xml" ]]; then
   DETECTED_LANG="java"
 fi
