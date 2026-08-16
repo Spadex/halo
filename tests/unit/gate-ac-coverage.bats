@@ -42,3 +42,31 @@ setup() {
     and (.findings | length == 2)' "$SANDBOX/ac-coverage.json"
   assert_success
 }
+
+@test "the numeric fallback does not treat this spec's own declared test as foreign-owned" {
+  # 闭合批次 1 计划 496-502 行记录的空洞：build_foreign_owned（ac-coverage.sh:137-146）
+  # 用 `[[ "$f" -ef "$SPEC" ]] && continue`（:142）自跳过本 spec，避免把本 spec 自己
+  # 在 AC-1 行声明的测试函数，当成"外部 spec 拥有"从而在 AC-2 的数字兜底里被误扣。
+  # AC-1 走 Tier 1（声明命中 TestAC2Combined）；AC-2 无声明，走 Tier 2 数字兜底，
+  # 候选集只有 TestAC2Combined 这一个，如果 :142 的自跳过失效，候选会被
+  # FOREIGN_OWNED 扣光，AC-2 从 covered 变 uncovered。
+  make_spec halo/specs self-decl 2
+  mkdir -p internal/handler
+  cat > internal/handler/item_test.go << 'GO'
+package handler
+func TestAC2Combined(t *testing.T) {}
+GO
+  # AC-1 的验证单元格改成声明这个函数；AC-2 的单元格改成非测试标识符。
+  local tmp
+  tmp="$(mktemp)"
+  sed -e 's/| TestAC1 |/| TestAC2Combined |/' -e 's/| TestAC2 |/| manual review |/' \
+    halo/specs/self-decl/spec.md > "$tmp" && mv "$tmp" halo/specs/self-decl/spec.md
+
+  run bash halo/kernel/delivery/gates/ac-coverage.sh halo/specs/self-decl/spec.md . \
+    --json-out="$SANDBOX/ac-coverage.json"
+  assert_success
+
+  run yq -r -e '.findings[] | select(.ac == "AC-2") | .status' "$SANDBOX/ac-coverage.json"
+  assert_success
+  assert_output "covered"
+}
