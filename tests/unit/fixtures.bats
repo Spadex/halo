@@ -43,3 +43,39 @@ setup() {
   run grep -c '^| AC-' halo/specs/fixture-many/spec.md
   assert_output "4"
 }
+
+# make_plan 的三种任务体形态都必须被 plan-lint 判为合法。
+# ref 是存量形态（无覆盖声明行，门禁回退到全文扫描，plan-lint 出 warning 但不 fail）；
+# decl-cn / decl-en 是现行形态（有声明行，不该出 warning）。
+# 断言 warning 的有无而不只是退出码：三者的退出码都是 0，只有 warning 能区分它们。
+
+@test "make_plan decl-cn emits a Chinese declaration line accepted by plan-lint" {
+  make_spec halo/specs fixture-decl-cn
+  make_plan halo/specs fixture-decl-cn 2 1 decl-cn
+  run bash halo/kernel/orchestrator/sdd/plan-lint.sh fixture-decl-cn
+  assert_success
+  refute_output --partial "no 覆盖验收/Covers line"
+}
+
+@test "make_plan decl-en emits a Covers line accepted by plan-lint" {
+  make_spec halo/specs fixture-decl-en
+  make_plan halo/specs fixture-decl-en 2 1 decl-en
+  run bash halo/kernel/orchestrator/sdd/plan-lint.sh fixture-decl-en
+  assert_success
+  refute_output --partial "no 覆盖验收/Covers line"
+}
+
+@test "make_plan ref keeps the legacy fallback shape" {
+  make_spec halo/specs fixture-ref
+  make_plan halo/specs fixture-ref 2 1 ref
+  run bash halo/kernel/orchestrator/sdd/plan-lint.sh fixture-ref
+  assert_success
+  assert_output --partial "no 覆盖验收/Covers line"
+}
+
+@test "make_plan rejects an unknown style instead of falling back silently" {
+  make_spec halo/specs fixture-bad-style
+  run make_plan halo/specs fixture-bad-style 2 1 nonsense
+  assert_failure
+  assert_output --partial "nonsense"
+}

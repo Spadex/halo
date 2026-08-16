@@ -28,3 +28,23 @@ setup() {
   [ "$(pwd)" = "$SANDBOX" ]
   [ -f halo/manifest.yaml ]
 }
+
+@test "fixture install lays the tree over the sandbox" {
+  halo_install_fixture ac/cross-spec-mentions
+  [ -f "$SANDBOX/halo/specs/cross-spec-ac/spec.md" ]
+  [ -f "$SANDBOX/halo/specs/cross-spec-ac/plan.md" ]
+  # 叠加不得清掉沙箱原有内容
+  [ -f "$SANDBOX/halo/manifest.yaml" ]
+}
+
+@test "fixture install fails loudly on a missing fixture" {
+  run halo_install_fixture ac/no-such-fixture
+  assert_failure
+  assert_output --partial "no such fixture"
+}
+
+@test "language override lands in the sandbox manifest" {
+  halo_set_language python
+  run yq -r '.project.language' "$SANDBOX/halo/manifest.yaml"
+  assert_output "python"
+}

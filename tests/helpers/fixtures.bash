@@ -101,11 +101,36 @@ ${ac_rows}
 EOF
 }
 
-# make_plan <specs_root> <id> [ac_count=2] [ac_start=1]
+# make_plan <specs_root> <id> [ac_count=2] [ac_start=1] [style=ref]
 # 每个 AC 生成一组 RED-n（红测试任务）+ T-n（实现任务），n 从 1 计数。
+#
+# style 决定任务体里那一行 AC 引用的写法，三者都是被 plan-lint 接受的黄金形态：
+#   ref      `- Ref: AC-N`        存量形态：无覆盖声明行，门禁回退到任务全文扫描，
+#                                 plan-lint 出 fallback warning 但不 fail。
+#   decl-cn  `- 覆盖验收：AC-N`   现行形态（中文标签），门禁只读声明行。
+#   decl-en  `- Covers: AC-N`     现行形态（英文标签），同上。
+# 标签口径见 harness-template/halo/kernel/_lib.sh 的 ac_declaration_lines()。
+#
+# 「一个任务声明多条 AC / 声明外部 spec 的 AC / 声明行不含 AC token」等变体不进本函数，
+# 走 tests/fixtures/ 静态文件——那些形态的价值在于可被逐字审阅。
 make_plan() {
-  local root="$1" id="$2" ac_count="${3:-2}" ac_start="${4:-1}"
+  local root="$1" id="$2" ac_count="${3:-2}" ac_start="${4:-1}" style="${5:-ref}"
   local dir="$root/$id"
+
+  # 未知 style 必须报错退出，不得静默回落到默认形态：静默回落会让用例
+  # 以为自己在测声明行，实际测的是 ref 形态，断言照样通过（假绿）。
+  # 标签含分隔符与其后的间距，中文冒号后不留空格（与仓内既有 plan 写法一致）。
+  local ac_label
+  case "$style" in
+    ref) ac_label="Ref: " ;;
+    decl-cn) ac_label="覆盖验收：" ;;
+    decl-en) ac_label="Covers: " ;;
+    *)
+      echo "make_plan: unknown style '${style}' (expected ref|decl-cn|decl-en)" >&2
+      return 1
+      ;;
+  esac
+
   mkdir -p "$dir"
 
   local red_tasks="" impl_tasks="" i ac n
@@ -113,7 +138,7 @@ make_plan() {
     ac=$((ac_start + i))
     n=$((i + 1))
     red_tasks+="- [ ] RED-${n}: Add failing test for AC-${ac}
-  - Ref: AC-${ac}
+  - ${ac_label}AC-${ac}
   - Expected failure: handler does not implement AC-${ac} yet
   - Test file: \`internal/handler/item_test.go\`
   - Verification: \`go test ./internal/handler -run TestAC${ac}\`
@@ -122,7 +147,7 @@ make_plan() {
 
 "
     impl_tasks+="- [ ] T${n}: Implement behavior for AC-${ac}
-  - Ref: AC-${ac}
+  - ${ac_label}AC-${ac}
   - Mode: tdd
   - Scope: Implement the smallest path needed for AC-${ac}.
   - Interfaces:

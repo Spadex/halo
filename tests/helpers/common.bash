@@ -12,6 +12,10 @@ HELPERS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$HELPERS_DIR/../.." && pwd)"
 export REPO_DIR
 
+# 静态 fixture 根目录。目录树按目标项目布局镜像，装进沙箱时整棵叠加。
+HALO_FIXTURES_DIR="$REPO_DIR/tests/fixtures"
+export HALO_FIXTURES_DIR
+
 # shellcheck source=/dev/null
 source "$HELPERS_DIR/../vendor/bats-support/load.bash"
 # shellcheck source=/dev/null
@@ -54,4 +58,28 @@ halo_sandbox_clone() {
   export SANDBOX="$BATS_TEST_TMPDIR/project"
   cp -R "$HALO_TEMPLATE_DIR" "$SANDBOX"
   cd "$SANDBOX" || return 1
+}
+
+# 把 tests/fixtures/<rel>/ 的整棵目录树叠加到沙箱。
+# fixture 目录按项目布局镜像（halo/specs/... 与 tests/... 一次到位），
+# 已存在的同名文件被覆盖——这是叠加多份 fixture 造反向场景的手段。
+#
+# 失败方向：源目录不存在直接 return 1 让用例红（fail-closed）。
+# 不静默跳过：装不上 fixture 的用例后面断言什么都不算数，绿了才是最坏结果。
+halo_install_fixture() { # <fixture_rel_dir> [dest=$SANDBOX]
+  local rel="$1" dest="${2:-$SANDBOX}"
+  local src="$HALO_FIXTURES_DIR/$rel"
+  if [[ ! -d "$src" ]]; then
+    echo "halo_install_fixture: no such fixture: tests/fixtures/${rel}" >&2
+    return 1
+  fi
+  mkdir -p "$dest" || return 1
+  cp -R "$src"/. "$dest"/ || return 1
+}
+
+# 改当前沙箱 manifest 的 project.language。
+# 无需还原：bats 每条用例一个独立沙箱副本，改动不会外溢到别的用例
+# （smoke-test 里「改完再改回去」是单沙箱串行执行下的补丁，这里是多余的全局可变状态）。
+halo_set_language() { # <lang>
+  yq -i ".project.language = \"$1\"" "$SANDBOX/halo/manifest.yaml"
 }
