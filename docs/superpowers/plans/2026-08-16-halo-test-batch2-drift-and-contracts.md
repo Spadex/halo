@@ -387,7 +387,9 @@ sed -e 's/| TestAC1 |/| TestAC2Combined |/' -e 's/| TestAC2 |/| manual review |/
   halo/specs/self-decl/spec.md > /tmp/x && mv /tmp/x halo/specs/self-decl/spec.md
 ```
 
-现行实现：`build_foreign_owned` 的 `:142` 自跳过让 `FOREIGN_OWNED` 为空 → AC-1 走 Tier 1 命中 `TestAC2Combined`；AC-2 无 decl 走 Tier 2，候选 `{TestAC2Combined}`，`comm -23` 不扣 → covered → exit 0。删掉 `:142` 后 `FOREIGN_OWNED={TestAC2Combined}`（从本 spec 的 AC-1 行提取）→ AC-2 候选被扣光 → uncovered → exit 1 → 用例变红。这就是 M26。
+现行实现：`build_foreign_owned` 的 `:142` 自跳过把**本 spec 自己**排除在外 → AC-1 走 Tier 1 命中 `TestAC2Combined`；AC-2 无 decl 走 Tier 2，候选 `{TestAC2Combined}`，`comm -23` 不扣 → covered → exit 0。删掉 `:142` 后 `TestAC2Combined` 从本 spec 的 AC-1 行进入 `FOREIGN_OWNED` → AC-2 候选被扣光 → uncovered → exit 1 → 用例变红。这就是 M26。
+
+> **一处措辞更正（实施时实测发现）**：本段原写「自跳过让 `FOREIGN_OWNED` 为空」——不准。`gate-ac-coverage.bats` 的 `setup()` 会造一个 `uncovered-go` 兄弟 spec，`build_foreign_owned` 会从它的 AC 行取到 `TestAC1`/`TestAC2`，所以基线上 `FOREIGN_OWNED` 非空。结论不受影响：那两个 token 与 `TestAC2Combined` 不碰撞，M26 仍精确点亮 acg-3。
 
 - [ ] Step 1 写 `lib-ac-declaration.bats`（同样用 `lib_run` 子进程助手）
 - [ ] Step 2 `gate-ac-coverage.bats` 追加 acg-3，`setup` 不变（该条自建 `self-decl`）
