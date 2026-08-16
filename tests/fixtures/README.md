@@ -35,6 +35,7 @@
 
 ## 改这里的文件之前
 
-这些正文是**逐字**从 `tests/smoke-test.sh` 与 `tests/ac-coverage-test.sh` 的内嵌 heredoc 搬过来的。
+这些正文是**逐字**从 `tests/smoke-test.sh` 与 `tests/ac-coverage-test.sh` 的内嵌 heredoc 搬过来的
+（两处来源都已随批次 1 删除，要对照原文去 git history 找 `be50a1f` 之前的版本）。
 措辞里埋着被测语义（比如那句否定式的「本任务不覆盖 AC-3」），**改一个字就可能改掉断言的含义**。
 要调整就先问：我改的是陷阱本身，还是只是觉得读着不顺？

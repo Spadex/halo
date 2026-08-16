@@ -124,10 +124,8 @@ run_legacy() {
   if ! bash "$SCRIPT_DIR/smoke-test.sh"; then
     FAILED=1
   fi
-  echo "── legacy: ac-coverage-test.sh ──"
-  if ! bash "$SCRIPT_DIR/ac-coverage-test.sh"; then
-    FAILED=1
-  fi
+  # 批次 0 当时这里还有第二条腿跑 ac-coverage-test.sh；该脚本已随批次 1 迁成
+  # tests/regression/2026-07-25-ac-coverage-cross-spec-attribution.bats 并删除。
 }
 
 case "$SUITE" in
@@ -809,6 +807,8 @@ git commit -m "Add test maintainer handbook; route verification through tests/ru
 | 提交 | 与本计划的差异 | 原因 |
 |------|----------------|------|
 | `1e5fbc8` | `tests/run.sh` 中 `run_bats_suite` 的 fail-direction 注释重写；`tests/README.md` 目录表为 `regression/` `e2e/` `meta/` `fixtures/` 补批次标注 | 代码评审 minor：原注释把 fail 方向说反了（实际是 fail-closed），且手册未说明空目录属预期状态。本计划正文中的两处代码块已同步为最终实现。 |
+| `1a9773e` | 批次 0 的完成定义多了一项本不在计划内的产出：`init.sh` 缺陷的修复 + 回归测试 + 复核文档 | CI 首跑抓到真缺陷（详见 Task 4 Step 3）。计划假设「macos 红 = 依赖抖动」，实际是产品缺陷——这恰是加 macos runner 的目的。 |
+| `be50a1f` | Task 1 Step 4 的 `run.sh` 代码块与仓库文件不再一致：`run_legacy` 的第二条腿（ac-coverage-test.sh）已随批次 1 删除 | 批次 1 把该脚本迁成了 bats 回归用例。本计划正文的代码块已加注说明，保留历史形态便于对照。 |
 
 计划正文中 Task 1 Step 4 与 Task 5 Step 1 的代码块已按 `1e5fbc8` 的最终形态回写，与仓库当前文件一致。
 

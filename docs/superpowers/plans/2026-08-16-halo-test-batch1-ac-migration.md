@@ -467,3 +467,36 @@ git diff --check
 - meta-lint 五条规则、报告↔测试对应检查、`release-check.sh` 扩展 → 批次 3
 - O-1（node 无跨 spec 归属保护）的修复 → 需先走完整 SOP（报告 + analysis + 回归 + 修复同批提交）
 - CI 两个 workflow 的 smoke-test 重叠合并 → 批次 4 双轨期结束时
+
+---
+
+## 批次 1 完成记录（2026-08-16）
+
+| 条件 | 状态 | 证据 |
+|------|------|------|
+| 新 bats 用例全绿 | ✅ | `bash tests/run.sh` 退出码 0：unit 18 条（9 → 18）、regression 37 条、smoke-test 145/145，总耗时 64 秒 |
+| 每条被迁移断言都有对应变异且验证过 | ✅ | 22 条变异，**34/34** 用例被点亮，记录见 `8c3b118` |
+| 旧段已删且未破坏残余用例 | ✅ | smoke-test `167 → 145`（−22，与预测一致）；三处顺序耦合逐项核查通过；残余引用 grep 无输出 |
+| `harness-template/` 零改动 | ⚠️ 一处，有充分理由 | `1a9773e` 修了 CI 抓到的 `init.sh` 缺陷（不在 `harness-template/` 下，是根目录安装器）。除此之外 kernel 零改动，变异全部回滚 |
+| 静态检查全绿 | ✅ | `bash -n` + `shellcheck --severity=warning` 覆盖 run.sh / smoke-test.sh / helpers |
+| 命名与 SOP 落地 | ✅ | `docs/bug_report/INDEX.md`；7 个 regression 文件均带三行文件头；`tests/README.md` 已写入命名规则、三档分界线、变异测试协议、批次 3 待办 |
+| CI 双平台绿 | 待推送后确认 | 批次 0 的修复已验证过双平台（run 31924319231） |
+
+### 与计划的偏离
+
+| 项 | 计划 | 实际 | 原因 |
+|---|---|---|---|
+| Task 0 | 推送即闭合 | 首跑 macos 红，先修 `init.sh` 缺陷才闭合 | CI 抓到真缺陷，见批次 0 计划 Task 4 Step 3 |
+| `tests/regression/` 启用时机 | 批次 1 Task 2 | 提前到 Task 0 | 上面那个缺陷的回归用例要落地 |
+| 用例总数 | 34 | 34 + 5（init 缺陷）+ 5（helper 自测）= unit 18 + regression 37 | 计划外产出，均有对应报告或自测职责 |
+| JSON 数组断言写法 | `yq -e '.ac_refs == [...]'` | `join(",")` 比较 | 本仓 yq 是 mikefarah v4，表达式语言不是 jq，数组字面量比较静默求值为 false。已写进 `tests/README.md` |
+| 变异条数 | 21 | 22 | 前 21 条只点亮 30/34。缺的 4 条全是「正向归属」方向，原因是变异集**只有放松方向没有收紧方向**，不是断言没判别力。补 M22（Tier 1 存在性检查恒不命中）后精确点亮那 4 条 |
+| 慢 yq shim | 预告接口 | 同左，未实现 | 无调用方（#11 属批次 3） |
+
+### 实测发现的覆盖空洞（不在本批次修）
+
+删掉 `ac-coverage.sh:142` 的 `[[ "$f" -ef "$SPEC" ]] && continue`（自跳过），
+让一个 spec 自己声明的测试被算成「兄弟 spec 拥有」——**一条测试都不红**。
+旧的 smoke-test 与 ac-coverage-test 同样没守它，不是本次迁移引入的。
+要触发需要「一条 AC 声明了测试、另一条 AC 依赖数字兜底且候选恰是自己声明的 token」
+的 fixture，属契约单测范畴 → **批次 2**（与 `find_spec` / `narrow_acs_to_declared` 同批）。
