@@ -92,9 +92,9 @@ PY
 }
 
 @test "a path-first column order still reports a genuinely missing route" {
-  # drt-4（本批次新增，收紧方向）：旧断言只验证了「列序倒置也能通过」这一个放松方向。
-  # 一个把路径列恒抽成空字符串、却仍让 spec_routes 算出 3 的实现，不会被上面的
-  # drt-3 挡住——「提取到 3 行却全都误判为已注册」这种误绿此前没有任何断言守。
+  # drt-4（本批次新增，收紧方向）：drt-3/drt-4 真实守住的是「列序无关」这个维度——
+  # 已由一条精确变异证明：把 awk 里 `mi = hm; pi = hp` 硬编码成 `mi = 2; pi = 3` 时，
+  # drt-1/drt-2（方法列在前的 spec）仍绿，drt-3/drt-4（路径列在前）转红。
   # 这里用同一份列序倒置 spec 配**未补齐**（仍缺 DELETE）的代码，钉住真缺失
   # 依然要被抓出来，而不是被列序解析的松弛悄悄吞掉。
   run bash halo/kernel/delivery/gates/drift-check.sh \
