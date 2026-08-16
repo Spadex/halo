@@ -538,12 +538,16 @@ sed -e 's/| TestAC1 |/| TestAC2Combined |/' -e 's/| TestAC2 |/| manual review |/
 make_spec halo/specs ph-probe 2
 make_plan halo/specs ph-probe 2 1 decl-en      # decl-en 避免 fallback warning 噪声
 plan_with_scope() { # <替换串>
+  local tmp; tmp="$(mktemp)"
   sed "s#Scope: Implement the smallest path needed for AC-1\.#Scope: $1#" \
-    halo/specs/ph-probe/plan.md > halo/specs/ph-probe/plan-probe.md
+    halo/specs/ph-probe/plan.md > "$tmp" && mv "$tmp" halo/specs/ph-probe/plan.md
 }
 ```
 
-限定 `AC-1\.` 是必须的：两条 T 任务的 Scope 行只有 AC 号不同，不加限定 sed 会同时改两条。plan-lint 通过同目录 `spec.md` 解析 spec，产物与 spec 同目录即可。
+两条限制都是必须的：
+
+- **锚定 `AC-1\.`**——两条 T 任务的 Scope 行只有 AC 号不同，不加限定 sed 会同时改两条。
+- **就地覆盖 `plan.md`，不要另起文件名**（实施时实测发现，原计划写的是 `> …/plan-probe.md`，错的）。`plan-lint.sh:134-138` 有一条 Artifact layout 检查：`basename` 不是 `plan.md` 就 `fail_msg "Plan must be named plan.md"`。派生产物换名会让 pl-1/pl-2 的 `assert_success` 因为一个**与占位符判据无关**的原因失败。旧 smoke-test 没踩这个坑是侥幸：它的正向用例本就跑在 `plan.md` 上，反向用例虽然跑 `plan-residual.md` 但期望的就是失败，多一条布局失败不影响断言——归一成单个派生函数后才暴露。
 
 `review-package-scope.bats`（6 条，Root cause class: C + 框架自我矛盾）。文件内定义 `review_pkg_repo()`（见决定三），逐条用例显式调用：
 
