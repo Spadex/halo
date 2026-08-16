@@ -639,7 +639,7 @@ Expected: `true`。
 Run: `bash tests/run.sh`（等价于 CI 将执行的命令）
 Expected: 全绿退出码 0。
 
-- [ ] **Step 3: Commit 并推送验证**（部分完成：commit 已做（`2251d4b`），push 未做）
+- [x] **Step 3: Commit 并推送验证**
 
 ```bash
 git add .github/workflows/test.yml
@@ -649,7 +649,9 @@ git push
 
 推送后用 `gh run watch` 确认两个平台的 job 都绿。macos job 若因 brew/yq 安装抖动失败，重跑一次再判定；持续失败则回到 workflow 修依赖安装，不得跳过 macos。
 
-**当前状态：workflow 文件已提交，但批次 0 的 8 个提交尚未推送到 `origin/main`，`test` workflow 从未在 GitHub Actions 上运行过。Linux 侧完全未验证，macOS 侧只有本地 `bash tests/run.sh` 的证据。这是批次 0 唯一未闭合的一步。**
+**实际结果（2026-08-16 推送）：首跑 [run 31923714977](https://github.com/Spadex/halo/actions/runs/31923714977) 中 ubuntu 绿、macos 红——不是安装抖动，是抓到了一个真缺陷：`init.sh` 的 Go 版本探测在 `set -euo pipefail` 下无兜底，未装 Go 的机器上 `halo init` 静默猝死（GitHub 的 macos-latest arm64 镜像不预装 Go）。修复、双向回归测试与复核文档见 `1a9773e` 与 `docs/bug_report/2026-08-16-init-detection-probe-pipefail-analysis.md`。修复后 [run 31924319231](https://github.com/Spadex/halo/actions/runs/31924319231) 双平台全绿，批次 0 闭合。**
+
+macos runner 的价值由此得到实证：它拦下的不是 BSD 工具链差异，而是「一台装机清单与开发机不同的机器」暴露出的产品缺陷。
 
 ---
 
@@ -796,11 +798,11 @@ git commit -m "Add test maintainer handbook; route verification through tests/ru
 | 条件 | 状态 | 证据 |
 |------|------|------|
 | `bash tests/run.sh` 本地全绿（9 条 bats 用例 + legacy 双轨） | ✅ | macOS 实测：unit 9/9、smoke-test 167/167、ac-coverage 6/6，退出码 0 |
-| CI `test` workflow 在 ubuntu 与 macos 双平台绿 | ❌ | 8 个提交未推送，workflow 从未在 GitHub Actions 上运行 |
+| CI `test` workflow 在 ubuntu 与 macos 双平台绿 | ✅ | [run 31924319231](https://github.com/Spadex/halo/actions/runs/31924319231) 双平台绿（首跑 macos 红，抓到 `init.sh` 探测缺陷，已随 `1a9773e` 修复） |
 | `tests/README.md` 存在且 AGENTS.md 指向它 | ✅ | `tests/README.md`（80 行）；`AGENTS.md:61` Design Rules + `:112-123` Verification |
 | smoke-test.sh 零改动（冻结从下一个提交起生效） | ✅ | `git log 4a543e1..HEAD -- tests/smoke-test.sh` 为空 |
 
-**批次 0 未闭合**：唯一缺口是 CI 双平台验证（Task 4 Step 3 的 push 部分）。推送后确认两平台 job 绿，批次 0 即可关闭。
+**批次 0 已闭合**（2026-08-16）。CI 首跑抓到的 `init.sh` 缺陷按 `tests/README.md` 的处置 SOP 走完了全流程（复核文档 + 双向回归测试 + 修复同批提交），回归用例落在 `tests/regression/2026-08-16-init-detection-probe-pipefail.bats`——`tests/regression/` 套件因此提前于批次 1 启用。
 
 ## 实施过程中的偏离记录
 
