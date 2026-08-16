@@ -35,7 +35,7 @@
 - Produces: `bash tests/run.sh [unit|regression|e2e|meta|legacy|all]`，默认 `all`；任一套件失败则非零退出。空套件目录跳过并明说。后续所有任务和 CI 都以此为入口。
 - Produces: `tests/vendor/bats-core/bin/bats` 可执行路径（helpers 与 CI 依赖）。
 
-- [ ] **Step 1: 添加三个 submodule 并锁定版本**
+- [x] **Step 1: 添加三个 submodule 并锁定版本**
 
 ```bash
 cd /Users/huxiao/Project/spadex/halo
@@ -49,7 +49,7 @@ git -C tests/vendor/bats-assert checkout v2.1.0
 
 验证：`tests/vendor/bats-core/bin/bats --version` 输出 `Bats 1.12.0`。
 
-- [ ] **Step 2: 写 sanity 用例（先写测试）**
+- [x] **Step 2: 写 sanity 用例（先写测试）**
 
 创建 `tests/unit/sanity.bats`：
 
@@ -74,12 +74,12 @@ setup() {
 }
 ```
 
-- [ ] **Step 3: 直接用 bats 跑 sanity，确认基础设施可用**
+- [x] **Step 3: 直接用 bats 跑 sanity，确认基础设施可用**
 
 Run: `tests/vendor/bats-core/bin/bats tests/unit/sanity.bats`
 Expected: `2 tests, 0 failures`
 
-- [ ] **Step 4: 写 `tests/run.sh`**
+- [x] **Step 4: 写 `tests/run.sh`**
 
 ```bash
 #!/usr/bin/env bash
@@ -104,8 +104,9 @@ run_bats_suite() {
   local dir="$SCRIPT_DIR/$name"
   local count=0
   if [[ -d "$dir" ]]; then
-    # find 输出仅计数，不依赖顺序（fail direction: 数错只会把非空当空跳过，
-    # bats --recursive 自身仍会发现用例；不会凭空报绿）
+    # find 输出仅用于计数，不依赖顺序（fail direction: find 报错时 pipefail 会中止
+    # 整个 runner → 非零退出 → CI 红，属 fail-closed；count=0 的 skip 分支只在
+    # 目录确实为空/不存在时走到，不会把失败伪装成跳过）
     count=$(find "$dir" -name '*.bats' -type f | wc -l | tr -d ' ')
   fi
   if [[ "$count" -eq 0 ]]; then
@@ -152,7 +153,7 @@ esac
 exit "$FAILED"
 ```
 
-- [ ] **Step 5: 验证 run.sh 各路径**
+- [x] **Step 5: 验证 run.sh 各路径**
 
 Run: `bash tests/run.sh unit`
 Expected: sanity 2 tests 通过，退出码 0。
@@ -166,12 +167,12 @@ Expected: `exit=2`。
 Run: `bash tests/run.sh`（全量，含 legacy 双轨）
 Expected: sanity 通过 + smoke-test、ac-coverage-test 照常全绿，最终退出码 0。
 
-- [ ] **Step 6: 静态检查**
+- [x] **Step 6: 静态检查**
 
 Run: `bash -n tests/run.sh && shellcheck --severity=warning tests/run.sh`
 Expected: 无输出，退出码 0。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add .gitmodules tests/vendor tests/run.sh tests/unit/sanity.bats
@@ -195,7 +196,7 @@ git commit -m "Add bats skeleton: vendored submodules, unified runner, sanity ca
   - 沙箱内关键路径：门禁 `$SANDBOX/halo/kernel/delivery/gates/*.sh`、SDD 脚本 `$SANDBOX/halo/kernel/orchestrator/sdd/*.sh`、PrismSpec `$SANDBOX/prismspec/bin/*.sh`、specs 根 `$SANDBOX/halo/specs/`。
   - `REPO_DIR` 环境变量指向本仓根。
 
-- [ ] **Step 1: 写验证用例（先写测试）**
+- [x] **Step 1: 写验证用例（先写测试）**
 
 创建 `tests/unit/harness-setup.bats`：
 
@@ -232,12 +233,12 @@ setup() {
 }
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `bash tests/run.sh unit`
 Expected: FAIL（`helpers/common.bash` 尚不存在，bats 在 load 阶段报错；具体报错文案不限，退出码非零即可）。
 
-- [ ] **Step 3: 写 `tests/helpers/common.bash`**
+- [x] **Step 3: 写 `tests/helpers/common.bash`**
 
 ```bash
 #!/usr/bin/env bash
@@ -285,7 +286,7 @@ require gorm.io/gorm v1.25.0
 EOF
   bash "$REPO_DIR/install.sh" "$HALO_TEMPLATE_DIR" > /dev/null
   (
-    cd "$HALO_TEMPLATE_DIR"
+    cd "$HALO_TEMPLATE_DIR" || exit
     bash .halo/framework/init.sh --non-interactive --lang=go --name=testapp --ci=github > /dev/null
   )
 }
@@ -299,17 +300,17 @@ halo_sandbox_clone() {
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `bash tests/run.sh unit`
 Expected: sanity 2 条 + harness-setup 3 条，共 5 tests, 0 failures。
 
-- [ ] **Step 5: 静态检查**
+- [x] **Step 5: 静态检查**
 
 Run: `bash -n tests/helpers/common.bash && shellcheck --severity=warning tests/helpers/common.bash`
 Expected: 无输出，退出码 0。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add tests/helpers/common.bash tests/unit/harness-setup.bats
@@ -331,7 +332,7 @@ git commit -m "Add bats sandbox helpers: per-file template install, per-test clo
   - `make_plan <specs_root> <id> [ac_count] [ac_start]` — 写出 `<specs_root>/<id>/plan.md`，每个 AC 一组 RED-n + T-n 任务。与同参数 `make_spec` 配套时必须通过 `plan-lint.sh` 与 `prismspec/bin/lint.sh … plan`。
   - 语法变体（交叉引用、真断号等）不做进构造函数：由用例对产物做 `sed` 改写（沿用 smoke-test 现行做法），静态变体后续放 `tests/fixtures/`。
 
-- [ ] **Step 1: 写验证用例（先写测试）**
+- [x] **Step 1: 写验证用例（先写测试）**
 
 创建 `tests/unit/fixtures.bats`：
 
@@ -383,12 +384,12 @@ setup() {
 }
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `bash tests/run.sh unit`
 Expected: fixtures.bats 全部 FAIL（`helpers/fixtures.bash` 尚不存在，load 阶段报错）；其余文件仍绿。
 
-- [ ] **Step 3: 写 `tests/helpers/fixtures.bash`**
+- [x] **Step 3: 写 `tests/helpers/fixtures.bash`**
 
 内容以 smoke-test 现行 modern-feature spec/plan fixture 为蓝本（它们已被全部门禁接受）：
 
@@ -561,19 +562,19 @@ EOF
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `bash tests/run.sh unit`
 Expected: sanity 2 + harness-setup 3 + fixtures 4，共 9 tests, 0 failures。
 
 若 lint 用例失败：diff 产物与 smoke-test 内嵌 fixture（`tests/smoke-test.sh:455-537` 与 `:692-760`），逐段对齐，不改门禁。
 
-- [ ] **Step 5: 静态检查**
+- [x] **Step 5: 静态检查**
 
 Run: `bash -n tests/helpers/fixtures.bash && shellcheck --severity=warning tests/helpers/fixtures.bash`
 Expected: 无输出，退出码 0。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add tests/helpers/fixtures.bash tests/unit/fixtures.bats
@@ -591,7 +592,7 @@ git commit -m "Add parameterized spec/plan fixture constructors validated by rea
 - Consumes: Task 1 的 `bash tests/run.sh`（含 submodule 依赖）。
 - Produces: push/PR 双平台测试门禁；macos runner 承担 BSD 工具链回归拦截（设计依据：#12 的 BSD awk 缺陷现仅靠代码注释防回退）。
 
-- [ ] **Step 1: 写 workflow**
+- [x] **Step 1: 写 workflow**
 
 创建 `.github/workflows/test.yml`：
 
@@ -630,7 +631,7 @@ jobs:
         run: bash tests/run.sh
 ```
 
-- [ ] **Step 2: 本地校验 YAML 与入口**
+- [x] **Step 2: 本地校验 YAML 与入口**
 
 Run: `yq -e '.jobs.test.strategy.matrix.os | length == 2' .github/workflows/test.yml`
 Expected: `true`。
@@ -638,7 +639,7 @@ Expected: `true`。
 Run: `bash tests/run.sh`（等价于 CI 将执行的命令）
 Expected: 全绿退出码 0。
 
-- [ ] **Step 3: Commit 并推送验证**
+- [ ] **Step 3: Commit 并推送验证**（部分完成：commit 已做（`2251d4b`），push 未做）
 
 ```bash
 git add .github/workflows/test.yml
@@ -647,6 +648,8 @@ git push
 ```
 
 推送后用 `gh run watch` 确认两个平台的 job 都绿。macos job 若因 brew/yq 安装抖动失败，重跑一次再判定；持续失败则回到 workflow 修依赖安装，不得跳过 macos。
+
+**当前状态：workflow 文件已提交，但批次 0 的 8 个提交尚未推送到 `origin/main`，`test` workflow 从未在 GitHub Actions 上运行过。Linux 侧完全未验证，macOS 侧只有本地 `bash tests/run.sh` 的证据。这是批次 0 唯一未闭合的一步。**
 
 ---
 
@@ -660,7 +663,7 @@ git push
 - Consumes: Task 1-4 全部产出（手册描述的就是它们）。
 - Produces: bug 处置 SOP 的规范入口；AGENTS.md 引导所有进仓 Agent 到手册与 `tests/run.sh`。
 
-- [ ] **Step 1: 写 `tests/README.md`**
+- [x] **Step 1: 写 `tests/README.md`**
 
 ```markdown
 # Halo 测试维护手册
@@ -684,11 +687,11 @@ tests/vendor/bats-core/bin/bats tests/unit/fixtures.bats -f "make_spec"  # 按�
 | 目录 | 职责 |
 |------|------|
 | `unit/` | 契约单测：被多个门禁共享的谓词（`_lib.sh` 等）的直接测试 |
-| `regression/` | 回归语料库：一份 bug 报告 = 一个 `.bats` 文件 |
-| `e2e/` | 端到端：init → spec → plan → 门禁 → 证据 黄金路径 |
-| `meta/` | 原则守护 lint：把 AGENTS.md Gate Rules 变成机器断言 |
+| `regression/` | 回归语料库：一份 bug 报告 = 一个 `.bats` 文件 （批次 1 起）|
+| `e2e/` | 端到端：init → spec → plan → 门禁 → 证据 黄金路径 （批次 4 起）|
+| `meta/` | 原则守护 lint：把 AGENTS.md Gate Rules 变成机器断言 （批次 3 起）|
 | `helpers/` | `common.bash`（沙箱）、`fixtures.bash`（spec/plan 构造函数） |
-| `fixtures/` | 静态语法变体 fixture，按框架分目录 |
+| `fixtures/` | 静态语法变体 fixture，按框架分目录 （随迁移批次填充）|
 | `vendor/` | bats-core / bats-support / bats-assert（git submodule，锁版本） |
 
 `smoke-test.sh` 是迁移中的存量：**已冻结，只删不加**。新测试一律写 bats。
@@ -745,7 +748,7 @@ drift-check 每声称支持一种框架，`examples/` 必须新增该框架的�
 - 契约单测文件头注明被测函数的调用方清单，让改动者看到爆炸半径。
 ```
 
-- [ ] **Step 2: 修订 `AGENTS.md` Verification 段**
+- [x] **Step 2: 修订 `AGENTS.md` Verification 段**
 
 把现有 Verification 代码块中的 `bash tests/smoke-test.sh` 替换为 `bash tests/run.sh`，并在代码块前加一句 submodule 初始化提示。修改后该段为：
 
@@ -771,7 +774,7 @@ git diff --check
 - `tests/smoke-test.sh` is frozen: new tests are written as bats cases under `tests/`; smoke-test only shrinks as batches migrate.
 ```
 
-- [ ] **Step 3: 验证**
+- [x] **Step 3: 验证**
 
 Run: `bash tests/run.sh && git diff --check`
 Expected: 全绿。
@@ -779,7 +782,7 @@ Expected: 全绿。
 Run: `rg -n "smoke-test" AGENTS.md`
 Expected: 仅剩 bash -n / shellcheck 行（双轨期 smoke-test.sh 仍需语法检查）与冻结说明，Verification 的执行入口已是 `tests/run.sh`。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tests/README.md AGENTS.md
@@ -790,10 +793,22 @@ git commit -m "Add test maintainer handbook; route verification through tests/ru
 
 ## 批次 0 完成定义
 
-- `bash tests/run.sh` 本地全绿（9 条 bats 用例 + legacy 双轨）。
-- CI `test` workflow 在 ubuntu 与 macos 双平台绿。
-- `tests/README.md` 存在且 AGENTS.md 指向它。
-- smoke-test.sh 零改动（冻结从下一个提交起生效）。
+| 条件 | 状态 | 证据 |
+|------|------|------|
+| `bash tests/run.sh` 本地全绿（9 条 bats 用例 + legacy 双轨） | ✅ | macOS 实测：unit 9/9、smoke-test 167/167、ac-coverage 6/6，退出码 0 |
+| CI `test` workflow 在 ubuntu 与 macos 双平台绿 | ❌ | 8 个提交未推送，workflow 从未在 GitHub Actions 上运行 |
+| `tests/README.md` 存在且 AGENTS.md 指向它 | ✅ | `tests/README.md`（80 行）；`AGENTS.md:61` Design Rules + `:112-123` Verification |
+| smoke-test.sh 零改动（冻结从下一个提交起生效） | ✅ | `git log 4a543e1..HEAD -- tests/smoke-test.sh` 为空 |
+
+**批次 0 未闭合**：唯一缺口是 CI 双平台验证（Task 4 Step 3 的 push 部分）。推送后确认两平台 job 绿，批次 0 即可关闭。
+
+## 实施过程中的偏离记录
+
+| 提交 | 与本计划的差异 | 原因 |
+|------|----------------|------|
+| `1e5fbc8` | `tests/run.sh` 中 `run_bats_suite` 的 fail-direction 注释重写；`tests/README.md` 目录表为 `regression/` `e2e/` `meta/` `fixtures/` 补批次标注 | 代码评审 minor：原注释把 fail 方向说反了（实际是 fail-closed），且手册未说明空目录属预期状态。本计划正文中的两处代码块已同步为最终实现。 |
+
+计划正文中 Task 1 Step 4 与 Task 5 Step 1 的代码块已按 `1e5fbc8` 的最终形态回写，与仓库当前文件一致。
 
 ## 明确不做（后续批次）
 
