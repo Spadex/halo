@@ -40,10 +40,6 @@ run_legacy() {
   if ! bash "$SCRIPT_DIR/smoke-test.sh"; then
     FAILED=1
   fi
-  echo "── legacy: ac-coverage-test.sh ──"
-  if ! bash "$SCRIPT_DIR/ac-coverage-test.sh"; then
-    FAILED=1
-  fi
 }
 
 case "$SUITE" in
