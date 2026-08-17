@@ -951,6 +951,8 @@ Step 2 要求的逐条记录。**数据来源**：七个并行子代理在隔离
 
 **这是本 Task 的主要产出。**
 
+> **本节是速查表；详述版以「批次 2 完成记录」下的「[Task 9 抓到的 5 条测试自身缺陷（本批次的主要收获）](#task-9-抓到的-5-条测试自身缺陷本批次的主要收获)」一节为准**（含每条的决定性证据、红在哪一行、rp-2 对 Task 7 拆分有效性结论的追溯影响、以及两次「防御性冗余吸收变异」现象）。两节列的是同五条、内容一致无矛盾，本节先落盘、详述版在 Task 12 补写；检索时若同时命中，取详述版。**但两表的第 3/4 条次序不同**（本节 3 = rp-2、4 = `all_c`；详述版 3 = `all_c`、4 = rp-2），**跨节引用一律按条目名指认，不要用序号**。
+
 | # | 缺陷 | 位置 | 失效方式 | 处置 |
 |---|---|---|---|---|
 | 1 | drt-3 / fca-5 缺 `.metrics.checked.routes` | `drift-route-table.bats`、`…collection-root….bats` | `drift-check.sh` 路由维度有**六条** `gate_skip` 出口（`:348/:358/:388/:398/:415/:418`），任一走到时 `drift_count == 0` 与 `exit 0` 照样成立 → 「压根没验」与「验过且干净」分不开 | 本批次加强 |
@@ -970,7 +972,7 @@ Step 2 要求的逐条记录。**数据来源**：七个并行子代理在隔离
 
 #### Task 9 产出的批次 3 输入
 
-沿用「范围边界」表的归属口径，以下五条为本 Task 新产出、须并入批次 3 的输入：
+沿用「范围边界」表的归属口径，以下六条为本 Task 新产出、须并入批次 3 的输入：
 
 | # | 输入 | 来源 | 归属 |
 |---|---|---|---|
@@ -979,6 +981,7 @@ Step 2 要求的逐条记录。**数据来源**：七个并行子代理在隔离
 | 3 | pl-5 是第三个 alternation 的**唯一且专属**守卫，零冗余；一旦被削弱该分支即刻失去全部保护 | H 组 | 批次 3 |
 | 4 | 除加强后的 dec-6 外，全批次没有任何用例断言 `findings[].status` 枚举 | E 组 | 批次 3 |
 | 5 | O-17（explicit provenance 两份真源，见「实现观察」表） | A 组 | 批次 3，需独立走完整 SOP |
+| 6 | **评估防线独立性时须区分「专属点亮」与「宽半径顺带点亮」。** M38/M39 是本批次半径最宽的共享谓词（单点变异即点亮 8/9 条），把它们列为某条用例的「点亮来源」形式上成立，但对「该用例有没有**专属**防线」没有说服力——例如 fca-1 在覆盖核对表里挂着 M38/M39，而它真正的专属来源是 **M41**。本批次的 72/72 门槛已按严格判据（必须有变异以该用例为「期望变红」）扫过一遍，但**覆盖核对表的「点亮它的变异」列并未按此区分**，批次 3 设计契约单测时应逐条重标 | 控制者（Task 9 修复轮 3 的 deferred minor） | 批次 3 |
 
 - [ ] Step 1 前置：`git status --porcelain` 无输出，`bash tests/run.sh` 全绿
 - [ ] Step 2 逐条执行 M1-M73（含 M47a/M47b，共 **74 条**），记录「变异编号 / 目标行 / 实际变红的 @test / 是否 ⊇ 期望」——结果见下文「Task 9 变异执行结果」一节
@@ -1155,5 +1158,115 @@ git diff --check
 - 契约单测其余三项（`task_has_ac_declaration`、AC 归属、模式解析链）→ 批次 3
 - meta-lint 五条规则、报告↔测试对应检查、`release-check.sh` 扩展 → 批次 3
 - O-1（node/js/ts 缺跨 spec 归属保护）、O-7（Express 无 examples 工程）、O-9（`_lib.sh` 函数名前缀）→ 需先走完整 SOP
-- Task 9 产出的 5 条批次 3 输入（夹具缺口 ×2、pl-5 零冗余、`findings[].status` 枚举无覆盖、O-17）→ 批次 3，清单见 Task 9 的「Task 9 产出的批次 3 输入」小节
+- Task 9 产出的 6 条批次 3 输入（夹具缺口 ×2、pl-5 零冗余、`findings[].status` 枚举无覆盖、O-17、专属点亮 vs 宽半径顺带点亮）→ 批次 3，清单见 Task 9 的「Task 9 产出的批次 3 输入」小节
 - E2E 主干迁移、删空 smoke-test、CI 两个 workflow 的 smoke-test 重叠合并 → 批次 4
+
+---
+
+## 批次 2 完成记录（2026-08-18）
+
+逐条对照上面「验证（端到端）」表。**未达成与部分达成的两条排在最后，不与已达成的混排。**
+
+| 条件 | 状态 | 证据 |
+|---|---|---|
+| 新 bats 用例全绿 | ✅ | `bash tests/run.sh` 退出码 0，全程零 `not ok`：**unit 50**（`1..50`，基线 18）、**regression 78**（`1..78`，基线 37），合计 **128**；legacy smoke-test `✅ 122 / 122`。基线由 `git ls-tree c7ff1cf` 逐文件 `grep -c '^@test'` 实测。耗时 `time bash tests/run.sh unit` = 34.9s、`… regression` = 68.4s，合计 103.3s < 150s（**耗时逃生阀不触发**，模板安装缓存 Task 不开） |
+| 契约单测覆盖设计文档要求的边界条件族 | ✅ | 三族各有专门用例且全绿：**空输入** find-7（`find_spec returns 1 and prints nothing when no spec exists`，`lib-find-spec.bats:146`）、ac-5（`spec_declared_acs on a missing file returns 0 with no output`，`:87`）、ac-9（`narrow_acs_to_declared returns 0 with no output when the text has no AC token`，`:119`）、disc-8（`an empty specs root returns 1, not an empty selection`，`spec-discovery.bats:253`）；**grep 未命中** ac-6（`:93`）、ac-10（`:127`）；**pipefail 下的管道退出码** find-10（`lib-find-spec.bats:182`）、ac-10（同上） |
+| 契约单测与回归的分层可证 | ✅ | 四条全部成立，逐条实测记录在本计划「Task 9 变异执行结果（74 条）」一节：①（按更正后表述）M1–M7 不点亮 disc-1..disc-8、disc-11；② M8/M10/M12/M13/M15/M16 六条的 unit 结果无一例外 `ok=50 notok=0`，零 find-\* 点亮；③ M4 点亮 find-8 与 find-12、disc-4 保持绿；④ M62 点亮 disc-9、disc-10 保持绿。**本 Task 未重跑变异**，证据来自 Task 9 各组实测 + 三轮独立评审（第 2 轮做的是全量脚本扫描而非抽样，`CASES FAILING STRICT CLOSURE: none`） |
+| 每条被迁移/新增断言都有对应变异且验证过 | ✅ | **74 条变异**：设计表（`:646-766`）与结果表（`:827-950`）各 74 行（按「行首为表格分隔符 + 可选粗体 + `M` + 数字」的正则逐区间 `grep -c` 实测，均为 74），编号集合完全一致。本批次新增 `@test` **73 条**（`git diff 606856a..HEAD -- 'tests/**/*.bats' \| grep -c '^+@test'` = 73），除 `unit/harness-setup` 的 helper 自测 1 条外 **72/72 各有专属的「期望变红」变异**（严格判据，不算期望外连带）。4 条等价变异（M30/M40/M45/M46）零变红，其期望用例各有其它实测点亮者 |
+| 旧段已删且未破坏残余用例 | ✅ | `bash tests/smoke-test.sh` → `✅ 122 / 122`（基线 145 实测，−23 = 8+13+2）；`git diff --numstat c7ff1cf..HEAD -- tests/smoke-test.sh` = `0 506` —— **「只删不加」由 numstat 直接证实**。评审用 `awk` 重建期望文件与提交后文件**逐字节 diff → IDENTICAL**，并对 23 条被删断言做了**完整**（非抽样）迁移等价性核对，23/23 有 bats 对应物且判定为「净加强而非等量迁移」 |
+| O-4 闭合 | ✅ | `grep -n 'pipeline\.sh\|guide\.sh' tests/smoke-test.sh` 共 12 处：6 处带 `--spec=`（`:294/:593/:735/:1531/:1563/:1729`）；其余 6 处中 2 处只是文件存在性/文本检查（`:215/:259`），4 处真实调用（`:338/:345/:420/:437`）位于 `halo/specs` **为空**的阶段——唯一在先的 `smoke-new-spec` 已在 `:301` 被 `rm -rf`，下一个 spec 到 `:454` 才创建。**再没有任何断言依赖「哪个 spec 恰好胜出」** |
+| 批次 1 覆盖空洞闭合 | ✅ | `unit/gate-ac-coverage.bats` 的 acg-3 在位且绿；M26（删 `ac-coverage.sh:142` 自跳过）实测**只**点亮 acg-3、零连带（exit 0→1、AC-2 covered→uncovered、覆盖率 1/2），Task 3 评审与 Task 9 C+D 组两次独立复现。正交性矩阵 M66→只红 acg-1 / M67→只红 acg-2 / M26→只红 acg-3 证明三条各守一维 |
+| `harness-template/` 与 `prismspec/` 零改动 | ✅ | `git diff --stat 606856a..HEAD -- harness-template/ prismspec/` 为空；`git diff --stat c7ff1cf..HEAD -- harness-template prismspec` 亦为空。74 条变异全部在隔离 worktree 内施加并回滚，7 个 worktree 已 remove。**O-1 未被顺手修掉是这条的一部分** |
+| 设计文档批次表已更正 | ✅ | `docs/superpowers/specs/2026-08-07-halo-test-system-design.md:159` 批次 2 行已补「+ §9b spec 自动发现（`spec-select.sh`）」；`:163-164` 脚注已写入（原表把 §9b 误标为 learn-draft，实测 §9b 是 spec 自动发现、§9c 才是 learn-draft） |
+| 静态检查全绿 | ✅ | `bash -n` 与 `shellcheck --severity=warning` 覆盖 `init.sh install.sh tests/run.sh tests/smoke-test.sh tests/helpers/*.bash $(find harness-template prismspec/bin -name '*.sh')`，两者 rc=0 无输出；`git diff --check` 无输出。（`.bats` 按计划约束不进 shellcheck，也不进 `bash -n`——`@test "name" { … }` 不是合法 bash 语法） |
+| 命名与 SOP 落地 | ✅ | 7 个新 regression 文件（`2026-08-03-halo-gate-findings/` 下 5 个 + `…_2/spec-discovery.bats` + `2026-08-03-fastapi-collection-root-route-dropped.bats`）均带固定三行文件头，逐个 `head -3` 核对；`docs/bug_report/INDEX.md` 的 `:53/:54/:55` 三行已更新（+16/−4）；`tests/README.md`（+214/−7）已写入聚合上报命名规则（`:52`、`:60`）、`_lib.sh` source 红线（`:182`）、门禁诚实性契约（`:313`），以及 Task 9 产出的三段方法论（`:154` 绿的证据条件、`:166` 防御性冗余、`:252` 量词空集哨兵） |
+| BSD awk 陷阱有机器防线 | ⚠️ **部分达成：macOS 侧已验证，Linux 侧未验证** | **macOS 侧 PASS**：M39（`drift-check.sh:279` 的表头定位改用多字节 `==` 比较）实测让期望的 drt-1/drt-3/drt-4 全部变红（另 5 条非预期连带）；F 组对该变异做了字节级验证（只有 `:279` 不同、`方法` = `e6 96 b9 e6 b3 95` 编码正确、其余 4 行中文逐字节完好）。**陷阱本身本 Task 复现**：`awk 'BEGIN{print ("端点"=="方法")}'` → `1`（`awk version 20200816`，即 BSD awk）。<br>**Linux 侧未验证**：本机无 Docker，无法在 Linux 上施加变异；CI 跑的又是**未变异**的代码，即使推送也证明不了「Linux 上不变红」。计划原文要求的「两个结果都记录」只拿到一半 |
+| CI 双平台绿 | ❌ **未验证** | **维护者选择本地收口，本批次不 `git push`、不跑 `gh run watch`**（计划 Task 12 的前两个 checkbox 据此作废）。本地已跑通的只有 macOS 单平台。Linux 侧完全无数据，其中已知的活风险有两处：`drift-check.sh:268-289` 的 awk 表头定位与 `:302-309` 的 `tr`/`grep_folded`（BSD/GNU 分歧面），以及 `review-package-scope.bats` 依赖的 git 默认分支名。另 Task 8 评审曾点名 disc-7 的 `env PATH` 白名单在 Linux 上可能因 yq 常驻 `/usr/bin` 而静默退化（该条已在 `1f7de72` 改为软链白名单，但同样只在 macOS 上验证过） |
+
+**规模**：`c7ff1cf..HEAD` 共 **17** 个提交，`git diff --shortstat c7ff1cf..HEAD` = **34 files changed, 2707 insertions(+), 567 deletions(-)**（含本条记录所在的这次提交自身）。
+
+> **这一行是自指统计，改它必须走「写 → 提交 → 重取 → 比对」的闭环。** 初版曾写「16 个提交 / 2594 insertions」——那是**提交前**取的快照，落盘瞬间即失真（本次提交自身贡献了 1 个提交与百余行插入）。`34 files` 与 `567 deletions` 不受影响，因为本次只改一个已在计数内的文件、且零删除。批次 3 写同类行时请注意：`amend` 不改变提交数，但会改变 insertions，故必须在**最后一次 amend 之后**重取一遍并确认与写进去的数字一致。
+
+**实现观察表已核对**：本批次新增的 O-7 ~ O-17 全部在位，其中 O-14（auto 发现的 `spec_source_detail` 恒为空，`f482840`）、O-15（框架自带 knowledge 库让每个新项目的第一个 spec 必然 warn，`24d8d46`）、O-16（spec 声明 `GET /` 恒被判已注册，`b59d6da`）三条是**真实生产缺陷且已端到端实测复现**，O-17（explicit provenance 有两份互不相干的真源）是 Task 9 新发现。四条**全部按纪律只记录、不在本批次修**，归批次 3 走完整 SOP。
+
+---
+
+### 与计划的偏离
+
+本表是这些信息进入版本库的**唯一**途径——SDD ledger（`.superpowers/sdd/…/progress.md`）与七份分组报告都在 git-ignored 目录下，不随仓库分发。
+
+#### 一、计划文本缺陷的更正（八处）
+
+| # | 偏离了什么 | 为什么 | 谁拍的板 | 留痕 |
+|---|---|---|---|---|
+| 1 | Task 1 Step 1 说新用例进 `tests/unit/fixtures.bats`，实际进了 `tests/unit/harness-setup.bats` | 同一段又要求「照现有 `language override lands in the sandbox manifest` 写」，而那条范本住在 `harness-setup.bats:46`；两个文件头已写明分工（harness-setup = `common.bash` 的沙箱契约，fixtures = `fixtures.bash` 构造函数产物），`halo_set_framework` 定义在 `common.bash` 且是沙箱形态操作。计划文本的文件名是笔误，两种读法只有一种自洽 | 我方（不构成需维护者拍板的范围变更） | 提交 `4013d04`（并入 Task 1 fix round 1）；计划覆盖核对表的行标签已订正为「unit/harness-setup 新增」。**实测佐证**：`git diff --name-status c7ff1cf..HEAD -- tests/unit` 中 `fixtures.bats` 根本没出现（本批次零改动） |
+| 2 | Task 2 Step 3 的可归因性抽查写「`bats … -f "ambiguous"` 只跑 **2 条**」，实测只有 **1 条** | `tests/unit/lib-find-spec.bats` 的 12 个 `@test` 名里只有 find-12（`every gate refuses an ambiguous auto-discovery instead of skipping it`）含 `ambiguous`。**本 Task 复测**：`grep -c '^@test.*ambiguous'` = 1，`bats … -f "ambiguous"` 输出 `1..1` 且只跑 find-12。计划原文按 2 条写，是我方笔误，实施者实测证伪 | 我方（实施者报、控制者核实后同步改计划） | 提交 `f482840`（Task 2 的实施提交一并带上了计划文件的同步编辑，`git show f482840 -- <计划>` 可见 `只跑 2 条` → `只跑 find-12 **1 条**`）；计划现文为 `:343` |
+| 3 | Task 3 的 acg-3 推演写「自跳过让 `FOREIGN_OWNED` 为空」 | 措辞不准：`gate-ac-coverage.bats` 的 `setup()` 造了 `uncovered-go` 兄弟 spec，`build_foreign_owned` 会取到它的 `TestAC1`/`TestAC2`，故基线上 `FOREIGN_OWNED` 非空（实测 DEBUG 输出确认）。结论不受影响（两 token 与 `TestAC2Combined` 不碰撞） | 我方（实施者报、控制者独立核实后采纳） | 单独提交 `5ed0be3` 留痕 |
+| 4 | Task 7 的 `plan_with_scope()` 片段把派生产物写到 `plan-probe.md`，改为就地覆盖 `plan.md`（临时文件 + `mv`） | 撞 `plan-lint.sh:134-138` 的 Artifact layout 检查（basename 必须是 `plan.md`），会让 pl-1/pl-2 因**与占位符判据无关**的原因失败。旧 smoke-test 躲过是侥幸——正向用例本就跑 `plan.md`，反向用例期望失败故多一条布局失败不影响；归一成单个派生函数才暴露 | 我方 | 单独提交 `e4e9269` 留痕 |
+| 5 | Task 9 变异表的**十余处期望值订正** | 逐条都是我方指派错误而非断言失效：M3（`find-1/find-5/find-11` → 仅 `find-1`，`_lib.sh:185-187` 连剥两段只输出路径，source 标签变异对 find-5 结构性不可见）、M17（移出 ac-4，扫描范围与量词正交）、M23（移出 ac-10，`_lib.sh:215` 的 grep 能命中、`\|\| true` 不参与）、M29（收窄为 dec-1）、M32（收窄为 dec-2）、M44（订正为 7 条：移出 fca-1、移入 fca-4，判定由 MISS 转 PASS）、M51（收窄为仅 pl-1，那条 grep 有三个 alternation 而 M51 只换第二个）、M70（设计表原写期望 pl-5 → 实为「无预设（探查性）」） | 我方（各组只报不改，控制者逐条裁定） | 计划「Task 9 变异执行结果（74 条）」一节逐条记录，提交 `d4f309c` |
+| 6 | Task 9 **分层核验①的表述过宽** | 原表述被 M5 点亮 disc-9 证伪，但**不是 disc-9 越界**：disc-9/disc-10 断的是 pipeline 落盘 eval JSON 的 provenance，走 `_lib.sh` + `pipeline.sh` 接线，本就不属「纯选择器」层。正确表述为「M1–M7 未点亮 disc-1..disc-8、disc-11」 | 我方 | 计划验证表与 Task 9 Step 3 已同步改写，提交 `d4f309c` |
+| 7 | **覆盖核对表的算术错误** | 表格逐项相加 = 73，正文却写「71/71 均有对应变异」。差额来自正文漏算，非表格错 | 我方（门槛总核对时实测发现） | 计划「覆盖核对（74 条变异 → 73 条用例）」一节，提交 `d4f309c` |
+| 8 | **Task 11 抓到：计划 Global Constraints 里的 `lib_run` 片段本身是假绿生成器**（本批次最讽刺的一处） | `tests/README.md:200` 与**计划 `:55` 的 Global Constraints**（两处逐字相同）给的是 `run bash -c 'source …; shift; eval "$*"' _ "$@"`。`bash -c 'script' _ "$@"` 里 `_` 已占掉 `$0`、实参从 `$1` 起，再 `shift` 就丢掉唯一实参，`eval "$*"` 求值空串 → **照抄该片段写出的契约单测恒得 `$status=0`、`$output` 为空**，正是这条红线本身要防的形态。实测：`bash -c 'shift; eval "$*"' _ 'echo HELLO'` → rc=0 且无输出；`bash -c 'eval "$1"' _ 'echo HELLO'` → `HELLO`。仓库真实实现（`lib-find-spec.bats:56` / `lib-ac-declaration.bats:33`）用的是 `run --separate-stderr bash -c 'source …; eval "$1"' _ "$1"`，文档还漏了 `--separate-stderr`。**这个错误从批次开始就在计划里、所有 Task 都读过，但实施者们写代码时用的都是正确写法——只有文档一直错着** | 我方（Task 11 评审提出，控制者实测证实后进修复轮） | 提交 `61d9cca`，两处同改 |
+| 补 | 四组子代理独立报的「变异表路径笔误」，**归因更正为不是计划缺陷** | 计划表格一律用 basename（`compliance.sh:148` 等），没写错；完整路径 `harness-template/halo/gates/…` 是**控制者在派发提示里自己加的**，加错了。正确处置不是改路径，而是**补一张 basename → 实际路径对照表**——basename 在本仓不保证唯一 | 我方（自我归因更正） | 计划新增「basename → 实际路径对照表」一节，提交 `d4f309c` |
+
+#### 二、实施层面的偏离（三处）
+
+| # | 偏离了什么 | 为什么 | 谁拍的板 | 留痕 |
+|---|---|---|---|---|
+| 9 | Task 6 的 fca-3 用 `awk` 在用例内派生 3 行变体，fca-4 用完整 4 行 | 计划 fca-3 断言 `spec_routes==3`（逐字搬自旧 smoke-test），但 Task 1 为给 fca-4 造**不可掩盖**的判别信号，已把 `fastapi-multiline` 的 `spec.md` 刻意扩成 4 行（新增 `GET /api`）——这是我造成的计划内部冲突。评审给出比实施者更精确的论证并被采纳：fca-3 实际主守 `DECORATOR_PAT` 折行、fca-4 **独占**守 `PREFIX_PAT` 折行，M43（破坏折行本身）让两条一起红，只破坏 `PREFIX_PAT` 的更窄变异只让 fca-4 红。**互补而非冗余**；备选的「改成 `spec_routes==4`」会让 fca-3 退化成 fca-4 的弱子集 | 我方（实施者提方案、评审独立验证后采纳） | 提交 `921dab3` |
+| 10 | Task 8 的 disc-1 与 disc-11 fixture 重做 | 评审两条 Important 均经独立复核确认：① disc-1 的 fixture 是 `implemented` vs `verified`，胜负在 `spec-select.sh:76` 的排序键 1（rank）就决出，`updated_at`（键 2）根本不参与——M9 实测让 disc-1 **保持绿**，简报预测的「M9 点亮 disc-1」是错的；② disc-11 沙箱只有一个 spec，`.spec_id == "onlyspec"` 对任何能解析出结果的实现都恒真，「加强」名不副实。修法：disc-1 改成同 status 让键 2 决胜；disc-11 扩成两 spec 且赢家取字典序靠后者 + 写死正确答案。修后 M9 → disc-1/disc-6/disc-11 红（旧文件对照仅 disc-6 红），M-G1（`guide.sh:132` 停止委托 kernel）→ 只 disc-11 红而旧单 spec fixture 保持绿——**判别力增量是实测的** | 我方（两条均不与计划文本冲突，无需维护者拍板） | 提交 `1f7de72` |
+| 11 | Task 11 的行区间与「逐字/派生」措辞按实测改写 | 简报 Step 2 第 3 点的行区间 `:40-49`/`:86-91` 起点是空行且截掉了表格末行 → 改为 `:41-50`/`:87-91`；「四份逐字对应」过宽——只有 `drift/spec-template-placeholder` 与 `compliance/context-basis-zh` 是逐字，另两份是派生变体，改标为「派生」但**保留对全部四份的同步义务**。另：简报 Step 2 前两点（矩阵表 +8 行、约束扩为四条）**已被 Task 1 的 `4013d04` 提前完成**（矩阵已 13 行、约束已**五**条），实施者未重复追加、也未把五条删成四条。<br>**Task 号更正**：SDD ledger 的 `Task 11:` 条目把 `4013d04` 写成「Task 3 的」，本表首次转述时原样带了过来，**两者都错**。实测 `git show --stat 4013d04` = 8 份新夹具 + `tests/helpers/common.bash` + `tests/unit/harness-setup.bats`，标题 `Add drift and compliance fixture matrix and a framework override helper`，正是 **Task 1 fix round 1** 的成果（与本表 #1 行对同一 sha 的署名一致）；Task 3 的提交是 `40efc90` 与 `5ed0be3`。载荷结论不受影响，坏的只是 Task 号——但批次 3 顺着「Task 3 的 4013d04」回溯会找错任务，故就地更正。ledger 不进版本库，只改此处 | 我方（实施者据实测偏离，评审用 `git show 4013d04^:`/`git show 4013d04:` 对拍确认；Task 号错误由 Task 12 评审查出） | 提交 `61d9cca`（载荷）+ 本次提交（Task 号更正） |
+
+#### 三、Task 9 的范围变化（四处）
+
+| # | 偏离了什么 | 为什么 | 谁拍的板 | 留痕 |
+|---|---|---|---|---|
+| 12 | **变异总数 64 → 74** | 逐组执行后查出十处门槛缺口（用例无任何变异覆盖或无**专属**期望变红），按 `tests/README.md` 的两分表这属「变异集有缺口」而非「断言没判别力」→ 正确处置是**补变异，不是改断言**。新增：M64（find-11）、M65（ac-5）、M66（acg-1）、M67（acg-2）、M68（fca-5）、M69（dec-4）、M70（中文占位探查）、M71（find-7）、M72（disc-10）、M73（find-5）。其中 M69 与 M71 是**复合变异**——单点变异被防御性冗余吸收，打不穿 | 我方 | 计划设计表与结果表各 74 行，提交 `d4f309c` |
+| 13 | **M35 因选错注入点被替换定义** | 原 M35 在 gdc-2/gdc-3 场景下，四个维度都在到达 `mark_checked` 之前就已 `gate_skip`，变异根本执行不到。替换为 M35c（`drift-check.sh:460` 实际会执行到的 `gate_skip` → `mark_checked` + `ok`），实测同时点亮 gdc-2 与 gdc-3。**若不替换，gdc-3 在本批次内零变异点亮**。附带一处方向归类更正：控制者原把新 M35 归为「收紧/误红」，实施者改判为**fail-open 放松**（把跳过的维度谎报成「已验证且干净」）并经独立复核确认 | 我方（实施者改判、独立复核） | 计划结果表 M35 行 + 方向配平段（9 + 65 = 74），提交 `d4f309c` |
+| 14 | **74 条逐条记录的落点由 commit message 改为计划文档** | 计划 Step 7 明文要求「commit 正文逐条列出」，未执行；而验证表反过来断言了一份不存在的记录。评审的观察很尖锐：**这正是更正清单 §九 自己写的失效方式（「否则记录只存在于 git-ignored 的报告里」）在同一次提交里对 74 行结果表复发了一次**。落到计划文档的理由：可 diff、可检索、批次 3 要读它 | **维护者拍板** | 计划新增「Task 9 变异执行结果（74 条）」一节；commit `d4f309c` 正文保留聚合结论并指向该节；Step 7 与验证表两处表述同步改为与实际交付一致 |
+| 15 | 门槛达成过程：**曾宣称 72/72，实为 70/72**，两次补漏才真正达成 | 门槛判据取严格解释（必须有人**专门设计一条变异去打这条断言**，不算爆炸半径蹭到、不算「必须仍绿」）。按此扫描先后查出两个**同型**缺口，成因相同——某条变异的期望被收窄后让出的缺口没人补：disc-10（只以「必须仍绿」出现过）与 find-5（M3 收窄后，find-11 的缺口补了 M64、find-5 的没补）。补 M72 → 71/72，补 M73 → 72/72，两条闭合者均实测零连带。**裁定维持严格判据而非降为弱判据**——改用弱判据等于降低本任务的完成定义 | 我方（M3 收窄时曾用弱判据裁定，与 `:620` 的严格原文不对齐，是我留下的不一致） | 计划「门槛达成过程（三次订正，两个同型缺口）」一节，提交 `d4f309c`（经 3 轮修复 + 3 轮再评审，其中第 2 轮再评审做的是**全量脚本扫描**） |
+
+#### 四、Task 12 自身的偏离（两处）
+
+| # | 偏离了什么 | 为什么 | 谁拍的板 | 留痕 |
+|---|---|---|---|---|
+| 16 | **不 `git push`、不跑 `gh run watch`**，Task 12 的前两个 checkbox 作废 | 维护者选择本地收口，推送与 CI 双平台验证由维护者自己做 | **维护者拍板** | 本节 + 本次提交正文；完成记录表「CI 双平台绿」一行记为 ❌ 未验证。提交标题相应由计划原文的 `Record the batch-2 CI result` 改为 `Record the batch-2 completion and deviations` |
+| 17 | **M39 的 Linux 侧记为已知缺口，不阻塞** | 本机无 Docker，无法在 Linux 上施加变异；CI 跑的又是未变异的代码，即使推送也证明不了「Linux 上不变红」。macOS 侧已 PASS 且陷阱本身本机可复现（`awk 'BEGIN{print ("端点"=="方法")}'` → `1`）。**如实记为未验证，不伪造、不写成已达成** | **维护者拍板** | 完成记录表「BSD awk 陷阱有机器防线」一行记为 ⚠️ 部分达成 |
+
+#### 五、过程性偏离与协作事故（ledger 独有，不记则丢失）
+
+| 项 | 内容 | 教训 / 处置 |
+|---|---|---|
+| 分支策略 | 直接在 `main` 上执行，不开 feature 分支（沿用批次 0/1） | **维护者拍板**（Setup 阶段） |
+| 重复代码的优先级 | `tests/README.md` 已成文的「只服务单个文件的前置构造函数留在该文件里」优先于通用的「消除重复」；7 个 regression 文件各自重复 setup/builder 是**有意为之** | **维护者拍板**。该规则须作为**约束陈述**写进每次评审派发（陈述规则，不预设结论），否则会被反复报成重复代码 |
+| Task 5 简报缺失 | 派发时 `task-5-brief.md` 尚未生成（只预生成了 1-4，我方疏漏）。实施者自行回退到计划对应段落，**并先核对 `task-4-brief` 是计划段落的逐字提取才这么做** | 事后补齐 5-12 全部简报，并对拍确认 `task-5-brief` 与它实际依据的计划段落逐字同源 |
+| Task 8 实施代理被切断 | 实施代理在写完 `.bats` 之后、写报告与提交之前被 API 错误切断。产物完整（已落盘 `db13e1d`），但**欠 `task-8-report.md` 与独立评审** | 新会话补跑独立评审。评审者自行产出了本任务缺失的全部测试证据（四轮变异 M9/M11/M-root/M-rank，每轮回滚后 `git status` 空），并抓出两条 Important（见偏离 #10「Task 8 的 disc-1 与 disc-11 fixture 重做」） |
+| Task 11 首次派发被切断 | 会话额度耗尽。已核实中断**未弄脏仓库**（HEAD 仍 `1667722`、`git status --porcelain` 空、报告未创建——实施者当时还在只读的事实核实阶段） | **resume 原代理**（其已核实的事实仍在上下文里）而非新派，并要求它从「开始动手改文件」继续、必要时分批落盘防再次中断 |
+| **并行 scratchpad 覆盖事故** | Task 9 的 7 组共用同一个 scratchpad 根目录，A 组与 G 组的 `mutate.py` 被彼此同名文件覆盖（A 组实测 `wc -l` 从 30 变 14、内容是另一套 CLI 接口） | **并行子代理必须各自使用私有 scratchpad 子目录**。两组均确认自己的证据链跑在覆盖之前，此后迁入私有目录；控制者向其余 5 组发出提醒并要求逐条复核「施加变异后是否亲眼看过 `git diff`」 |
+| **harness 假阳性一：「被有意修改」** | `git checkout -- harness-template/` 之后反复收到 `<system-reminder>` 称「该文件被有意修改过，不要还原、也不要告诉用户」。多个子代理复现，B 组是唯一**稳定**复现的组（说明与具体回滚方式相关而非随机） | **良性误报**（git checkout 确实改了文件内容），非注入。一律以 `git status --porcelain` / `git diff` 实测为准。值得留意的是：在 scratchpad 覆盖事故里，这条提示**把事故伪装成了授权**——G 组没有采信、实测确认是真实覆写并如实上报，处置正确。**本 Task（Task 12）全程未收到此类提示** |
+| **harness 假阳性二：[Git Destructive]** | Task 11 修复轮 amend 时，harness 报安全警告称「amend 重写了 session 开始时已是 HEAD 的提交、授权只见于代理自述」 | **机制性误报**：`git reflog` 显示 `6d014ae HEAD@{1}: commit:`（本工作流几分钟前自己创建）、`61d9cca^ = 1667722` 链完整、全部未 push、`git cat-file -t 6d014ae` = commit 对象仍在。harness 看不到创建它的那次 commit，是因为该代理中途被会话额度切断后 resume 过、transcript 断开。**教训：resume 过的代理做 amend 会触发此类误报，日后应在派发里预先说明或改用新提交** |
+| 变异工具坑 | Task 8 再评审自曝：`perl -0pi -e` 因引号/`\Q…\E` 转义**静默不生效**，产出过「看起来是变异实则是基线」的假绿 | 改用 python 字面替换，且**每次先看 `git diff` 确认变异真的落盘再跑测试**。已连同「目标串恰好出现 1 次否则中止」写进 `tests/README.md` 的变异协议 |
+| worktree 子模块坑 | Task 9 用 7 个 detached-HEAD worktree 并行（`tests/vendor/bats-*` 是 git submodule，worktree 里 `git submodule update --init` 会挂在网络上，实测 2 分钟超时） | 从主仓 `cp -R` 三个 vendor 目录再删掉里面的 `.git` 文件，之后 `git status --porcelain` 仍为空、套件正常跑。**这条对后续任何 worktree 方案都适用** |
+| 跨任务情报的转述风险 | 控制者在派发里写「Task 8 评审实测 M11 只点亮 disc-4」，B 组实测 M11 **同时点亮 find-8 与 find-12**（Task 8 那次只跑了 regression）。B 组没有因为「情报这么说」就把观测往情报上靠 | **情报是待核实声明不是判据**。转述跨任务情报时必须注明其**测量范围**，否则会诱导后续代理误判 MISS |
+
+---
+
+### Task 9 抓到的 5 条测试自身缺陷（本批次的主要收获）
+
+这五条的共同点是：**被守护的行为坏掉时，断言仍然是绿的**。而且它们**全部藏在已通过独立评审的测试里**——独立评审看得见「断言在不在、方向对不对」，看不见「断言能不能红」。只有变异测试能。
+
+| # | 用例 | 缺陷 | 决定性证据 |
+|---|---|---|---|
+| 1 | drt-3 / fca-5 | 只断 `assert_success` + `drift_count == 0`，而 `drift-check.sh` 在路由维度有**六条** `gate_skip` 出口（`:348/:358/:388/:398/:415/:418`），任一被走到时 `drift_count` 保持 0、gate 仍 `exit 0` → **「压根没验」与「验过且干净」分不开** | M44（删 `:400` 的 `mark_checked`）之下两条照常绿。补 `.metrics.checked.routes == true` 后，M44 点亮数 5 → 7；关键不在「多红了两条」而在**红的位置**：失败点是新增的 yq 合取项（`…collection-root….bats:143`、`drift-route-table.bats:97`），而**更靠前的 `assert_success` 仍然通过**——gate 照常 exit 0、照常报 `drift_count == 0`，只有 `checked.routes` 暴露路由维度压根没验 |
+| 2 | dec-6 | 用例名是 `an unmapped project language reports NOT verified instead of clean`，**而它恰恰守不住「报成 clean」这个方向**：`gate_skip → ok` 之后消息文本没变、exit 没变，而 `ok()` 同样不调 `mark_checked`，所以 `checked.error_codes` 仍是 false——三条旧断言全部成立。与 O-16 完全同型 | M33 加强前 dec-6 不红、加强后点亮，**变异一字未动，只有断言变了**；评审复核确认红在 `drift-error-codes.bats:242`（新增的 `findings[].status` 断言），而 `:222/:223/:226` 三条旧断言全部通过。补此条之前，**全批次没有任何用例断言 `findings[].status` 的枚举值**——这是 Task 4 评审确认「实现区分了 skip/pass/drift」之后，测试侧唯一没接上的那一环 |
+| 3 | `all_c` 空数组哨兵 | yq 的全称量词 `all_c` **对空数组返回 true**。不配 `length > 0` 反向哨兵，把整条 finding 删掉反而会让断言通过——那就是又一条假绿 | E 组落笔前做三向验证：基线 → true、**谎报版**（status 改 pass）→ false、**蒸发版**（删掉整条 error_codes finding）→ false。评审的反例验证独立复现：去掉 `length > 0` 后，删掉整条 finding 使 `findings` 变 `[]`，断言 rc=0（**绿**）——证明该哨兵是**承重的而非装饰**。已写进 `tests/README.md:252` |
+| 4 | rp-2 | 用的是对整个 package 文件的**全文** `grep -F "review-pkg-untracked.txt"`，而 `review-package.sh:117` 的 `## Git Status` 段里 `git status --short` 会把未跟踪文件输出成 `?? review-pkg-untracked.txt` → **只要该文件未跟踪就无条件通过，与 `## Untracked Files` 段（`:156`）是否正确生成完全无关** | M57（`UNTRACKED_FILES=""`）之下 Untracked 段退化成 `(none)`，rp-2 照样绿（H 组在私有沙箱复刻 package 验证：段内是 `(none)`，全文唯一命中在第 23 行的 Git Status 段）。加强为 awk 段内提取后 M57 点亮 rp-2；评审另把旧断言换回去在同一变异下跑，得 `ok`——**实证旧断言恒绿** |
+| 5 | disc-5（唯一在**夹具层**的一条） | 用例名 `with no updated_at anywhere the selector falls back to mtime and says so` 声称守「按 mtime 选」，但夹具目录名的**字典序与 mtime 序同向**（`newer` < `older` 且 `newer` 的 mtime 最新），于是 `head -1` 与 `ls -t \| head -1` 返回同一文件——**用例名承诺的那一半根本没被测** | M16 之下两套件全绿即为实证。裁定**修夹具不动断言**（断言是对的，坏的是夹具）：改名为 `alpha-stale`（字典序在前、mtime 最旧）/ `zeta-fresh`（字典序在后、mtime 最新）。M16 由 MISS 转 PASS，决定性证据是 `expected: …/zeta-fresh/spec.md` vs `actual: …/alpha-stale/spec.md`——分叉正是字典序 vs mtime；评审把夹具改回 `older`/`newer` 后同变异下转绿，**实证夹具修复的必要性**。M12 回归仍点亮 disc-5，两个侧面都保住（M12 守「说没说」，M16 守「选没选对」） |
+
+**第 4 条（rp-2 补段落作用域）有追溯影响**——注意速查表版把 rp-2 排在第 3 条，故此处按条目名指认而非序号。Task 7 的评审当时用「`UNTRACKED_CONTENT_LIMIT=0` → 只 rp-3 红、rp-2 仍绿」判定 rp-2/rp-3 拆分有效；现在看，rp-2 绿是因为**它测不出来**，不是因为清单没坏。拆分本身正确（上半 rp-3 的证明坚实），但拆出的 rp-2 是条弱断言。裁定不推给批次 3、就在本轮改，并要求加强后重测 M58——那次的「rp-2 绿」才真正证明拆分有效。由此得出的方法论已写进 `tests/README.md:154`：
+
+> **一条断言的「绿」，只有在它被独立证伪过之后，才构成证据。**
+
+**顺带记下另一个现象**（同样已写进 `tests/README.md:166`）：本批次出现两次「防御性冗余吸收变异」——M30 被 `drift-check.sh:452-456` 的全文数值回退掩盖（需复合 M69 才暴露）、M14 被 `_lib.sh:170` 的 `-n "$selected"` 冗余守卫吸收（需复合 M71 才暴露）。含义是代码里存在**未被任何测试覆盖的防御性冗余层**，单点变异打不穿。已列为批次 3 输入。
+
+**落地方式**：四份补丁（E/F/H/B 四组）在 detached worktree 内验证、**不提交**，作为交接物由控制者另派实施者在 `main` 上落地并走独立评审（提交 `d4f309c`）。五条加强合计改 5 个 `.bats`，**不含任何 `harness-template/` 或 `prismspec/` 改动，生产代码零净改动**。
