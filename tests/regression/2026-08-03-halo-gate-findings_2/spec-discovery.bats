@@ -22,22 +22,33 @@
 # ── setup 分两档（本文件相对 §7c 各文件的特殊之处）──
 #
 # disc-1..8 只直接跑 spec-select.sh，在 $BATS_TEST_TMPDIR 里现搭 spec 树，不装
-# harness、不调用 halo_template_install。这不只是为了快：spec-select.sh:6-8 的设计
-# 契约原文是「刻意不依赖 _lib.sh 与 yq，因为 guide.sh 必须能在没有 halo 的 standalone
-# 宿主下工作」——在装好 harness 的沙箱里测它，恰好把这条契约测没了。setup_file 里无
-# 条件装模板会让这 8 条白等一次安装，所以模板安装被推迟到 disc-9..11 各自的用例体内
-# （discovery_ensure_template，见下），且用磁盘上是否已存在 manifest.yaml 做记忆化，
-# 保证三条用例共享同一次安装而不是各装一次。
+# harness、不调用 halo_template_install。理由是契约，不是速度：spec-select.sh:6-8 的
+# 设计契约原文是「刻意不依赖 _lib.sh 与 yq，因为 guide.sh 必须能在没有 halo 的
+# standalone 宿主下工作」——在装好 harness 的沙箱里测它，恰好把这条契约测没了。守住
+# 这条契约的是「不调用 halo_sandbox_clone」，与模板何时安装无关。
+#
+# 曾经这里写过一句「setup_file 里无条件装模板会让这 8 条白等一次安装」——那是错的，
+# 已删：setup_file 每文件只跑一次，不是每用例一次，两种写法都只安装一次。实测两种
+# 形态的耗时（5.98/4.97/4.94s 对 4.93/4.92/5.81s）完全在噪声里，没有任何收益。
+# 下面的 discovery_ensure_template 记忆化保留，但它的作用是让 disc-9..11 共享同一次
+# 安装、且 disc-1..8 全程不触发安装路径，不是为了省时间。
 #
 # disc-9..11 需要完整沙箱（pipeline.sh / guide.sh 都要在已初始化的项目里跑），用
 # halo_sandbox_clone。
 #
 # ── 分层边界（必须遵守，与 tests/unit/lib-find-spec.bats 互指）──
-# 判据一句话：改 spec-select.sh 的排序键/输出会红的，归 regression（本文件）；改
-# _lib.sh 的分支/返回码会红的，归 unit（tests/unit/lib-find-spec.bats，Task 2 已
-# 落地，commit f482840，该文件头也写了对称的禁令并指向本文件）。本文件不得出现
-# 断言 specs.active / SPEC_FILE 优先级、find_spec 输出形状（source|detail|path 三段）
-# 的用例——那些归 lib-find-spec.bats。
+# 判据一句话：改 spec-select.sh 的排序键/输出会红的，**外加** smoke-test §9b 迁移过来
+# 的端到端来源记录（disc-9/disc-10 断言的是 pipeline.sh 落盘 eval JSON 里的
+# spec_source，走的是 _lib.sh + pipeline 接线，在 spec-select.sh 的排序键变异 M9 与
+# 并列阈值变异 M11 下它们全程不红），归 regression（本文件）；改 _lib.sh 的分支/
+# 返回码会红的，归 unit
+# （tests/unit/lib-find-spec.bats，Task 2 已落地，commit f482840，该文件头也写了对称
+# 的禁令并指向本文件）。
+#
+# disc-9/disc-10 与 lib-find-spec.bats 不构成分层违规而是互补：后者直接调 find_spec、
+# 从不启动 pipeline.sh，覆盖不到「门禁真的把 auto/explicit 写进了 eval JSON」这一段
+# 接线。本文件不得出现断言 specs.active / SPEC_FILE 优先级、find_spec 输出形状
+# （source|detail|path 三段）的用例——那些归 lib-find-spec.bats。
 
 bats_require_minimum_version 1.5.0
 
@@ -89,14 +100,34 @@ discovery_ensure_template() {
   fi
 }
 
+# set_spec_updated_at <spec.md> <value>
+# make_spec（tests/helpers/fixtures.bash:29-30）给每个 spec 写死 status: drafted 与
+# updated_at: 2026-01-01T00:00:00Z，所以两次裸调用会构造出精确并列 → spec-select.sh:103
+# 的 rc=2。disc-11 需要两个 spec 且胜负明确，就地改写沙箱内产物的 front matter 拉开
+# 排序键 2 —— 改的是沙箱里的副本，不是冻结的 tests/helpers 或 harness-template。
+# 不用 sed -i：GNU 要 `-i`、BSD 要 `-i ''`，写临时文件再 mv 在两边都对。
+set_spec_updated_at() {
+  local file="$1" value="$2"
+  sed "s#^updated_at: .*#updated_at: ${value}#" "$file" > "$file.tmp"
+  mv "$file.tmp" "$file"
+}
+
 @test "front matter updated_at outranks a newer file mtime" {
   # analysis §1：mtime 是文件系统事故，git checkout 会重写它。current 的内容更新
   # （2026-08-03T13:52:14Z），merged 的内容更旧（2026-08-03T05:15:58Z）；用 touch -t
   # 显式钉死两份 mtime 模拟一次 git 检出——检出后 merged 的 mtime 反而最新。
   # 用显式时间戳而不是连续 touch 依赖墙钟间隔：不同文件系统的 mtime 粒度不同
   # （FAT32 只精确到 2 秒），显式打时间戳消除这一类偶发抖动。
+  #
+  # 两个 spec 必须同 status：spec-select.sh:76 把 verified 记 rank=1、其余记 rank=0，
+  # 而 rank 是排序键 1（:95）。一旦一个 implemented 一个 verified，键 1 就单独定胜负，
+  # updated_at（键 2）根本不参与——本用例的名字与注释会变成谎报覆盖，且与 disc-3
+  # 判别同一件事。实测过：那种写法下 M9（:95 的 -k2,2r → -k2,2，把 updated_at 的
+  # 排序方向整个反过来）只点亮 disc-6，本条纹丝不动。同 status 之后键 1 均匀，胜负
+  # 只能落在 updated_at 上，与 mtime 的对撞才成立。
+  # 两个 updated_at 必须不同：同 rank 且同 updated_at 会命中 :103 的精确并列 → rc=2。
   write_discovery_spec current current implemented "2026-08-03T13:52:14Z"
-  write_discovery_spec merged merged verified "2026-08-03T05:15:58Z"
+  write_discovery_spec merged merged implemented "2026-08-03T05:15:58Z"
   touch -t 202601010000 "$DISCOVERY_ROOT/current/spec.md"
   touch -t 202602020000 "$DISCOVERY_ROOT/merged/spec.md"
 
@@ -177,12 +208,36 @@ discovery_ensure_template() {
 
 @test "spec-select.sh resolves without yq or a manifest on PATH" {
   # spec-select.sh:6-8 的设计约束此前无任何断言覆盖：guide.sh 必须能在没有 halo 的
-  # standalone 宿主下工作，所以这个文件刻意不依赖 _lib.sh 与 yq。PATH 收窄到只剩
-  # /usr/bin:/bin（无 yq，也无法 source 任何装了 halo 的东西），且 root 目录里没有
-  # manifest.yaml，验证选取器仍能独立工作。
+  # standalone 宿主下工作，所以这个文件刻意不依赖 _lib.sh 与 yq。
+  #
+  # 收窄方式不能写死 `env PATH=/usr/bin:/bin`：那只在「yq 不在 /usr/bin」的宿主上
+  # 才真的藏住 yq。这台 Mac 上 yq 在 /opt/homebrew/bin，收窄有效；但 Linux CI 上
+  # yq 常常就装在 /usr/bin，同一行会静默退化成「yq 在 PATH 上时 spec-select.sh 能
+  # 跑」——一条恒绿、什么都不证明的断言。Task 12 要在 ubuntu runner 上跑本套件，
+  # 这是活风险不是假想。
+  #
+  # 改成显式白名单：只把 spec-select.sh 真正用到的工具软链进一个空目录，yq 永远不
+  # 在其中，于是收窄在任何宿主上都成立。白名单同时成了这个文件的依赖清单断言——
+  # 哪天它开始依赖别的工具，这里会响亮地红，而不是悄悄绿。
   write_discovery_spec alpha alpha drafted "2026-01-01T00:00:00Z"
 
-  run --separate-stderr env PATH=/usr/bin:/bin bash "$REPO_DIR/harness-template/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT"
+  local narrow_bin="$BATS_TEST_TMPDIR/narrow-bin"
+  mkdir -p "$narrow_bin"
+  local tool tool_path bash_path
+  bash_path="$(command -v bash)"
+  for tool in find sort awk sed cut grep head ls xargs tr; do
+    tool_path="$(command -v "$tool")" \
+      || fail "cannot build the narrowed PATH: '$tool' is missing from this host's PATH"
+    ln -sf "$tool_path" "$narrow_bin/$tool"
+  done
+
+  # 收窄必须真的生效。失败时要响亮地红，不是 skip——静默跳过正是本批次要消灭的形态。
+  run env PATH="$narrow_bin" "$bash_path" -c 'command -v yq'
+  assert_failure
+  assert_output ""
+
+  run --separate-stderr env PATH="$narrow_bin" "$bash_path" \
+    "$REPO_DIR/harness-template/halo/kernel/spec-select.sh" "$DISCOVERY_ROOT"
   assert_success
   assert_output "$DISCOVERY_ROOT/alpha/spec.md"
 }
@@ -206,6 +261,13 @@ discovery_ensure_template() {
   # 候选，自然不会撞上 make_spec 精确并列（同 status: drafted + 同 updated_at）的
   # rc=2 陷阱。
   make_spec halo/specs onlyspec
+
+  # 前置写死，不靠推断：O-4 的教训就是「唯一胜出」这个前提没有任何断言保护。这里把
+  # 「被扫描的根下恰好只有一个 spec.md」变成用例自己断言的事实——将来模板要是开始
+  # 附带一份样例 spec，这条会立刻响亮地红，而不是悄悄把本用例的含义换成别的。
+  run bash -c "find halo/specs -name spec.md -type f -not -path '*/.locks/*' | wc -l | tr -d '[:space:]'"
+  assert_success
+  assert_output "1"
 
   local eval_json="$SANDBOX/halo/state/discovery-eval.json"
   run bash halo/kernel/delivery/pipeline.sh --only=spec-lint --json-out="$eval_json"
@@ -257,13 +319,29 @@ discovery_ensure_template() {
   # 2. 旧断言被 `if [[ -f "$REPO_DIR/prismspec/bin/guide.sh" ]]` 包着且无 else——
   #    文件不在时整条断言消失且不报警，正是设计文档「诚实 skip」要拦的形态。这里
   #    改成无条件断言。
-  make_spec halo/specs onlyspec
+  #
+  # 3. 沙箱必须放 **两个** spec。只放一个时 kernel_pick_id 恒为那一个，
+  #    `.spec_id == kernel_pick_id` 对任何「能解析出点什么」的实现都成立——那是同义
+  #    反复，不是简报说的「加强」。两个 spec 之后这条等式才真的在判别「选中了哪一
+  #    个」。alpha-older 沿用 make_spec 的默认 updated_at（2026-01-01T00:00:00Z），
+  #    zeta-newer 改到 2026-08-03T13:52:14Z：同 status（都是 drafted，键 1 均匀）、
+  #    键 2 分胜负，赢家同时是**字典序靠后**的那个——于是「干脆取第一个候选」这类
+  #    退化实现会被抓住，而不是碰巧蒙对。
+  make_spec halo/specs alpha-older
+  make_spec halo/specs zeta-newer
+  set_spec_updated_at "$SANDBOX/halo/specs/zeta-newer/spec.md" "2026-08-03T13:52:14Z"
 
   run --separate-stderr bash halo/kernel/spec-select.sh halo/specs
   assert_success
   local kernel_pick="$output"
   local kernel_pick_id
   kernel_pick_id="$(basename "$(dirname "$kernel_pick")")"
+
+  # 前置写死：两边共用同一份实现（guide.sh:125-132 在 halo 宿主下直接 source 本仓
+  # 的 spec-select.sh 再调 spec_select），所以「两边一致」这条等式**抓不到共同错**
+  # ——kernel 排错了，guide 也跟着排错，等式照样成立。这一行才是拦共同错的那道闸：
+  # 它写死了本 fixture 下唯一正确的答案。
+  assert_equal "$kernel_pick_id" "zeta-newer"
 
   run --separate-stderr bash prismspec/bin/guide.sh --json
   assert_success
