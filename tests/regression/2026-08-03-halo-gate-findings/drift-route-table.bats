@@ -86,8 +86,14 @@ PY
     --json-out="$SANDBOX/drift-route-order.json"
   assert_success
 
+  # `checked.routes` 不是装饰性断言：路由维度有六条 gate_skip 出口，任何一条被走到时
+  # drift_count 都保持 0 且 gate 仍 exit 0——「压根没验」与「验过且干净」在
+  # assert_success + drift_count == 0 之下完全同形。spec_routes 也救不了场：它在
+  # gate_skip 分支之前就算好，跳过时照常输出。mark_checked 置的这个标志位是区分
+  # 二者的唯一信号，缺了它本用例会把静默跳过读成通过（#12 要根除、O-16 同族的形态）。
   run yq -e '.metrics.spec_routes == 3
-    and .metrics.drift_count == 0' "$SANDBOX/drift-route-order.json"
+    and .metrics.drift_count == 0
+    and .metrics.checked.routes == true' "$SANDBOX/drift-route-order.json"
   assert_success
 }
 

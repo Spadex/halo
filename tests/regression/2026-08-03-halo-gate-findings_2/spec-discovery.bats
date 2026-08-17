@@ -182,14 +182,22 @@ set_spec_updated_at() {
   # 全部候选都缺 updated_at 时回退 ls -t，保证不比旧行为更差，但必须明确说这是
   # mtime 兜底、git 检出可能改变它。同样用 touch -t 显式钉死 mtime，避免文件系统
   # 时间戳粒度不同导致的抖动。
-  write_discovery_spec older older drafted
-  write_discovery_spec newer newer drafted
-  touch -t 202601010000 "$DISCOVERY_ROOT/older/spec.md"
-  touch -t 202602020000 "$DISCOVERY_ROOT/newer/spec.md"
+  #
+  # 目录名刻意让「字典序」与「mtime 序」反向：alpha-stale 字典序在前、mtime 最旧，
+  # zeta-fresh 字典序在后、mtime 最新。spec_select_candidates(:45) 的 `find | sort`
+  # 产出的是字典序，所以两序一旦同向，「按 mtime 选」与「按字典序取首个」会给出同一
+  # 个答案，本用例名承诺的 mtime 那一半就根本没被测到——一个完全无视 mtime、只取排序
+  # 首个候选的实现照样能让它变绿。改名前的夹具正是这种退化写法（newer/older，n < o
+  # 且 newer 恰好 mtime 最新，两序同向）。反向命名之后 `head -1` 必然给出 alpha-stale，
+  # 只有真正按 mtime 排序才选得中 zeta-fresh，断言这才具备判别力。
+  write_discovery_spec alpha-stale alpha-stale drafted
+  write_discovery_spec zeta-fresh zeta-fresh drafted
+  touch -t 202601010000 "$DISCOVERY_ROOT/alpha-stale/spec.md"
+  touch -t 202602020000 "$DISCOVERY_ROOT/zeta-fresh/spec.md"
 
   spec_select_run
   assert_success
-  assert_output "$DISCOVERY_ROOT/newer/spec.md"
+  assert_output "$DISCOVERY_ROOT/zeta-fresh/spec.md"
   [[ "$stderr" == *"mtime"* ]] || fail "stderr missing 'mtime' fallback notice: $stderr"
 }
 

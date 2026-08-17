@@ -97,8 +97,21 @@ IGNORE
   run bash halo/kernel/orchestrator/sdd/review-package.sh rp-probe branch
   assert_success
   local pkg="$output"
-  run grep -F "review-pkg-untracked.txt" "$pkg"
+  # 命中必须限定在 `## Untracked Files` 段（review-package.sh:156）之内，不能全文 grep。
+  # 理由是实测出来的，不是防御性洁癖：`## Git Status` 段（review-package.sh:117-120）
+  # 调用 `git status --short`，它把未跟踪文件输出成 `?? review-pkg-untracked.txt`。
+  # 那是一条与本条要测的分支毫无关系的代码路径，却足以让全文 grep 无条件成立——
+  # 把 review-package.sh:80 的 UNTRACKED_FILES 置空（未跟踪清单功能彻底损坏、
+  # 段内只剩 `(none)`）之后，旧的全文 grep 版本依然通过。那是一条假绿断言。
+  #
+  # 段边界：自 `## Untracked Files` 标题的下一行起，到下一个以 `#` 开头的行为止。
+  # 这样既切掉了后面的 `## Expected Review Output`，也切掉了段内的
+  # `### Untracked Content` 子段（review-package.sh:163）——内联内容里的 diff 头
+  # 同样带着文件名，放它进来等于把 rp-3 的证据借给 rp-2，本条会重新失去对
+  # 「列清单」这一条分支的判别力。
+  run awk '/^## Untracked Files$/{f=1;next} f && /^#/{exit} f{print}' "$pkg"
   assert_success
+  assert_output --partial "review-pkg-untracked.txt"
 }
 
 @test "untracked file content is inlined below the limit" {

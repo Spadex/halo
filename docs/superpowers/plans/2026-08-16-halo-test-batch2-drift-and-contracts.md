@@ -609,9 +609,11 @@ plan_with_scope() { # <替换串>
 
 ---
 
-### Task 9: 等价性验证——64 条变异（完成定义的核心）
+### Task 9: 等价性验证——74 条变异（完成定义的核心）
 
-**Files:** 无（验证 Task，零代码改动）
+> **总数订正**：原表 64 条，执行中新增 8 条（M64–M71）补门槛缺口，独立评审第一轮再新增 1 条（**M72**，补 disc-10），第二轮再新增 1 条（**M73**，补 find-5——与 disc-10 同型的缺口），合计 **74 条**；另有 M35 因选错注入点被替换定义（占用原编号，不计入新增）。
+
+**Files:** 5 份 `.bats`（Step 4 触发的断言/夹具加强，见下文「Task 9 抓到的测试自身缺陷」；`harness-template/` 与 `prismspec/` 仍为零改动）
 
 SOP 的「先红后绿」要求在未修复代码上确认 FAIL，但本批次的缺陷早已修复。等价且更强的做法是对修复点注入定向变异，确认预期用例变红。
 
@@ -638,11 +640,13 @@ tests/vendor/bats-core/bin/bats <同上>              #    必须全绿
 |---|---|---|---|
 | M1 | `_lib.sh:152` | 去掉 `&& [[ -f "$spec_file" ]]` | find-2 |
 | M2 | `_lib.sh:157` | `if [[ -n "$active_spec" ]]` → `if false` | find-3、find-4 |
-| M3 | `_lib.sh:153` | `explicit\|…` → `auto\|…` | find-1、find-5、find-11 |
+| M3 | `_lib.sh:153` | `explicit\|…` → `auto\|…` | **find-1**<br>（订正：原列 find-1、find-5、find-11。find-5 只断 `find_spec` 的路径输出，而 `_lib.sh:185-187` 连剥两段，source 标签对它结构性不可见——M7 已点亮 find-5；find-11 断 NF==3 与路径绝对性，M1–M7 无一条触碰该维度 → 改由 M64） |
 | M4 | `_lib.sh:174` | 删 `[[ "$rc" -eq 2 ]] && return 2`（歧义降级为 rc=1） | find-8、find-12 |
 | M5 | `_lib.sh:171` | `auto\|…` → `manifest-active\|…` | find-6 |
 | M6 | `_lib.sh:184` | 去掉 `\|\| rc=$?`（errexit 下直接终止调用方） | find-10 |
 | M7 | `_lib.sh:187` | `"${resolved#*\|}"` → `"$resolved"`（少剥一段） | find-1、find-3 |
+| **M64** | `_lib.sh:153` | `echo "explicit\|caller-supplied\|$spec_file"` → `echo "explicit\|$spec_file"`（NF 3→2） | find-11<br>（执行中新增，补 M3 让出的缺口） |
+| **M73** | `_lib.sh:152` | 条件追加 `&& [[ -z "$active_spec" ]]`（explicit 仅在无 `specs.active` 时才抢先，**优先级反转**） | find-5<br>（第二轮评审新增：M3 收窄时 find-11 的缺口补了 M64，**find-5 让出的缺口没补**——它与 disc-10 同型，在全表「期望变红」列里一次都没出现过，唯一机器覆盖是 M7 的期望外连带。本条专打「explicit 必须压过 manifest-active」这一维，与 M1（`-f` 存在性）、M2（manifest 分支置 false）、M3（source 标签）正交） |
 
 **B 组 · `spec-select.sh` 排序语义 → `unit/lib-find-spec.bats` + `regression/…/spec-discovery.bats`**
 
@@ -654,29 +658,35 @@ tests/vendor/bats-core/bin/bats <同上>              #    必须全绿
 | M11 | `spec-select.sh:103` | `-gt 1` → `-gt 99`（永不判并列，回到抛硬币） | disc-4、find-8、find-12 |
 | M12 | `spec-select.sh:88-89` | 删掉两条 mtime 兜底的 stderr 提示 | disc-5 |
 | M13 | `spec-select.sh:120-127` | 删掉 `not selected` 循环 | disc-2 |
-| M14 | `spec-select.sh:60` | `[[ -n "$files" ]] \|\| return 1` → `return 0` | disc-8、find-7 |
+| M14 | `spec-select.sh:60` | `[[ -n "$files" ]] \|\| return 1` → `return 0` | **disc-8**<br>（订正：原列 disc-8、find-7。M14 让 `spec_select` 空目录返回 0，但 `selected` 为空、被 `_lib.sh:170` 的 `-n "$selected"` 冗余守卫吸收，`find_spec` 仍 rc=1 且不打印 → find-7 改由 M71） |
 | M15 | `spec-select.sh:18` 后 | 插入 `command -v yq >/dev/null \|\| exit 1`（引入依赖，**收紧方向**） | disc-7 |
-| M16 | `spec-select.sh:85` | mtime 兜底分支改为取 `$files` 首行（不按 mtime） | disc-5 |
+| M16 | `spec-select.sh:85` | mtime 兜底分支改为取 `$files` 首行（不按 mtime） | disc-5<br>（**需 disc-5 夹具修复后才成立**——原夹具目录名字典序与 mtime 序同向，`head -1` 与 `ls -t \| head -1` 返回同一文件，本变异下两套件全绿） |
+| **M71** | `spec-select.sh:60` + `_lib.sh:170` | **复合**：`[[ -n "$files" ]] \|\| return 1` → `return 0` **且** 删 `&& -n "$selected"` | find-7<br>（执行中新增，归组 A/B，补 M14 让出的缺口。单点变异打不穿——见下文「防御性冗余」一条） |
 
 **C 组 · `_lib.sh` 的 AC 声明源 → `unit/lib-ac-declaration.bats`**
 
 | # | 目标 | 变异 | 期望变红 |
 |---|---|---|---|
-| M17 | `_lib.sh:203` | 行首锚定+取首格 → 全文 `grep -oE 'AC-[0-9]+'` | ac-1、ac-3、ac-4 |
+| M17 | `_lib.sh:203` | 行首锚定+取首格 → 全文 `grep -oE 'AC-[0-9]+'` | **ac-1、ac-3**<br>（订正：原列 ac-1、ac-3、ac-4。ac-4 守 `AC-[0-9]+` 的 `+`，M17 改的是扫描范围，两者正交——M18 精确点亮 ac-4） |
 | M18 | `_lib.sh:203` | `AC-[0-9]+` → `AC-[0-9]*` | ac-4 |
 | M19 | `_lib.sh:203` | 管道末尾追加 `\| sort -u` | ac-2 |
 | M20 | `_lib.sh:203` | 去掉 `{ … \|\| true; }` 包裹（pipefail 下 grep 未命中崩溃） | ac-6 |
 | M21 | `_lib.sh:219` | 去掉收窄，原样 `printf '%s\n' "$mentioned"` | ac-7 |
 | M22 | `_lib.sh:218` | 去掉回退分支的 `printf`（fail-open 反转成 fail-closed） | ac-8 |
-| M23 | `_lib.sh:215` | 去掉 `\|\| true` | ac-9、ac-10 |
+| M23 | `_lib.sh:215` | 去掉 `\|\| true` | **ac-9**<br>（订正：原列 ac-9、ac-10。ac-10 传入 `"AC-99"`，`:215` 的 grep 能命中、`\|\| true` 不参与；ac-10 守的是 `:219` 那层，由 M24 精确点亮） |
 | M24 | `_lib.sh:219` | 去掉 `\|\| true` | ac-10 |
 | M25 | `_lib.sh:215` | 去掉 `\| sort -u` | ac-11 |
+| **M65** | `_lib.sh:202` | `[[ -n "$spec" && -f "$spec" ]] \|\| return 0` → `\|\| return 1`（**收紧方向**） | ac-5<br>（执行中新增：ac-5 原先无任何变异点亮） |
+
+> **M65 附注（反直觉，值得留给后来者）**：直觉改法「删掉 `-f` 守卫」**行不通**——grep 对不存在的文件只往 stderr 报错并被 `\|\| true` 吞掉，stdout 仍空、rc 仍 0，而 `lib_run` 带 `--separate-stderr`，ac-5 不会红。必须改返回码才打得到那一层。
 
 **D 组 · `ac-coverage.sh` → `unit/gate-ac-coverage.bats`**
 
 | # | 目标 | 变异 | 期望变红 |
 |---|---|---|---|
 | M26 | `ac-coverage.sh:142` | 删 `[[ "$f" -ef "$SPEC" ]] && continue`（自跳过） | acg-3 ← **批次 1 遗留空洞的闭合证明** |
+| **M66** | `ac-coverage.sh:301` | `echo "❌ FAIL — uncovered:$UNCOVERED"` → 去掉 `$UNCOVERED` | acg-1<br>（执行中新增，顺带闭合批次 1 遗留用例） |
+| **M67** | `ac-coverage.sh:82` | `ac_total` 取值钉死为 `0` | acg-2<br>（执行中新增，顺带闭合批次 1 遗留用例） |
 
 **E 组 · drift-check 错误码 → `unit/gate-drift-check.bats` + `regression/…/drift-error-codes.bats`**
 
@@ -684,15 +694,16 @@ tests/vendor/bats-core/bin/bats <同上>              #    必须全绿
 |---|---|---|---|
 | M27 | `drift-check.sh:443` | 表头正则删掉中文分支 | dec-2、dec-3 |
 | M28 | `drift-check.sh:444` | 删 `c ~ /^[A-Z][A-Z0-9_]{2,}$/`（恢复纯数字扫描 = #12 修复前） | dec-2、dec-3 |
-| M29 | `drift-check.sh:444` | `c ~ /^[A-Z][A-Z0-9_]{2,}$/` → `c ~ /[A-Z]/`（放宽到吃下 `{ERROR_CODE}`，**误红方向**） | dec-1、gdc-2 |
-| M30 | `drift-check.sh:444` | 删 `c ~ /^[0-9]+$/` | dec-4 |
+| M29 | `drift-check.sh:444` | `c ~ /^[A-Z][A-Z0-9_]{2,}$/` → `c ~ /[A-Z]/`（放宽到吃下 `{ERROR_CODE}`，**误红方向**） | **dec-1**<br>（订正：原列 dec-1、gdc-2。M29 只改 spec 侧抽取，gdc-2 的空 project 场景必落 `:469` 的 `gate_skip`） |
+| M30 | `drift-check.sh:444` | 删 `c ~ /^[0-9]+$/` | dec-4<br>（单独施加被 `:452-456` 的全文数值回退掩盖 → dec-4 实由 **M69** 闭合） |
 | M31 | `drift-check.sh:452-456` | 删掉无表时的全文数值回退 | dec-5 |
-| M32 | `drift-check.sh:495-499` | `if grep_files …` → `if true`（恒判为已定义） | dec-2、gdc-4 |
+| M32 | `drift-check.sh:495-499` | `if grep_files …` → `if true`（恒判为已定义） | **dec-2**<br>（订正：原列 dec-2、gdc-4。M32 改字符串码分支，gdc-4 走数值分支，控制流不经过——gdc-4 由 M36 点亮） |
 | M33 | `drift-check.sh:468` | `gate_skip "… NOT verified"` → `ok "…"` | dec-6 |
 | M34 | `drift-check.sh:144-149` | `gate_skip` 里删掉 `SKIPPED=$((SKIPPED + 1))` | gdc-2 |
-| M35 | `drift-check.sh:58-64` | `mark_checked` 四个分支全部无条件置 true | gdc-2、gdc-3 |
+| M35 | `drift-check.sh:460` | `gate_skip "No business error codes in spec (error code drift NOT verified)"` → `mark_checked` + `ok "No business error codes in spec"` | gdc-2、gdc-3<br>（**替换定义**：原为「`drift-check.sh:58-64` 的 `mark_checked` 四个分支全部无条件置 true」，注入点选错——gdc-2/gdc-3 场景下四个维度都在到达 `mark_checked` 之前就 `gate_skip` 了，原变异不可达。**gdc-3 由此获得本批次内唯一的点亮来源。**） |
 | M36 | `drift-check.sh:571` | drift>0 分支 `write_gate_json "fail"` → `"pass"` | gdc-4 |
 | M37 | `drift-check.sh:583` | `write_gate_json "pass"` → `"unknown"` | gdc-1 |
+| **M69** | `drift-check.sh:444` + `:452-456` | **复合**：删 `c ~ /^[0-9]+$/` **且** 删无表时的全文数值回退 | dec-4<br>（执行中新增，闭合 M30 被防御性冗余掩盖的缺口——见下文「防御性冗余」一条） |
 
 **F 组 · drift-check 路由 → `regression/…/drift-route-table.bats` + `…fastapi-collection-root….bats`**
 
@@ -700,13 +711,14 @@ tests/vendor/bats-core/bin/bats <同上>              #    必须全绿
 |---|---|---|---|
 | M38 | `drift-check.sh:279-280` | 删掉两条表头定位正则（`hm`/`hp` 恒 0，回退 `$3`/`$4`） | drt-3、drt-4 |
 | M39 | `drift-check.sh:279` | `c ~ /^(…\|方法)$/` → `c == "方法"`（BSD awk 多字节 `==` 陷阱） | **macOS**：drt-1、drt-3、drt-4 · **Linux**：不红（记录，非失败） |
-| M40 | `drift-check.sh:285` | 去掉 `&& p ~ /^\//`（说明列被当路径） | drt-3、drt-4 |
+| M40 | `drift-check.sh:285` | 去掉 `&& p ~ /^\//`（说明列被当路径） | drt-3、drt-4<br>（**当前夹具集上的等价变异**——抽出 awk 块对 6 份 spec 逐字节比对，6/6 输出相同。drt-3/drt-4 由 M38 覆盖） |
 | M41 | `drift-check.sh:325` | `[[ -z "$path" \|\| "$path" == /* ]]` → `[[ "$path" == /* ]]`（恢复 #16 缺陷） | fca-1、fca-2 |
 | M42 | `drift-check.sh:326` | `[[ -z "$path" ]] \|\| printf …` → 无条件 printf（产出裸空路由，**误红方向**） | 观察项；若无用例变红，记 O-8 |
 | M43 | `drift-check.sh:307` | `tr '\n' ' ' < "$f"` → `cat "$f"`（恢复按行 grep） | fca-3、fca-4 |
-| M44 | `drift-check.sh:400` | 删 `mark_checked` | drt-1、drt-2、drt-3、fca-1、fca-2、fca-3、fca-5 |
-| M45 | `drift-check.sh:336` | `grep -qxF` → `grep -qF`（前缀即算命中，放松） | drt-1、drt-4、fca-1 |
-| M46 | `drift-check.sh:339-343` | 删掉尾段宽松匹配（fail-open 变 fail-closed，**收紧方向**） | fca-5、drt-2 |
+| M44 | `drift-check.sh:400` | 删 `mark_checked` | **drt-1、drt-2、drt-3、fca-2、fca-3、fca-4、fca-5**<br>（订正：原列 drt-1、drt-2、drt-3、fca-1、fca-2、fca-3、fca-5。等量替换——移出 fca-1、移入 fca-4：fca-1 的 `assert_failure 1` + `drift_count == 1` 已间接钉死「比对确实发生过」，无需 `checked.routes`。订正后名单恰等于「全部断言了 `.metrics.checked.routes` 的用例集合」。**需断言加强后成立**） |
+| M45 | `drift-check.sh:336` | `grep -qxF` → `grep -qF`（前缀即算命中，放松） | drt-1、drt-4、fca-1<br>（**放松路径结构性不可达**——三份期望报漂移的夹具，缺失路由清一色是 `DELETE`，而代码侧零 `DELETE`。三条期望分别由 M39(macOS)/M38/M41 覆盖） |
+| M46 | `drift-check.sh:339-343` | 删掉尾段宽松匹配（fail-open 变 fail-closed，**收紧方向**） | fca-5、drt-2<br>（删掉的兜底对当前夹具是死代码。drt-2 由 M44 覆盖，fca-5 由 M44（加强后）与 M68 覆盖） |
+| **M68** | `drift-check.sh` 的 `normalize_path` | 去掉 `s#/+$##` | fca-5<br>（执行中新增，补 M46 让出的缺口；与 O-16 同一处坍缩） |
 
 **G 组 · compliance → `unit/gate-compliance.bats` + `regression/…/compliance-source-trace.bats`**
 
@@ -725,46 +737,252 @@ tests/vendor/bats-core/bin/bats <同上>              #    必须全绿
 
 | # | 目标 | 变异 | 期望变红 |
 |---|---|---|---|
-| M51 | `plan-lint.sh:236` | `\{[A-Z][A-Z0-9_]*\}` → `\{[A-Za-z_][A-Za-z0-9_-]*\}`（恢复旧判据） | pl-1、pl-5 |
+| M51 | `plan-lint.sh:236` | `\{[A-Z][A-Z0-9_]*\}` → `\{[A-Za-z_][A-Za-z0-9_-]*\}`（恢复旧判据） | **pl-1**<br>（订正：原列 pl-1、pl-5。`plan-lint.sh:236` 那条 grep 有三个 alternation，M51 只换第二个；中文占位由第三个 `\{[^{}]*[^ -~][^{}]*\}` 捕获。pl-5 的门槛来源是 **M53**；M70 亦点亮它，但属无预设期望的探查性变异） |
 | M52 | `plan-lint.sh:236` | `<[A-Za-z][A-Za-z0-9_.-]*>` → `<[^>]+>`（恢复旧判据） | pl-2 |
 | M53 | `plan-lint.sh:236` | 删掉整个第二个 grep 分支 | pl-3、pl-4、pl-5 |
 | M54 | `plan-lint.sh:235` | 删掉 `\b(TODO\|TBD\|FIXME)\b` 分支 | pl-6 |
+| **M70** | `plan-lint.sh:236` | 只删第三个 alternation `\{[^{}]*[^ -~][^{}]*\}` | **无预设（探查性）**<br>（执行中新增，**派发时明确不预设期望**——目的是查清「中文占位形态到底有没有守卫」，而非验收某条断言。**结论**：实测只有 pl-5 变红、其余五条 `pl-*` 全绿，故 **pl-5 是第三个 alternation 的唯一且专属守卫**，零冗余；一旦被削弱该分支即刻失去全部保护，已列入批次 3 输入。<br>**注意**：pl-5 的门槛闭合**不依赖本条**——它的「期望变红」来源是 M53，故本条不影响 72/72） |
 | M55 | `review-package.sh:139-140` | committed 段改为恒 `echo "(none)"` | rp-1 |
 | M56 | `review-package.sh:61-63` | 候选链只留 `origin/main`（删 `main master`） | rp-1、rp-4 |
-| M57 | `review-package.sh:80` | `UNTRACKED_FILES="$(…)"` → `UNTRACKED_FILES=""` | rp-2、rp-3 |
-| M58 | `review-package.sh:82` | `UNTRACKED_CONTENT_LIMIT=50` → `=0` | rp-3（**且 rp-2 必须仍绿**——这是 2/3 拆分有效性的证明） |
+| M57 | `review-package.sh:80` | `UNTRACKED_FILES="$(…)"` → `UNTRACKED_FILES=""` | rp-2、rp-3<br>（**rp-2 需断言加段落作用域后才成立**——原断言是对整个 package 全文 `grep -F`，被 `## Git Status` 段里 `git status --short` 输出的 `?? <文件名>` 无条件满足） |
+| M58 | `review-package.sh:82` | `UNTRACKED_CONTENT_LIMIT=50` → `=0` | rp-3（**且 rp-2 必须仍绿**——这是 2/3 拆分有效性的证明）<br>（该证明**只在 rp-2 加强之后成立**——加强前 rp-2 是恒绿断言，「M58 下 rp-2 绿」无法区分「M58 没碰坏清单」与「rp-2 测不出清单坏」） |
 | M59 | `review-package.sh:114` | `none resolved — committed work is NOT in this package` → `(n/a)` | rp-6 |
 | M60 | `review-package.sh:55-57` | 忽略 `--base=`，恒走自动发现 | rp-5 |
 | M61 | `prismspec/bin/guide.sh:125` + `:120` | `if [[ -f … ]]` → `if false`（强制走 standalone 内联副本）**且** `:120` 的 `-k2,2r` → `-k2,2`（内联副本漂移） | disc-11 |
 | M62 | `pipeline.sh:304` | `SPEC_SOURCE="${resolved%%\|*}"` → `SPEC_SOURCE="explicit"` | disc-9（**且 disc-10 必须仍绿**） |
+| **M72** | `pipeline.sh:291` | `SPEC_SOURCE="explicit"` → `SPEC_SOURCE="auto"` | disc-10<br>（评审第一轮新增：disc-10 此前在全表中只以「必须仍绿」出现过，**从无任何变异以它为期望变红**——当时门槛实为 **70/72**（另一条同型缺口是 find-5，见 M73），本条补上后为 71/72。注入点由 O-17 指出——`--spec=` 路径上的 provenance 是 `pipeline.sh` 自己写死的第二份真源，`_lib.sh` 侧的变异（M3）结构性够不到它） |
 
-#### 覆盖核对（64 条变异 → 71 条用例）
+#### basename → 实际路径对照表
+
+变异表通篇用 basename，而本仓 basename 不保证唯一，四组子代理都为找路径付出过成本。补：
+
+```
+_lib.sh          → harness-template/halo/kernel/_lib.sh
+spec-select.sh   → harness-template/halo/kernel/spec-select.sh
+pipeline.sh      → harness-template/halo/kernel/delivery/pipeline.sh
+compliance.sh    → harness-template/halo/kernel/delivery/gates/compliance.sh
+ac-coverage.sh   → harness-template/halo/kernel/delivery/gates/ac-coverage.sh
+drift-check.sh   → harness-template/halo/kernel/delivery/gates/drift-check.sh
+plan-lint.sh     → harness-template/halo/kernel/orchestrator/sdd/plan-lint.sh
+review-package.sh→ harness-template/halo/kernel/orchestrator/sdd/review-package.sh
+guide.sh         → prismspec/bin/guide.sh
+```
+
+**上表所有行号经七组逐条核对均有效**，目标行文本与描述逐字吻合，无漂移。
+
+#### 覆盖核对（74 条变异 → 73 条用例）
 
 | 用例组 | 条数 | 点亮它的变异 |
 |---|---|---|
-| unit/lib-find-spec（find-1..12） | 12 | M1-M7、M4/M11、M9、M14 |
-| unit/lib-ac-declaration（ac-1..11） | 11 | M17-M25 |
-| unit/gate-drift-check（gdc-1..4） | 4 | M29、M32、M34-M37 |
+| unit/lib-find-spec（find-1..12） | 12 | M1-M7、M4/M11、M9、**M64、M71**（M14 已按订正移出） |
+| unit/lib-ac-declaration（ac-1..11） | 11 | M17-M25、**M65**（ac-5 原先无变异点亮） |
+| unit/gate-drift-check（gdc-1..4） | 4 | M34-M37（**M35 为替换定义，gdc-3 的唯一来源**；M29/M32 已按订正移出） |
 | unit/gate-compliance（gcp-1..3） | 3 | M49、M50、M63 |
-| unit/gate-ac-coverage 新增（acg-3） | 1 | M26 |
-| unit/fixtures 新增 | 1 | helper 自测，不入变异表（与批次 1 一致） |
-| regression drift-error-codes（dec-1..6） | 6 | M27-M33 |
-| regression drift-route-table（drt-1..4） | 4 | M38-M40、M44-M46 |
-| regression fastapi-collection-root（fca-1..5） | 5 | M41、M43、M44、M45、M46 |
+| unit/gate-ac-coverage 新增（acg-3） | 1 | M26<br>**acg-1/acg-2 属批次 1 遗留**（`gate-ac-coverage.bats` 由 `fa7c59e` 建于批次 1，已核实 `c7ff1cf` 时该文件已存在），不在本批次门槛范围内；本批次在该文件只新增 acg-3。但 acg-1/acg-2 已被新增的 M66/M67 顺带闭合 |
+| unit/harness-setup 新增（`framework override lands in the sandbox manifest`） | 1 | helper 自测，不入变异表（与批次 1 一致）。**行标签订正**：原写作「unit/fixtures 新增」，实测 `fixtures.bats` 在本批次内零改动，`harness-setup.bats` 才是 +1 条 |
+| regression drift-error-codes（dec-1..6） | 6 | M27-M33、**M69**（dec-4 的实际闭合者） |
+| regression drift-route-table（drt-1..4） | 4 | M38、M39、M44——M44 在**加强前**即已点亮 drt-1/drt-2，「加强后」只对 **drt-3** 而言；drt-4 由 M38/M39 点亮，**不**由 M44 点亮。**M40/M45/M46 实测零变红**（等价变异/结构性不可达），不计为点亮者 |
+| regression fastapi-collection-root（fca-1..5） | 5 | M38、M39、M41、M43、M44、**M68**——M44 在**加强前**即已点亮 fca-2/fca-3/fca-4，「加强后」只对 **fca-5** 而言；M45/M46 同上，不计为点亮者 |
 | regression compliance-source-trace（csr-1..3） | 3 | M47a、M47b、M48 |
-| regression plan-lint-placeholder（pl-1..6） | 6 | M51-M54 |
+| regression plan-lint-placeholder（pl-1..6） | 6 | M51-M54——**pl-5 的门槛闭合者是 M53**（唯一以 pl-5 为「期望变红」的变异）。M70 亦实测点亮 pl-5，但它是**无预设期望的探查性变异**，不计为门槛来源 |
 | regression review-package-scope（rp-1..6） | 6 | M55-M60 |
 | regression spec-discovery（disc-1..11） | 11 | M8-M16、M61、M62 |
 
-**71/71 均有对应变异。** 方向配平（批次 1 的教训）：放松方向 56 条，**收紧/误红方向 8 条**（M15、M29、M42、M46、M58、M11 的反向读法、M62、M39 的平台方向）。
+**本批次新增/迁移的 `@test` 共 73 条**（逐文件 `grep -c '^@test'` 实测；原文「71/71 均有对应变异」是算术错误——上表逐项相加为 73），其中 `unit/harness-setup` 的 helper 自测 1 条不入变异表 → **需被变异点亮的 72 条。**
+
+**门槛达成过程（三次订正，两个同型缺口）**
+
+门槛判据取**严格解释**：`:620` 原文要求「至少出现一次作为**期望变红**」——即必须有人**专门设计一条变异去打这条断言**，而不是碰巧被别的变异的爆炸半径扫到。「必须仍绿」不满足该定义，「被某条变异的期望外连带点亮」同样不满足。
+
+按此判据全表扫描，先后查出**两个同型缺口**，成因相同——都是某条变异的期望被收窄后，让出的缺口没人补：
+
+| 用例 | 缺口成因 | 唯一的机器覆盖（不满足严格判据） | 闭合者 |
+|---|---|---|---|
+| disc-10 | 全表只出现于用例清单与 M62 行的「**且 disc-10 必须仍绿**」 | M62 的「仍绿」断言 | **M72**（`pipeline.sh:291`） |
+| find-5 | M3 的期望由 `find-1、find-5、find-11` 收窄为 `find-1`（见 `:643`）后，`find-11` 的缺口补了 M64，**`find-5` 的没补** | M7 的**期望外**连带 | **M73**（`_lib.sh:152`） |
+
+- 第一轮汇总曾宣称 72/72，实为 **70/72**（disc-10、find-5 两条均无专属期望变红）。
+- 第二轮补 M72 后为 **71/72**。
+- 第三轮补 M73 后，**72/72 方才真正达成**——两条闭合者均经实测：M72 精确点亮 disc-10 一条、M73 精确点亮 find-5 一条，**双双零连带**。
+
+> **判据对齐的说明**（这处不一致值得留给后来者）：M3 收窄时曾用**弱判据**（「M7 已点亮 find-5，门槛满足」）作过裁定，而 `:620` 的门槛原文与本节用的是**严格判据**。两者不对齐正是 find-5 缺口被漏掉一轮的原因。**最终裁定：维持严格判据、补变异**——改用弱判据等于降低本任务的完成定义。
+
+方向配平（批次 1 的教训），**按 74 条重算**（原句「放松 56 + 收紧 8」是按 64 条算的，已失效）：
+
+- **收紧/误红方向 9 条**：M11（反向读法）、M15、M29、M39（平台方向）、M42、M46、M58、M62（以上 8 条沿用原表分类）+ 新增的 **M65**（`\|\| return 0` → `return 1`，把 fail-open 反转成 fail-closed）。
+- **放松/破坏方向 65 条**：其余全部。**M73 归此类**——它不放宽也不收紧任何门禁判据，而是反转 explicit 与 manifest-active 的优先级，属「选错对象」的破坏方向。9 + 65 = 74 ✔
+- **M35 不计入「新增」**——它占用原编号、属**替换定义**，不在 M64–M73 之列。其新定义（`gate_skip` → `mark_checked` + `ok`）是「把跳过的维度谎报成已验证且干净」，方向上属**放松**，故计入上述 65 条。（`task-9-plan-corrections.md` 第五节曾把它列入收紧/误红，与该定义的实际方向不符，此处按实际方向归类。）
+
+#### Task 9 变异执行结果（74 条）
+
+Step 2 要求的逐条记录。**数据来源**：七个并行子代理在隔离 worktree 中的实测输出，
+逐条抄自 `task-9-group-{A,B,CD,E,F,G,H}-report.md`（非推理填充）；M72 由收尾轮实测补入。
+每条均走同一协议：`git status` 空 → 施加 → **先看 `git diff` 确认落盘** → 跑 unit + regression
+→ `git checkout -- harness-template/ prismspec/` → 复核 status 空。**未使用 `sed -i`。**
+
+「实际变红」列只列被点亮的用例编号；**期望外的连带变红照实列出**（Step 4 明说大量非预期变红
+不算失败但要记录）。未标注平台的条目均为 macOS 实测。
+
+**A 组 · `_lib.sh` spec 解析（9 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M1 | `_lib.sh:152` | find-2 | find-2 | PASS |
+| M2 | `_lib.sh:157` | find-3、find-4 | find-3、find-4 | PASS |
+| M3 | `_lib.sh:153` | find-1（订正后） | find-1 | PASS（订正后） |
+| M4 | `_lib.sh:174` | find-8、find-12 | find-8、find-12（disc-4 保持绿 → 分层核验③） | PASS |
+| M5 | `_lib.sh:171` | find-6 | find-6 + find-2、**disc-9**（期望外） | PASS |
+| M6 | `_lib.sh:184` | find-10 | find-10 + find-12（期望外） | PASS |
+| M7 | `_lib.sh:187` | find-1、find-3 | find-1、find-3 + find-4、find-5、find-6、find-9（期望外） | PASS |
+| M64 | `_lib.sh:153` | find-11 | find-11（红在 `[ "$nf" -eq 3 ]` 这一句）+ find-1（期望外） | PASS |
+| M73 | `_lib.sh:152` | find-5 | find-5（仅此一条，零连带；unit 49/50、regression 78/78）。红在 `lib-find-spec.bats:114` 的 `assert_output`，`expected …/alpha/spec.md` vs `actual …/beta/spec.md`——即**选错了 spec** | PASS（第二轮评审新增，闭合 find-5 的门槛缺口） |
+
+**B 组 · `spec-select.sh` 排序语义（10 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M8 | `spec-select.sh:76` | disc-3 | disc-3 | PASS |
+| M9 | `spec-select.sh:95` | disc-1、find-9 | disc-1、find-9 + disc-6、disc-11（期望外） | PASS |
+| M10 | `spec-select.sh:72` | disc-6 | disc-6 | PASS |
+| M11 | `spec-select.sh:103` | disc-4、find-8、find-12 | disc-4、find-8、find-12 | PASS |
+| M12 | `spec-select.sh:88-89` | disc-5 | disc-5（点亮的是 stderr「可察觉性」那一半） | PASS |
+| M13 | `spec-select.sh:120-127` | disc-2 | disc-2 | PASS |
+| M14 | `spec-select.sh:60` | disc-8（订正后） | disc-8 | PASS（订正后） |
+| M15 | `spec-select.sh:18` 后 | disc-7 | disc-7 | PASS |
+| M16 | `spec-select.sh:85` | disc-5 | 修夹具前：**零变红**；修夹具后：disc-5 | PASS（夹具修复后） |
+| M71 | `spec-select.sh:60` + `_lib.sh:170` | find-7 | find-7 + find-10、disc-8（期望外） | PASS |
+
+**C+D 组 · AC 声明源 / `ac-coverage.sh`（13 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M17 | `_lib.sh:203` | ac-1、ac-3（订正后） | ac-1、ac-3 + regression 7 条（#4/#6/#15/#58/#59/#60/#61） | PASS（订正后） |
+| M18 | `_lib.sh:203` | ac-4 | ac-4 | PASS |
+| M19 | `_lib.sh:203` | ac-2 | ac-2 + regression #5 | PASS |
+| M20 | `_lib.sh:203` | ac-6 | ac-6 + ac-8（期望外） | PASS |
+| M21 | `_lib.sh:219` | ac-7 | ac-7 + ac-10 + regression 7 条（本组爆炸半径最大） | PASS |
+| M22 | `_lib.sh:218` | ac-8 | ac-8 | PASS |
+| M23 | `_lib.sh:215` | ac-9（订正后） | ac-9 | PASS（订正后） |
+| M24 | `_lib.sh:219` | ac-10 | ac-10（零连带） | PASS |
+| M25 | `_lib.sh:215` | ac-11 | ac-11 | PASS |
+| M26 | `ac-coverage.sh:142` | acg-3 | acg-3（零连带，专属探针） | PASS |
+| M65 | `_lib.sh:202` | ac-5 | ac-5（零连带；ac-6 按预判保持绿） | PASS |
+| M66 | `ac-coverage.sh:301` | acg-1 | acg-1 + regression #2（期望外）；**acg-2 保持绿** | PASS |
+| M67 | `ac-coverage.sh:82` | acg-2 | acg-2（零连带）；**acg-1 保持绿** | PASS |
+
+**E 组 · drift-check 错误码（12 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M27 | `drift-check.sh:443` | dec-2、dec-3 | dec-2、dec-3 | PASS |
+| M28 | `drift-check.sh:444` | dec-2、dec-3 | dec-2、dec-3 | PASS |
+| M29 | `drift-check.sh:444` | dec-1（订正后） | dec-1 | PASS（订正后） |
+| M30 | `drift-check.sh:444` | dec-4 | **零变红** | 等价变异（被 `:452-456` 全文回退掩盖 → 由 M69 闭合） |
+| M31 | `drift-check.sh:452-456` | dec-5 | dec-5 | PASS |
+| M32 | `drift-check.sh:495-499` | dec-2（订正后） | dec-2 | PASS（订正后） |
+| M33 | `drift-check.sh:468` | dec-6 | 加强前：**零变红**；加强后：dec-6 | PASS（断言加强后） |
+| M34 | `drift-check.sh:144-149` | gdc-2 | gdc-2 | PASS |
+| M35 | `drift-check.sh:460` | gdc-2、gdc-3 | gdc-2、gdc-3 | PASS（**替换定义**；gdc-3 的唯一来源） |
+| M36 | `drift-check.sh:571` | gdc-4 | gdc-4 | PASS |
+| M37 | `drift-check.sh:583` | gdc-1 | gdc-1 | PASS |
+| M69 | `drift-check.sh:444` + `:452-456` | dec-4 | dec-4 + gdc-4、dec-5、dec-6（期望外） | PASS |
+
+**F 组 · drift-check 路由（10 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M38 | `drift-check.sh:279-280` | drt-3、drt-4 | 8 条：fca-1、fca-2、fca-3、fca-4、drt-1、drt-2、drt-3、drt-4 | PASS |
+| M39 | `drift-check.sh:279` | **macOS**：drt-1、drt-3、drt-4 | **macOS**：8 条（同 M38）。**Linux 本机无 Docker 未执行，归 Task 12 CI** | PASS（macOS 侧） |
+| M40 | `drift-check.sh:285` | drt-3、drt-4 | **零变红** | 等价变异（抽出 awk 块对 6 份 spec 逐字节比对，6/6 相同） |
+| M41 | `drift-check.sh:325` | fca-1、fca-2 | fca-1、fca-2 + fca-4（期望外） | PASS |
+| M42 | `drift-check.sh:326` | 无（观察项） | **零变红** | 观察项 → 确认 **O-8**（该约束无机器防线） |
+| M43 | `drift-check.sh:307` | fca-3、fca-4 | fca-3、fca-4（精确相等） | PASS |
+| M44 | `drift-check.sh:400` | drt-1、drt-2、drt-3、fca-2、fca-3、fca-4、fca-5（订正后） | 加强前 5 条（fca-2、fca-3、fca-4、drt-1、drt-2）；加强后 **7/7 精确相等** | PASS（断言加强 + 期望订正后） |
+| M45 | `drift-check.sh:336` | drt-1、drt-4、fca-1 | **零变红** | 等价变异（三份夹具缺失路由清一色 `DELETE`，代码侧零 `DELETE`，放松路径不可达） |
+| M46 | `drift-check.sh:339-343` | fca-5、drt-2 | **零变红** | 等价变异（尾段兜底对当前夹具是死代码，只在复合故障下可观察） |
+| M68 | `drift-check.sh:294` `normalize_path` | fca-5 | fca-5（仅此一条，爆炸半径 = 1） | PASS |
+
+**G 组 · compliance（6 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M47a | `compliance.sh:148` | csr-1 | csr-1（csr-2/csr-3 保持绿） | PASS |
+| M47b | `compliance.sh:148` | csr-2 | csr-2（csr-1/csr-3 保持绿） | PASS |
+| M48 | `compliance.sh:148` | csr-3 | csr-3 | PASS |
+| M49 | `compliance.sh:65` | gcp-2 | gcp-2 + csr-1、csr-2、csr-3（期望外） | PASS |
+| M50 | `compliance.sh:177` | gcp-3 | gcp-3 + gcp-1（期望外） | PASS |
+| M63 | `compliance.sh:79` | gcp-1 | gcp-1（精确相等） | PASS |
+
+**H 组 · plan-lint / review-package / guide.sh / pipeline（14 条）**
+
+| # | 目标 | 期望变红 | 实际变红 | 判定 |
+|---|---|---|---|---|
+| M51 | `plan-lint.sh:236` | pl-1（订正后） | pl-1 | PASS（订正后） |
+| M52 | `plan-lint.sh:236` | pl-2 | pl-2（精确相等） | PASS |
+| M53 | `plan-lint.sh:235-236` | pl-3、pl-4、pl-5 | pl-3、pl-4、pl-5（精确相等） | PASS |
+| M54 | `plan-lint.sh:235` | pl-6 | pl-6 | PASS |
+| M55 | `review-package.sh:139-143` | rp-1 | rp-1 | PASS |
+| M56 | `review-package.sh:61-63` | rp-1、rp-4 | rp-1、rp-4（rp-5 正确保持绿） | PASS |
+| M57 | `review-package.sh:80` | rp-2、rp-3 | 加强前：仅 rp-3（rp-2 假绿）；加强后：**rp-2、rp-3** | PASS（断言加强后） |
+| M58 | `review-package.sh:82` | rp-3（且 rp-2 仍绿） | rp-3；**rp-2 保持 `ok 53`**（两半均成立） | PASS |
+| M59 | `review-package.sh:114` | rp-6 | rp-6 | PASS |
+| M60 | `review-package.sh:55-57` | rp-5 | rp-5 | PASS |
+| M61 | `guide.sh:125` + `:120` | disc-11 | disc-11（精确相等） | PASS |
+| M62 | `pipeline.sh:304` | disc-9（且 disc-10 仍绿） | disc-9；**disc-10 保持 `ok 31`** → 分层核验④ | PASS |
+| M70 | `plan-lint.sh:236` | 无预设（探查性） | pl-5（仅此一条） | PASS（探查性；证明 pl-5 是第三个 alternation 的**唯一且专属**守卫） |
+| M72 | `pipeline.sh:291` | disc-10 | disc-10（仅此一条，零连带；unit 50/50 全绿） | PASS（评审轮新增，闭合最后一个门槛缺口） |
+
+**统计**：74 条中 **PASS 69 条**、**等价变异 4 条**（M30、M40、M45、M46）、**观察项 1 条**（M42 → O-8）。
+四条等价变异所指的形态均需**新增夹具**才测得到，已列入批次 3 输入；它们不构成门槛缺口
+（各自的期望用例都另有点亮来源，署名按 F 组 A.5 点亮矩阵逐条核对：dec-4 ← M69；**drt-3 ← M38/M39/M44（加强后）**；**drt-4 ← M38/M39**——M44 订正后的 7 条期望里没有 drt-4，不是它的点亮者；drt-1/drt-2 ← M38/M39/M44；fca-1 ← M38/M39/M41；fca-5 ← M44（加强后）/M68）。
+
+#### Task 9 抓到的测试自身缺陷（5 条）
+
+**这是本 Task 的主要产出。**
+
+| # | 缺陷 | 位置 | 失效方式 | 处置 |
+|---|---|---|---|---|
+| 1 | drt-3 / fca-5 缺 `.metrics.checked.routes` | `drift-route-table.bats`、`…collection-root….bats` | `drift-check.sh` 路由维度有**六条** `gate_skip` 出口（`:348/:358/:388/:398/:415/:418`），任一走到时 `drift_count == 0` 与 `exit 0` 照样成立 → 「压根没验」与「验过且干净」分不开 | 本批次加强 |
+| 2 | dec-6 缺 `findings[].status` 枚举断言 | `drift-error-codes.bats` | `ok()` 同样不调 `mark_checked`，故 `gate_skip → ok` 之后 exit 0、消息文本、`checked.error_codes == false` 三项全部成立。用例名写着 `reports NOT verified instead of clean`，而它恰恰守不住「报成 clean」 | 本批次加强 |
+| 3 | rp-2 的 `grep -F` 无段落作用域 | `review-package-scope.bats` | 被 `## Git Status` 段里 `git status --short` 输出的 `?? <文件名>` 无条件满足，与 `## Untracked Files` 段是否正确生成完全无关 | 本批次加强 |
+| 4 | `all_c` 对空数组返回 true | 新写 yq 断言的通用陷阱 | 不加 `length > 0` 反向哨兵时，把整条 finding 删掉反而让断言通过 | 已在 dec-6 的新断言中规避；**写进 `tests/README.md`（Task 11）** |
+| 5 | disc-5 夹具退化 | `spec-discovery.bats` | 目录名字典序与 mtime 序**同向**，`head -1` 与 `ls -t \| head -1` 返回同一文件 → 「按 mtime 选」与「按字典序选」产出同一答案，用例名承诺的那一半没被测 | 本批次修夹具 |
+
+**共同点**：五条载体各异，失效方式同型——**被守护的行为坏掉时，断言仍然是绿的**。它们全部藏在已通过七轮独立评审的测试里，说明变异测试抓到了评审抓不到的那一层。
+
+#### 两条方法论结论（应进 `tests/README.md`，归 Task 11）
+
+1. **一条断言的「绿」只有在它被独立证伪过之后才构成证据。**
+   来自 M58：加强前的 rp-2 是恒绿断言，「M58 下 rp-2 绿」等于拿恒真命题当证据；加强后 rp-2 已被 M57 独立证伪过，那个绿才只能解释为「M58 客观上没破坏该分支」。
+2. **防御性冗余会吸收单点变异，需复合变异才打得穿。** 本批次出现两次：M30 被 `drift-check.sh:452-456` 的全文回退掩盖（→ M69）；M14 被 `_lib.sh:170` 的 `-n "$selected"` 冗余守卫吸收（→ M71）。
+   含义：代码里存在**未被任何测试覆盖的防御层**，单点变异法对「同一契约被上下游各守一道」的位置有系统性盲区。
+
+#### Task 9 产出的批次 3 输入
+
+沿用「范围边界」表的归属口径，以下五条为本 Task 新产出、须并入批次 3 的输入：
+
+| # | 输入 | 来源 | 归属 |
+|---|---|---|---|
+| 1 | 反引号包裹的数值错误码、数值+字符串混排表——两类夹具缺失，当前 6 条 dec 用例都不覆盖 | E 组 | 批次 3 |
+| 2 | M40/M45/M46 三条等价变异所指的形态需新增夹具才测得到 | F 组 | 批次 3 |
+| 3 | pl-5 是第三个 alternation 的**唯一且专属**守卫，零冗余；一旦被削弱该分支即刻失去全部保护 | H 组 | 批次 3 |
+| 4 | 除加强后的 dec-6 外，全批次没有任何用例断言 `findings[].status` 枚举 | E 组 | 批次 3 |
+| 5 | O-17（explicit provenance 两份真源，见「实现观察」表） | A 组 | 批次 3，需独立走完整 SOP |
 
 - [ ] Step 1 前置：`git status --porcelain` 无输出，`bash tests/run.sh` 全绿
-- [ ] Step 2 逐条执行 M1-M63（含 M47a/M47b，共 **64 条**），记录「变异编号 / 目标行 / 实际变红的 @test / 是否 ⊇ 期望」
-- [ ] Step 3 **分层核验**（决定二之附的机器证明，四条必须全部成立）：① M1-M7 未点亮任何 `disc-*`；② M8/M10/M12/M13/M15/M16 未点亮任何 `find-*`（M9/M11 是容许交叠，不算破坏）；③ M4 点亮 find-8 而**不**点亮 disc-4；④ M62 点亮 disc-9 而**不**点亮 disc-10。任一条不成立 → 对应文件越界，回去收窄断言
+- [ ] Step 2 逐条执行 M1-M73（含 M47a/M47b，共 **74 条**），记录「变异编号 / 目标行 / 实际变红的 @test / 是否 ⊇ 期望」——结果见下文「Task 9 变异执行结果」一节
+- [ ] Step 3 **分层核验**（决定二之附的机器证明，四条必须全部成立）：① M1–M7 未点亮 disc-1..disc-8、disc-11（纯选择器用例）；② M8/M10/M12/M13/M15/M16 未点亮任何 `find-*`（M9/M11 是容许交叠，不算破坏）；③ M4 点亮 find-8 而**不**点亮 disc-4；④ M62 点亮 disc-9 而**不**点亮 disc-10。任一条不成立 → 对应文件越界，回去收窄断言
+
+  > **①的表述订正**：原文写作「M1-M7 未点亮任何 `disc-*`」，过宽。disc-9/disc-10 断的是 `pipeline.sh` 落盘 eval JSON 的 provenance，走 `_lib.sh` + pipeline 接线，本就不属「纯选择器」层；**`_lib.sh` 的变异点亮 disc-9 恰恰是分层正确的表现**（M5 实测点亮 disc-9）。Task 8 的再评审已独立实测确认 disc-9/disc-10 在 `spec-select.sh` 的全部变异下全程不红。
+  >
+  > **四条分层核验的实测结论：①（按上述更正表述）、②、③、④ 全部成立。**
 - [ ] Step 4 判定：实际变红 ⊇ 期望变红 → 通过；某条期望用例未变红 → 按 `tests/README.md:104-107` 的两分表先分清是「断言没判别力」还是「变异集有缺口」，再决定加强断言还是补反方向变异；大量非预期变红不算失败（共享谓词本就有爆炸半径），但要记录，作为批次 3 契约单测的输入
 - [ ] Step 5 M39 在 macOS 与 Linux 各跑一次，两个结果都记录
+
+  > **实测**：**macOS 侧 PASS**（drt-1/drt-3/drt-4 全部变红），本机复现了陷阱本身（`awk 'BEGIN{print ("端点"=="方法")}'` → `1`，BSD awk 20200816）；**Linux 侧本机无 Docker 无法执行，归 Task 12 的 ubuntu CI job 验证**——本批次不含任何 Linux 侧实测数据。
+
 - [ ] Step 6 收尾 `git status --porcelain`（无输出）+ `bash tests/run.sh`（全绿）
-- [ ] Step 7 Commit（若 Step 4 触发断言加强则有代码改动，否则 `--allow-empty` 承载记录），正文逐条列出 64 条变异及其实际变红清单，并单列 Step 3 的分层核验结论
+- [ ] Step 7 Commit（若 Step 4 触发断言加强则有代码改动，否则 `--allow-empty` 承载记录）。**逐条记录的落点已更正**：74 条变异及其实际变红清单写入本计划的「Task 9 变异执行结果」一节——随提交留痕、可 diff、批次 3 可检索；commit 正文承载聚合结论（缺陷清单、门槛结论、分层核验、M39 平台结论）并指向该节。原表述要求把逐条清单写进 commit message，实际交付改为计划文档，二者以本节为准
 
 ---
 
@@ -856,8 +1074,8 @@ tests/vendor/bats-core/bin/bats <同上>              #    必须全绿
 |---|---|
 | 新 bats 用例全绿 | `bash tests/run.sh` 退出码 0；unit 由 18 增至 **50**，regression 由 37 增至 **78**，合计 **128** |
 | 契约单测覆盖设计文档要求的边界条件族 | 空输入（find-7、ac-5、ac-9、disc-8）、grep 未命中（ac-6、ac-10）、pipefail 下的管道退出码（find-10、ac-10）各有专门用例 |
-| 契约单测与回归的分层可证 | Task 9 Step 3 的分层核验四条全部成立（M1-M7 不点亮 disc-\*；M8/M10/M12/M13/M15/M16 不点亮 find-\*；M4 点亮 find-8 不点亮 disc-4；M62 点亮 disc-9 不点亮 disc-10） |
-| 每条被迁移/新增断言都有对应变异且验证过 | Task 9 的 commit message 中 64 条变异记录，「期望变红 ⊆ 实际变红」逐条成立，**71/71 用例被点亮** |
+| 契约单测与回归的分层可证 | Task 9 Step 3 的分层核验四条全部成立（M1–M7 不点亮 disc-1..disc-8、disc-11——见 Step 3 的①表述订正；M8/M10/M12/M13/M15/M16 不点亮 find-\*；M4 点亮 find-8 不点亮 disc-4；M62 点亮 disc-9 不点亮 disc-10） |
+| 每条被迁移/新增断言都有对应变异且验证过 | Task 9 的「Task 9 变异执行结果」一节逐条列出 **74 条**变异及其实际变红清单（不在 commit message 里），「期望变红 ⊆ 实际变红」逐条成立（4 条等价变异另注，各自期望用例均有其它点亮来源）；**73 条 `@test` 中除 helper 自测 1 条外，72/72 各有专属的「期望变红」变异**（严格判据：不算期望外连带）——disc-10 与 find-5 两个同型缺口分别由评审轮新增的 **M72**、**M73** 闭合 |
 | BSD awk 陷阱有机器防线 | M39 在 macOS runner 确认变红、Linux 确认不变红，两个结果都记录 |
 | 旧段已删且未破坏残余用例 | `bash tests/smoke-test.sh` → `✅ 122 / 122`（基线 145 实测，−23）；Task 10 Step 3 的残余引用 grep 无输出；核查点 1/2/4/7 的证据写进提交信息 |
 | O-4 闭合 | smoke-test 中不再存在任何依赖自动发现胜出者的断言（`grep -n 'pipeline.sh\|guide.sh' tests/smoke-test.sh` 逐条核对，全部带 `--spec=` 或位于 `halo/specs` 为空的阶段） |
@@ -912,6 +1130,7 @@ git diff --check
 | O-16 | `drift-check.sh:339-343`（`route_registered` 的兜底后缀匹配）+ `:293-295`（`normalize_path`） | **spec 声明的根路径 `/` 恒被判为已注册。** `normalize_path("/")` 因 `s#/+$##` 剥掉孤立斜杠而返回**空串**，于是 `endpoint=""`，兜底匹配的 `[[ "${line#"$method "}" == *"$endpoint" ]]` 坍缩成裸 `*` —— 只要代码里存在**任意一条同方法路由**，这条 spec 路由就算已注册。<br>**已实测复现（非推断）**：python+fastapi 项目，代码只有 `@router.get("/items")`，spec 声明 `GET /api/items` 与 `GET /`（后者根本没实现）→ 门禁 `exit 0`、`drift_count=0`、`checked.routes=true`、findings 里赫然是 `[pass] Route: GET /`。<br>**为什么这条比一般漏报更重**：它不是「未验证」，是**报成了「已验证且干净」**。AGENTS.md 的 Gate Rules 明写「没比较过的维度必须报未验证，`drift_count: 0` 不允许从『什么都没查』到达」；这里门禁确实跑了比对，但对该条路由的比对是空转的，`checked.routes=true` 让它看起来完全正常。<br>**发现路径**：批次 2 Task 5 的评审者为核实 drt-4 判别力而构造「路径列恒抽空」变异时发现 `route_registered` 的这处坍缩，我顺着查出它在真实 spec（声明根路径 `/`）下同样可达并实测确认。<br>**与 O-8 的区别**：O-8 是 code 侧空路径不产出裸路由的约束不可观测；本条是 **spec 侧**空 endpoint 让兜底匹配失效，两者独立。<br>**顺带**：`drift-route-table.bats` 里 drt-4 的行内注释举了「路径列恒抽空仍算 3 条」当例子，实测该场景下 drt-1..drt-4 全绿——注释的例子不成立（drt-3/drt-4 真实守住的是「列序无关」维度，已由另一条精确变异证明）。该注释待更正。 | 批次 3，需独立走完整 SOP（analysis + 双向回归 + 修复同批提交） |
 | O-15 | `compliance.sh` 的 `knowledge_reference` 检查 + `harness-template/halo/context/knowledge/` 自带的 4 个默认文件 | **框架自带的默认知识库让每个新项目的第一个 spec 必然告警。** 实测：`make_spec` 产出的黄金形态 spec（已被 spec-lint / prismspec lint / plan-lint / ac-coverage 全链路接受）跑 compliance 得到 `status="warn"` 而非 `"pass"`——因为模板自带 `architecture.md` / `glossary.md` / `pitfalls.md` / `rules.md` 四个文件，`TOTAL_KB=4>0` 恒成立，而 spec 正文从不出现 `knowledge/` 字样，于是 `knowledge_reference` 恒报一条 warning。<br>**为什么这条值得重新定性**：#12 的复核 §8 已把它列为「本期不修 P2」，理由是「上报方自己也定性为**书写约定**」。但框架自带默认知识库这个事实说明它不是项目侧的书写习惯——它与同一份复核 §3 对 `source_trace` 的定性完全同型：「成因不是项目的书写习惯，是**框架自己造的永久噪声**」。同一份报告把这个模式在 source_trace 上判为严重并修了，却把它的兄弟实例判成书写约定留了下来。<br>**发现路径**：批次 2 Task 4 写 `gate-compliance.bats` 时实测发现（自查发现，无上报原文）。<br>**当前影响可控**：软门禁，只 warn 不 fail，`gcp-1`/`gcp-2` 不断言 `status=="pass"` 故不受影响；但它会持续制造「已连续 N 个 spec 携带此告警」这类噪声——这正是 #12 上报方当初的原话。 | 批次 3，与 O-13（`compliance.sh:148` 的来源类别正则）一并重审 compliance 的软门禁噪声面 |
 | O-14 | `_lib.sh:169`（命令替换）+ `spec-select.sh:87/106/116`（赋值点） | **auto 发现的来源依据进不了证据链。** `spec_select` 靠全局变量 `SPEC_SELECT_DETAIL` 回传排序依据，但 `_lib.sh:169` 用 `selected="$(spec_select …)"` 调它——命令替换恒开子 shell，赋值到不了父进程，于是 `:171` 发出的永远是 `auto\|\|<path>`。`pipeline.sh:306` 正从这个字段读 `SPEC_SOURCE_DETAIL`，所以 **eval JSON 里 auto 发现的 `spec_source_detail` 恒为空**；`explicit` 与 `manifest-active` 的 detail 是内联硬编码的，不受影响——唯独最要紧的 auto 路径是碎的。#15 复核那句「这条让『谁指定了这个 spec』进入证据链」在此失效。<br>**为什么此前没被发现**：旧 smoke-test §9b 只断言 `.spec_source == "auto"`，从没碰过 detail。<br>**发现路径**：批次 2 Task 2 写 `find_spec` 契约单测时撞出（属「自查发现、无上报原文」一类，批次 3 补 analysis 时正文须写清）。<br>**它挡住的断言**：find-6 与 disc-9 均已退回为不断言 detail 内容（**且不许反向断言为空**）。排序依据本身并非无人可测——`spec-select.sh:118` 仍打到 stderr，由 disc-2 覆盖，碎的只是 `find_spec` 输出这条管道。<br>**修复难点**：`spec_select` 用全局变量回传，而 `_lib.sh` 必须用命令替换取 stdout 的路径；`prismspec/bin/guide.sh` 也是调用方，改返回契约要一并看它。 | 批次 3，需独立走完整 SOP（analysis + 双向回归 + 修复同批提交） |
+| O-17 | `pipeline.sh:289-291` / `_lib.sh:153` | **explicit provenance 有两份互不相干的真源。** `pipeline.sh:289-291` 在 `--spec=` 路径上自己写死 `SPEC_SOURCE="explicit"` 并直接 `export SPEC_FILE`，完全不调 `find_spec_with_source`；而 `_lib.sh:153` 也 `echo "explicit\|caller-supplied\|…"`。根因 H 的又一处温床。<br>**发现路径**：Task 9 的 M3 打不到 disc-10 正是因为它——disc-10 走的是 pipeline 那份硬编码，`_lib.sh` 的标签变异对它结构性不可见。**属正确行为而非断言失灵**，故 M3 的期望名单已相应订正而非加强 disc-10。 | 批次 3，需独立走完整 SOP |
 | O-13 | `compliance.sh:148` | 来源类别正则是一条 200 字符的单行 `grep -qiE`，中英混排 20+ 个 token，无换行无注释分组。它是根因 E 的直接补丁，也是最容易在「简化」中被削掉一半而无人察觉的地方。csr-1/2/3 只能守住「中文能过、英文能过、垃圾不能过」三个点，守不住具体哪几个 token | 批次 3 契约单测（按 token 逐条参数化） |
 
 ---
@@ -925,4 +1144,5 @@ git diff --check
 - 契约单测其余三项（`task_has_ac_declaration`、AC 归属、模式解析链）→ 批次 3
 - meta-lint 五条规则、报告↔测试对应检查、`release-check.sh` 扩展 → 批次 3
 - O-1（node/js/ts 缺跨 spec 归属保护）、O-7（Express 无 examples 工程）、O-9（`_lib.sh` 函数名前缀）→ 需先走完整 SOP
+- Task 9 产出的 5 条批次 3 输入（夹具缺口 ×2、pl-5 零冗余、`findings[].status` 枚举无覆盖、O-17）→ 批次 3，清单见 Task 9 的「Task 9 产出的批次 3 输入」小节
 - E2E 主干迁移、删空 smoke-test、CI 两个 workflow 的 smoke-test 重叠合并 → 批次 4

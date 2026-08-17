@@ -224,4 +224,20 @@ SPEC
 
   run yq -e '.metrics.checked.error_codes == false' "$SANDBOX/drift-cobol.json"
   assert_success
+
+  # 上面三条断言（exit 0 / `no source file mapping` 消息 / checked.error_codes == false）
+  # 合起来仍分不清「诚实地报未验证」与「悄悄报成干净」：把这一行的 gate_skip 换成
+  # ok 之后，退出码不变、消息文本不变，而 ok() 和 gate_skip() 一样不调用 mark_checked，
+  # 所以 checked.error_codes 照样是 false——用例名声称守住的 "instead of clean" 方向，
+  # 恰恰是三条断言都够不着的那一维。
+  # 真正区分两者的是 gate JSON 里该维度 finding 的状态枚举：诚实的跳过写 "skip"，
+  # 谎报干净写 "pass"。length > 0 是反向哨兵——finding 整条消失时 all_c 对空数组返回
+  # true，会把「维度凭空蒸发」也放过去。
+  # 不钉死 .metrics.checks_skipped 的绝对值：那是全 gate 的聚合计数，将来新增无关维度
+  # 会误伤（同批 unit/gate-drift-check.bats 头注释里记的就是这条约定）；per-finding 的
+  # 状态枚举才是精确对准本用例关注点的字段。
+  run yq -e '([.findings[] | select(.category == "error_codes")] | length > 0)
+    and ([.findings[] | select(.category == "error_codes")] | all_c(.status == "skip"))' \
+    "$SANDBOX/drift-cobol.json"
+  assert_success
 }

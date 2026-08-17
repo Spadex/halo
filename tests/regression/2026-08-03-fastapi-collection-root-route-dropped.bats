@@ -133,6 +133,12 @@ PY
     --json-out="$SANDBOX/drift-slash-root.json"
   assert_success
 
-  run yq -e '.metrics.drift_count == 0' "$SANDBOX/drift-slash-root.json"
+  # `checked.routes` 不是装饰性断言：路由维度有六条 gate_skip 出口，任何一条被走到时
+  # drift_count 都保持 0 且 gate 仍 exit 0——「压根没验」与「验过且干净」在
+  # assert_success + drift_count == 0 之下完全同形。本用例的立意是「`/` 形态仍能经
+  # prefix 解析成功」，若路由维度其实被静默跳过，drift_count == 0 照样成立，断言就成了
+  # 空转。mark_checked 置的这个标志位是区分二者的唯一信号（#12 要根除、O-16 同族的形态）。
+  run yq -e '.metrics.drift_count == 0
+    and .metrics.checked.routes == true' "$SANDBOX/drift-slash-root.json"
   assert_success
 }
