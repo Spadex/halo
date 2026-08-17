@@ -52,11 +52,22 @@ source 进测试进程后，`_lib.sh` 的 `fail()` 会把断言失败变成一�
 # bats-support 的 fail 同名，source 进测试进程会把断言失败原语替换掉（假绿）。
 # 附带收益：_lib.sh:12 的 set -euo pipefail 不外溢；find_spec 的 rc 1/2 直接落到 $status。
 lib_run() { # <bash 片段>
-  run bash -c 'source halo/kernel/_lib.sh; shift; eval "$*"' _ "$@"
+  run --separate-stderr bash -c 'source halo/kernel/_lib.sh; eval "$1"' _ "$1"
 }
 ```
 
-`spec-select.sh` 不受此限（只定义 `spec_select*` 与 `SPEC_SELECT_DETAIL`），但它本来就可执行，一律 `run bash halo/kernel/spec-select.sh <root>`。
+> **Task 11 更正（本计划原片段有缺陷，实现一直是对的）**：本节原先写的是
+> `run bash -c 'source halo/kernel/_lib.sh; shift; eval "$*"' _ "$@"`，两处错：
+> ① 缺 `--separate-stderr`，`spec_select` 打到 stderr 的选中依据会污染 stdout 契约；
+> ② **`shift` 会丢掉唯一实参**——`bash -c '…' _ "$1"` 里 `_` 已占掉 `$0`，实参从 `$1` 起，
+> 再 `shift` 之后 `$#` 归 0、`$*` 为空串，`eval` 求值空串，**恒得 `$status=0` 且 `$output` 为空**。
+> 实测：`bash -c 'shift; eval "$*"' _ 'exit 1'` 得 rc=**0**，而 `bash -c 'eval "$1"' _ 'exit 1'` 得 rc=**1**。
+> 照抄原片段写出的契约单测正是本节红线要防的那种全绿假绿。
+> **各 Task 的实际实现从一开始用的就是上面这个正确写法**
+> （`tests/unit/lib-find-spec.bats:55-57`、`tests/unit/lib-ac-declaration.bats:32-34`），
+> 错的一直只是文档。已同步更正 `tests/README.md`。
+
+`spec-select.sh` 不受此限（只定义 `spec_select*` 与 `SPEC_SELECT_DETAIL`），但它本来就可执行。调用形态**分两档**：被测对象是它的 standalone 契约时直接跑仓库源文件 `run --separate-stderr bash "$REPO_DIR/harness-template/halo/kernel/spec-select.sh" "$ROOT"`（不装 harness，理由见 `spec-select.sh:6-8` 的设计契约）；用例需要已初始化的项目时才用沙箱相对路径 `run --separate-stderr bash halo/kernel/spec-select.sh halo/specs`。范例见 `spec-discovery.bats:22-37`。
 
 ---
 

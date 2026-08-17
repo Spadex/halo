@@ -156,9 +156,13 @@ tests/regression/2026-08-03-fastapi-collection-root.bats
 |---|---|---|
 | 0 | bats 骨架 + helpers + CI workflow + `tests/README.md`；此后新测试只允许写 bats，smoke-test.sh 冻结（只删不加） | CI 双平台绿 |
 | 1 | AC 系列迁移（查重/断号/跨 spec/声明行，对应 #7/#9/#14/runningtime） | 新用例与旧断言等价（旧段注入缺陷时新用例也红），删旧段 |
-| 2 | drift-check 系列（§7c，#12/#16）+ 契约单测首批（`find_spec`、`narrow_acs_to_declared`） | 同上 |
-| 3 | SDD 门禁系列（§6d、SIGPIPE、learn-draft §9b/9c）+ 契约单测其余三项（`task_has_ac_declaration`、AC 归属、模式解析链）+ meta-lint 五条规则上线 | 同上；meta-lint 双向自测绿 |
+| 2 | drift-check 系列（§7c，#12/#16）+ §9b spec 自动发现（`spec-select.sh`）+ 契约单测首批（`find_spec`、`narrow_acs_to_declared`） | 同上 |
+| 3 | SDD 门禁系列（§6d、SIGPIPE、learn-draft §9c）+ 契约单测其余三项（`task_has_ac_declaration`、AC 归属、模式解析链）+ meta-lint 五条规则上线 | 同上；meta-lint 双向自测绿 |
 | 4 | E2E 主干迁移，删空 smoke-test.sh，双轨期结束 | smoke-test.sh 删除，`tests/run.sh` 为唯一入口 |
+
+> **脚注（批次 2 更正）**：原表把 §9b 误标为 learn-draft；实测 §9b 是 **spec 自动发现**、
+> §9c 才是 **learn-draft**。§9b 已随批次 2 迁移，批次 3 从这条承接的只剩 §9c。
+> 偏离说明见批次 2 计划的「决定二」。
 
 双轨期约束：`tests/run.sh` 同时跑 bats 与 smoke-test 残余，CI 全程有覆盖，无真空窗口。
 

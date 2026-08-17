@@ -17,13 +17,25 @@
   缺 analysis 的四份报告全部早于 SOP 成文（2026-08-07）。
 - **`tests/regression/*.bats` 的命名规则**：
   - 报告已合规 → bats 文件名与报告 basename **逐字相同**，机器可直接对拍；
+  - **聚合上报**（一份报告含多条互不相干的已修缺陷）→ 目录形态
+    `tests/regression/<报告 basename>/<缺陷 slug>.bats`，目录名与报告 basename 逐字相同；
   - 历史遗留报告 → 日期取**修复提交的作者日期**（可考据、唯一、与文件头 `Fixed by` 自洽），
     slug 取语义 slug，映射登记在本表。
 
 ## 批次 3 的对拍规则
 
 > `docs/bug_report/` 下存在 `<base>-analysis.md` 的报告 ⇒ 必须存在
-> `tests/regression/<base>.bats`，**除非**该 `<base>` 在本表中登记了映射或豁免（附原因）。
+> `tests/regression/<base>.bats` **或** `tests/regression/<base>/` 目录（其下至少一个 `.bats`），
+> 二者满足其一即可，**除非**该 `<base>` 在本表中登记了映射或豁免（附原因）。
+
+**为什么允许目录形态**：一份报告未必只含一个缺陷。批次 2 的两份聚合上报
+（`2026-08-03-halo-gate-findings` 与 `…_2`）各含多条互不相干的已修缺陷，其中 `_2`
+那份**横跨批次 2 与批次 3**。若强制平铺成单个 `.bats`，批次 3 就得回来往一个
+已通过等价性验证、已写进提交记录的文件里追加，归因链会断；且同一文件里的缺陷往往需要
+互不兼容的 `setup` 沙箱形态。故按缺陷拆分、用目录承载，**目录名与报告 basename 逐字相同**，
+对拍规则相应放宽为上面这条二选一。完整理由见 `tests/README.md` 的命名规则一节。
+
+机器对拍不受影响：`tests/run.sh` 的 `find … -name '*.bats'` 与 `bats --recursive` 都已递归。
 
 本表同时兜住一个坑：`spec-lint-ac-gap-analysis.md` 以 `-analysis` 结尾却**没有配对原文**，
 朴素的「去掉 `-analysis` 后缀找原文」逻辑会去找不存在的 `spec-lint-ac-gap.md`。
@@ -38,9 +50,9 @@
 | `spec-lint-ac-gap-analysis.md` | #9 | `334bdb6` | 2026-07-26 | A | `2026-07-26-spec-lint-ac-number-gap.bats` | ⚠️ 命名例外：本身即复核，无配对原文 |
 | `2026-07-31-sdd-gate-defects.md` | #10 | `04300a7` | 2026-07-31 | G + C | 批次 3 待迁 | ✅ |
 | `2026-08-02-tdd-cycle-evidence-sigpipe.md` | #11 | `c75d0c4` | 2026-08-02 | B + D | 批次 3 待迁 | ✅ |
-| `2026-08-03-halo-gate-findings.md` | 多条（含 #12/#13） | 多个，见 analysis | 2026-08-03 | 多类 | 批次 2/3 待迁 | ✅ |
-| `2026-08-03-halo-gate-findings_2.md` | 多条（含 #15） | 多个，见 analysis | 2026-08-03 | C + D | 批次 2/3 待迁 | ✅ |
-| `2026-08-03-fastapi-collection-root-route-dropped.md` | #16 | `55db4cb` | 2026-08-03 | F | 批次 2 待迁 | ✅ |
+| `2026-08-03-halo-gate-findings.md` | 多条（含 #12/#13） | 多个，见 analysis | 2026-08-03 | 多类 | `2026-08-03-halo-gate-findings/`（目录）：<br>`drift-error-codes.bats`（§1）<br>`drift-route-table.bats`（§2）<br>`compliance-source-trace.bats`（§3）<br>`plan-lint-placeholder.bats`（§4）<br>`review-package-scope.bats`（§5）<br>**聚合上报，按缺陷拆分** | ✅ |
+| `2026-08-03-halo-gate-findings_2.md` | 多条（含 #15） | 多个，见 analysis | 2026-08-03 | C + D | `2026-08-03-halo-gate-findings_2/spec-discovery.bats`（上报 §8.1 spec 自动发现）<br>**聚合上报，按缺陷拆分**；§3.3 learn-draft 形态：**批次 3 待迁** | ✅ |
+| `2026-08-03-fastapi-collection-root-route-dropped.md` | #16 | `55db4cb` | 2026-08-03 | F | `2026-08-03-fastapi-collection-root-route-dropped.bats` | ✅ |
 | `2026-08-03-user-report.md` | #14 | `1f993a4` | 2026-08-03 | A | `2026-08-03-user-report.bats` | ✅ |
 | `2026-08-07-runningtime-report/`（目录） | — | `3e25d7e` | 2026-08-07 | A + H | `2026-08-07-runningtime-report.bats` | ✅ |
 | `2026-08-16-init-detection-probe-pipefail-analysis.md` | — | `1a9773e` | 2026-08-16 | B | `2026-08-16-init-detection-probe-pipefail.bats` | ⚠️ 自查发现，无上报原文 |

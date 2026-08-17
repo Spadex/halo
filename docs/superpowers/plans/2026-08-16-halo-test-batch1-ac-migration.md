@@ -423,12 +423,12 @@ tests/vendor/bats-core/bin/bats tests/regression/<file>.bats    #    必须全�
 
 | # | 位置 | 观察 | 归属 |
 |---|---|---|---|
-| O-1 | `ac-coverage.sh:127` + `:138` | node/js/ts 的 `DECL_TOKEN_REGEX` 为空串 → `build_foreign_owned` 直接 `return 0` → **node 项目完全没有 #8 的跨 spec 归属保护**，同号 `test_acN` 会重新静默借用。#8 的修复对 node 不生效——真实功能缺口 | 独立 bug 报告 + 批次 3（需走完整 SOP） |
+| O-1 | `ac-coverage.sh:127` + `:138` | node/js/ts 的 `DECL_TOKEN_REGEX` 为空串 → `build_foreign_owned` 直接 `return 0` → **node 项目完全没有 #8 的跨 spec 归属保护**，同号 `test_acN` 会重新静默借用。#8 的修复对 node 不生效——真实功能缺口 | 独立 bug 报告 + 批次 3（需走完整 SOP）<br>**批次 2 补注**：本观察**不变**。批次 2 已确认**不碰**此项，理由见批次 2 计划的「实现观察」表与「范围边界（明确不越界）」表 |
 | O-2 | `ac-coverage.sh:185` 的 `\|\| true` | 该守卫在现行三种 `FUNC_REGEX` 下**不可达**（三者都必然在匹配行含 AC+数字）。是防御性冗余，只有放宽 FUNC_REGEX 才会用到。故 #5-3 只能断言可观测契约（退出码恰为 1 + 打印矩阵） | 批次 3 meta-lint 的 pipefail 规则可列为「正确但当前不可达」正样本 |
 | O-3 | `task_body()` 四份逐字副本（`task-evidence-lint.sh:49`、`task-complete.sh:60`、`task-next.sh:63`、`plan-lint.sh:87`） | 根因 H。本批次 rt-9/rt-10 通过两个调用方间接对齐了 `task_has_ac_declaration`，但 `task_body` 本身仍可各自漂移 | 批次 3 meta-lint 重复定义检测 |
-| O-4 | `spec-select.sh:103` | smoke-test 沙箱能通过自动发现断言，靠的是 `missing-evidence` 恰好携带真实时间戳而唯一胜出——一个**未被任何断言保护的隐性前提**。未来增删 `halo/specs` fixture 都可能把它推成 rc=2 | 批次 2 的 `find_spec` 契约单测应固化「同 rank 同 updated_at → rc=2」与「时间戳唯一 → rc=0」 |
+| O-4 | `spec-select.sh:103` | smoke-test 沙箱能通过自动发现断言，靠的是 `missing-evidence` 恰好携带真实时间戳而唯一胜出——一个**未被任何断言保护的隐性前提**。未来增删 `halo/specs` fixture 都可能把它推成 rc=2 | 批次 2 的 `find_spec` 契约单测应固化「同 rank 同 updated_at → rc=2」与「时间戳唯一 → rc=0」<br>**已在批次 2 闭合**：`unit/lib-find-spec.bats` 的 **find-8**（并列 → rc=2 被 `_lib.sh:174` 原样透传）与 **find-9**（时间戳唯一 → rc=0）固化了这两条；同时 smoke-test 的 **§9b 整节已迁走**（迁入 `regression/2026-08-03-halo-gate-findings_2/spec-discovery.bats`），删完 §7c + §9b 后 smoke-test 里**再没有任何断言依赖「哪个 spec 恰好胜出」**——隐性前提不是被补了一条断言，是被**物理移除**了。详见批次 2 计划「决定二」 |
 | O-5 | `smoke-test.sh:2699` | `.gitignore` heredoc 仍列 `py-ac-coverage/`，Task 8 后成为死条目；冻结纪律下不改 | 批次 4 删除 smoke-test 时消失 |
-| O-6 | `smoke-test.sh:1985-1986` | `── 7. AC-coverage gate ──` 标题在 Task 8 后已无对应内容；冻结纪律下不改写 | 批次 2 迁 drift-check 时消失 |
+| O-6 | `smoke-test.sh:1985-1986` | `── 7. AC-coverage gate ──` 标题在 Task 8 后已无对应内容；冻结纪律下不改写 | 批次 2 迁 drift-check 时消失<br>**批次 2 更正：预测不成立，顺延批次 3。** 实测：批次 2 删掉 §7c 之后，该标题**仍有内容**——`:1529` 起的 pipeline / eval / learn-draft / knowledge / outcome 各块都在这个标题之下（`:1529` 即紧随标题的第一块，pipeline gate JSON 嵌入），它们全归批次 3。故标题在批次 2 结束时依然存在（当前位置 `smoke-test.sh:1527`，行号因删除而前移）。归属改为**批次 3** |
 
 ---
 
@@ -500,3 +500,9 @@ git diff --check
 旧的 smoke-test 与 ac-coverage-test 同样没守它，不是本次迁移引入的。
 要触发需要「一条 AC 声明了测试、另一条 AC 依赖数字兜底且候选恰是自己声明的 token」
 的 fixture，属契约单测范畴 → **批次 2**（与 `find_spec` / `narrow_acs_to_declared` 同批）。
+
+**已在批次 2 闭合。** `unit/gate-ac-coverage.bats` 的 **acg-3**
+（`the numeric fallback does not treat this spec's own declared test as foreign-owned`）
+构造了上述 fixture；批次 2 的变异 **M26**（删 `ac-coverage.sh:142` 的 `[[ "$f" -ef "$SPEC" ]] && continue`
+自跳过，即本段描述的那处注入）**实测精确点亮 acg-3 且零连带**——空洞从「一条测试都不红」
+变成有专属探针把守。
