@@ -201,12 +201,16 @@ git status --porcelain          # 6. 必须再次为空，且重跑全绿
 > }
 > ```
 >
-> 这段是 `tests/unit/lib-find-spec.bats:55-57` 与 `tests/unit/lib-ac-declaration.bats:32-34`
+> 这段是 `tests/unit/lib-find-spec.bats:55-57` 与 `tests/unit/lib-ac-declaration.bats:40-42`
 > 的**逐字实现**，两处细节都不是可选的：
 >
-> - **`--separate-stderr` 不能省。** `spec_select`（`spec-select.sh:118` 起）把选中依据与落选
->   候选打到 stderr，而 `run` 默认把 stdout+stderr 合并进 `$output`；不分离的话，
->   `find_spec_with_source` 的 stdout 契约（`source|detail|path`）会被诊断行污染。
+> - **`--separate-stderr` 不能省，但两个文件的理由不同。** 在 `lib-find-spec.bats` 是
+>   `spec_select`（`spec-select.sh:118` 起）把选中依据与落选候选打到 stderr，而 `run` 默认把
+>   stdout+stderr 合并进 `$output`；不分离的话，`find_spec_with_source` 的 stdout 契约
+>   （`source|detail|path`）会被诊断行污染。`lib-ac-declaration.bats` 测的两个函数**不经过**
+>   `spec_select`，该理由不成立；它在那里的作用是把子进程 stderr 挡在 `$output` 外，让
+>   `ac-5`/`ac-6` 的 `assert_output ""` 只约束 stdout——代价是 stderr 一侧的退化对这两条不可观测
+>   （详见该文件 `lib_run` 上方的注释与计划里的 M65 附注）。
 > - **是 `eval "$1"`，不是 `shift; eval "$*"`。** `bash -c '…' _ "$1"` 里的 `_` 已经占掉 `$0`，
 >   实参从 `$1` 起；再 `shift` 会把唯一那个实参丢掉，`$*` 变成空串，`eval` 求值空串。
 >   后果是**恒得 `$status=0` 且 `$output` 为空**——本条红线要防的假绿，会原样从这个写法里长出来。

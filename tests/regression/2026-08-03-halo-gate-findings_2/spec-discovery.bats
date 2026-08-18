@@ -225,8 +225,17 @@ set_spec_updated_at() {
   # 这是活风险不是假想。
   #
   # 改成显式白名单：只把 spec-select.sh 真正用到的工具软链进一个空目录，yq 永远不
-  # 在其中，于是收窄在任何宿主上都成立。白名单同时成了这个文件的依赖清单断言——
-  # 哪天它开始依赖别的工具，这里会响亮地红，而不是悄悄绿。
+  # 在其中，于是收窄在任何宿主上都成立。
+  #
+  # 白名单只是**记录**本文件当前用到的工具，**不是**依赖清单断言——别指望「哪天多依赖
+  # 一个工具这里就会红」。实测（逐个从白名单里抽掉该工具后跑本条）：
+  #   抽 find / sort / sed / cut / head → 红；抽 awk / grep / ls / xargs / tr → 仍绿。
+  # 后五个绿在两条静默降级路径上：抽 awk 时 frontmatter_value（spec-select.sh:25）取空，
+  # has_updated 落 false，:80-85 转进 `ls -t` 的 mtime 兜底，本条只有一个候选，兜底恰好
+  # 选中同一个；抽 grep 时 :103 的 `$(… | grep -c .)` 取空串，`[[ "" -gt 1 ]]` 静默为假，
+  # 并列拒绝那条分支直接绕过。ls/xargs/tr 只出现在 :85 那条兜底上，awk 在时压根不可达。
+  # （只有 awk 与 ls 同时抽掉才会红——兜底被走到了、兜底自己又缺工具。）
+  # 本条真正守住的是「不依赖 yq」，由 M15 点亮；上面这些只是白名单的附带说明。
   write_discovery_spec alpha alpha drafted "2026-01-01T00:00:00Z"
 
   local narrow_bin="$BATS_TEST_TMPDIR/narrow-bin"

@@ -29,6 +29,14 @@ setup() {
 # tests/vendor/bats-core/lib/bats-core/test_functions.bash:437 的 bats 内建
 # skip() 同名。把 _lib.sh source 进 bats 测试进程会替换掉 assert_* 的失败原语，
 # 所有断言永不变红——全绿的假绿。
+#
+# `--separate-stderr` 在本文件不是照抄 lib-find-spec.bats 的无害样板，它有本地后果：
+# 这两个函数不经过 spec_select，没有「诊断打 stderr」那条理由，但它把子进程的 stderr
+# 挡在 $output 之外，于是 ac-5/ac-6 的 `assert_output ""` 看不见 grep 的报错。
+# M65 附注实测记下的反直觉点正源于此：删掉 `_lib.sh:202` 的 `-f` 守卫**打不红 ac-5**
+# ——grep 对不存在的文件只往 stderr 报错、被 `|| true` 吞掉，stdout 仍空、rc 仍 0，
+# 而 stderr 已被分离。要点亮 ac-5 必须改返回码（`|| return 0` → `return 1`）。
+# 换句话说：保留它是刻意的，但代价是这两条用例对 stderr 一侧的退化不可观测。
 lib_run() { # <bash 片段>
   run --separate-stderr bash -c 'source halo/kernel/_lib.sh; eval "$1"' _ "$1"
 }
