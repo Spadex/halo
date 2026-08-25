@@ -39,7 +39,11 @@ if [[ -z "$SPEC" ]]; then
   fi
 fi
 
-[[ -f "$SPEC" ]] || { echo "⚠️  Spec not found: $SPEC"; exit 0; }
+# exit 1, matching ac-coverage.sh / drift-check.sh / spec-lint.sh at this same guard.
+# The skip branch above is "auto-discovery found no candidate at all"; reaching here means
+# a caller named a spec that is not there, which is a missing input, not an empty workload.
+# Passing it would report green on a spec this gate never read.
+[[ -f "$SPEC" ]] || { echo "Spec file not found: $SPEC"; exit 1; }
 
 knowledge_dir=$(manifest_get '.context.knowledge.dir')
 PROJECT_KNOWLEDGE_DIR="${PROJECT_ROOT}/${knowledge_dir:-halo/context/knowledge}"

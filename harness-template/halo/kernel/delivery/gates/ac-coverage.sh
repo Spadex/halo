@@ -185,7 +185,13 @@ if [[ -n "$TEST_FILES" ]]; then
       ac_num=$(echo "$match_line" | grep -ioE 'AC[_-]?([0-9]+)' | grep -oE '[0-9]+' | head -1 || true)
       [[ -z "$ac_num" ]] && continue
       ac_num=$((10#$ac_num))
-      func_name=$(echo "$match_line" | grep -oE 'func [A-Za-z0-9_]+|def [a-z_0-9]+|(describe|it|test)\(' | head -1 | sed 's/^func //' | sed 's/^def //' | sed 's/($//')
+      # Failure direction: fail-closed. Same `|| true` as the AC-number extraction above,
+      # and for the same reason: FUNC_REGEX matches a whole line, this regex wants a name
+      # glued to `(`, so a match line can legitimately yield no token (jest's `it.each(`).
+      # Without the guard the bare assignment inherits grep's 1 under pipefail and errexit
+      # kills the gate mid-loop. Empty becomes "unknown" below, which Tier 2 excludes — the
+      # AC is reported uncovered, never silently covered.
+      func_name=$(echo "$match_line" | grep -oE 'func [A-Za-z0-9_]+|def [a-z_0-9]+|(describe|it|test)\(' | head -1 | sed 's/^func //' | sed 's/^def //' | sed 's/($//' || true)
       COVERAGE_ROWS+="$ac_num|${func_name:-unknown}|$test_file"$'\n'
     done < <(grep -E "$FUNC_REGEX" "$test_file" 2>/dev/null || true)
   done <<< "$TEST_FILES"

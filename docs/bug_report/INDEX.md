@@ -56,6 +56,8 @@
 | `2026-08-03-user-report.md` | #14 | `1f993a4` | 2026-08-03 | A | `2026-08-03-user-report.bats` | ✅ |
 | `2026-08-07-runningtime-report/`（目录） | — | `3e25d7e` | 2026-08-07 | A + H | `2026-08-07-runningtime-report.bats` | ✅ |
 | `2026-08-16-init-detection-probe-pipefail-analysis.md` | — | `1a9773e` | 2026-08-16 | B | `2026-08-16-init-detection-probe-pipefail.bats` | ⚠️ 自查发现，无上报原文 |
+| `2026-08-25-ac-coverage-func-name-pipefail-analysis.md` | — | `7976672` | 2026-08-25 | B | `2026-08-25-ac-coverage-func-name-pipefail.bats` | ⚠️ 自查发现，无上报原文 |
+| `2026-08-25-compliance-missing-spec-fail-open-analysis.md` | — | `7976672` | 2026-08-25 | C + H | `2026-08-25-compliance-missing-spec-fail-open.bats` | ⚠️ 自查发现，无上报原文 |
 
 根因类别的含义见 `tests/README.md` 的根因类别表。
 

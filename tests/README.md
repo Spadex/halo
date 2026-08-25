@@ -80,8 +80,8 @@ tests/vendor/bats-core/bin/bats tests/unit/fixtures.bats -f "make_spec"  # 按�
 | 类别 | 含义 | 机器防线 |
 |------|------|----------|
 | A. 词法「提及≠声明」 | 全文 grep 把散文/交叉引用当结构化声明 | `unit/` 对 `narrow_acs_to_declared` 等的契约单测 |
-| B. pipefail 语义 | grep 未命中崩溃、SIGPIPE、while 退出码 | `meta/` 反模式扫描 + 单测边界条件族 |
-| C. 失败方向搞反 | fail-open/fail-closed 用错边 | `meta/` 失败方向注释强制 |
+| B. pipefail 语义 | grep 未命中崩溃、SIGPIPE、while 退出码 | `meta/` 反模式扫描 + 单测边界条件族。**判定标准必须写明「`pipefail` 取管道里最右侧的非零码，末段是谁与危险性无关」**——2026-08-25 的 `ac-coverage.sh:188` 正是被「`head` 在末段吞掉了退出码」这个错误理由判为无害的 |
+| C. 失败方向搞反 | fail-open/fail-closed 用错边 | `meta/` 失败方向注释强制 + **诚实 skip 检查**。注释规则只管「有没有说明方向」，管不到「方向本身对不对」；同一守卫在多个门禁里的**齐平断言**才是拦住单边漂移的那道（见 `regression/2026-08-25-compliance-missing-spec-fail-open.bats` 第四条） |
 | D. 非确定性依赖 | mtime 排序、find 目录序、表格列序 | `meta/` 扫描 |
 | E. 框架读不懂自带模板 | 默认模板触发自家门禁误报 | `e2e/` + examples 黄金路径 |
 | F. 语法变体覆盖不足 | 只认单一书写形态 | `fixtures/` 变体矩阵 + examples 真实工程 |
