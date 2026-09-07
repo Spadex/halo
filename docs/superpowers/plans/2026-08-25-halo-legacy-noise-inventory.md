@@ -37,8 +37,32 @@
 
 | 项目 | 处置 | 测试 |
 |---|---|---|
-| `task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过 | 补 `else` 分支，fail-closed，输出含 `NOT verified` | `tests/regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats`（5 条，双向） |
-| 规则 5 剩余五处 skip 出口文案 | 五处各补 `— … NOT verified` | `tests/unit/gate-skip-honesty.bats`（4 条，含反向） |
+| `task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过 | 补 `else` 分支，fail-closed，输出含 `NOT verified` | `tests/regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats`（7 条，双向） |
+| **`task-complete.sh:231-233` 的同型缺陷**（独立评审发现，清单原先未登记） | 补对称的 `elif != plan` → `fail_complete` | 同上文件的用例 5、6 |
+| 规则 5 剩余五处 skip 出口文案 | 五处各补 `— … NOT verified` | `tests/unit/gate-skip-honesty.bats`（5 条，含反向） |
+
+### 独立评审揪出的三处，已就地修正
+
+本批的实现与文档经过一次独立评审（只读，独立上下文）。三处实质问题，均已修：
+
+1. **`task-complete.sh:231-233` 是同一缺陷的兄弟站点，而且在写路径上。** 同一个
+   `execution_mode()` + `task_mode()` 回退链、同一个 `if [[ tdd ]] … fi`，连 `plan`
+   分支都没有。lint 只读，它会**勾选任务**。正常路径上 `:217` 的 plan-lint 调用会先拦住，
+   但那道护栏是 `if [[ -x … ]]`——**本身就是 fail-open**，执行位一丢就静默跳过
+   （`doctor.sh:135` 专门检查这一位，说明该失效模式被建模过）。实测复现：
+   `chmod -x plan-lint.sh` 后，无模式无证据的任务被写成 `- [x] T1:`，退出码 0。
+2. **齐平用例对 `drift-check` 恒真。** 初版断的是宽泛子串 `NOT verified`，
+   而 `drift-check` 走**正常**路径时本来就打印这个词（`:576-577` 逐个列出未比较的维度）。
+   四个门禁里有一个完全不设防。已改为逐门禁断**各自那句完整出口文案**；
+   `drift-check` 不加反向用例（会立刻红且无意义），理由写进了测试文件。
+3. **回归用例 3 的说明与它实际守的东西不符。** 初版称它守「无声 `exit 1`」，
+   实测该变异下它仍绿（裸 `exit` 在循环里直接终止，收尾不执行），真正守住的是用例 2。
+   断言本身有判别力（`warn_msg` 变异能点亮），错的是描述。另收紧了断言串：
+   `"0 fail(s)"` 是 `"10 fail(s)"` 的子串，已改为 `"0 fail(s), 0 warning(s)"`。
+
+另修两处事实错误：本文档三处把 `No AC numbers found in spec` 的行号写作 `:158`
+（基线实为 `:156`，`git show c093b71:… | grep -n` 可验），`tests/README.md:21-22`
+的用例计数被本批改旧（unit 50→55、regression 78→95，后者在基线上就已失准）。
 
 复核报告：`docs/bug_report/2026-09-07-task-evidence-lint-unknown-mode-silent-skip-analysis.md`。
 
@@ -563,7 +587,7 @@ meta-lint 规则 4 改为「只对带此标记的副本放行」，其余报警�
 | 3 | `gates/spec-lint.sh:17` | `⚠️  No spec file found, skipping` | ✅ | ❌ |
 | 4 | `gates/compliance.sh:38` | `⚠️  No spec file found, skipping compliance check` | ✅ | ❌ |
 | 5 | `gates/compliance.sh:42` | `⚠️  Spec not found: $SPEC`（修复前） | ❌ | ❌ |
-| 6 | `gates/ac-coverage.sh:158` | `⚠️  No AC numbers found in spec` + `write_gate_json "skip"` | ❌（仅 JSON 里有 `"status":"skip"`） | ❌ |
+| 6 | `gates/ac-coverage.sh:156` | `⚠️  No AC numbers found in spec` + `write_gate_json "skip"` | ❌（仅 JSON 里有 `"status":"skip"`） | ❌ |
 
 > 【复核订正】初版漏掉 **`spec-lint.sh:17`**，导致 4+4+5 = 13 ≠ 14。它与 `ac-coverage.sh:38`、`drift-check.sh:36` 是**逐字相同的第三份副本**（同一 `find_spec` 失败分支），而且 `spec-lint.sh` 全文只有这一个 `exit 0`（正常 PASS 走 `_lib.sh:282 print_summary` 的 `return 0`），不可能被归进「正常 PASS 出口」。
 
@@ -603,6 +627,16 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 ```
 
 **但 `ac-coverage.sh` 与 `compliance.sh` 没有 `gate_skip`，也没有 `mark_checked`/`checks_run` 机制。** 它们的「跳过」只体现在 JSON 的 `status` 字段，stdout 上看不出来。
+
+> 【2026-09-07 登记·口径外残留】`compliance.sh:143` 的
+> `echo "  ⏭️  Context knowledge is empty, skipping"` 与本规则修的五处同型，
+> 但**本规则扫不到它**——规则 5 的口径是「门禁 `exit 0` 前」，而这一处不在 `exit 0` 站点上。
+> 严重度也更低：它同时 `record_finding "knowledge_reference" "skip"`，**JSON 侧是诚实的**，
+> 缺的只有 stdout 那半句。
+>
+> 登记在此而不是顺手改掉，是因为它和 ②`checked.*` / ③`checks_run` 属同一件待办：
+> 等 `gate_skip` 三件套提到 `_lib.sh` 时一并处理。**同时它也是规则 5 口径的一个已知盲区**
+> ——上线后别把「规则 5 零命中」读成「stdout 诚实性已全覆盖」。
 
 ### 处置方案
 
@@ -645,7 +679,7 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 | 命中 | 放行（含 `skipping` 字样） |
 |---|---|
 | `compliance.sh:42`（无任何 skip 字样） | `ac-coverage.sh:38` |
-| `ac-coverage.sh:158`（`skip` 只在 JSON 里） | `drift-check.sh:36` |
+| `ac-coverage.sh:156`（`skip` 只在 JSON 里） | `drift-check.sh:36` |
 | | `spec-lint.sh:17` |
 | | `compliance.sh:38` |
 
@@ -719,7 +753,8 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 |---|---|---|
 | 2026-08-25 | `ac-coverage.sh:188`（pipefail 硬崩）、`compliance.sh:42`（fail-open 报绿） | `regression/2026-08-25-*.bats` ×2 |
 | 2026-09-07 | 规则 5 剩余五处 skip 文案 | `unit/gate-skip-honesty.bats` |
-| 2026-09-07 | `task-evidence-lint.sh` 的 `unknown` 静默跳过（清单外的额外项，见「处置记录」） | `regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats` |
+| 2026-09-07 | `task-evidence-lint.sh` 的 `unknown` 静默跳过（本文档「复核补充」登记的额外项，不在五条规则的命中面统计内） | `regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats` |
+| 2026-09-07 | `task-complete.sh` 的同型缺陷（独立评审发现，清单原先完全未登记） | 同上文件 |
 
 余下的 5 处 = 规则 2 的 `guide.sh:216/223`、`ac-coverage.sh:266`、`pipeline.sh:203/235`；
 4 组 = 规则 4 的 `execution_mode` / `extract_task_id` / `has_frontmatter` / `frontmatter_value`。
@@ -789,7 +824,7 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 7. ~~`compliance.sh:42` 是否在批次 3 纠正？~~ —— **已修复**。
 8. `allowlist.txt` 是否采用 `EXEMPT` / `KNOWN-DEFECT` 两类条目？后者「打印告警但不失败、只减不增」的语义是否接受？
 9. `tests/smoke-test.sh` 排除出扫描范围（硬编码而非 allowlist）是否可接受？
-10. ~~规则 5 按二选一口径放行的四处仍不满足 `AGENTS.md:86-87`，是补文案还是登记落差？~~ —— **已定并已做（2026-09-07）：补文案。** 连同 `ac-coverage.sh:158` 共五处，实测零成本。**但落差只闭合了「① 输出含 `NOT verified`」这一层**，②`checked.*` 与 ③`checks_run` 仍未闭合——见规则 5 的口径一节，它们的真实待办是把 `gate_skip` 三件套提到 `_lib.sh`。
+10. ~~规则 5 按二选一口径放行的四处仍不满足 `AGENTS.md:86-87`，是补文案还是登记落差？~~ —— **已定并已做（2026-09-07）：补文案。** 连同 `ac-coverage.sh:156` 共五处，实测零成本。**但落差只闭合了「① 输出含 `NOT verified`」这一层**，②`checked.*` 与 ③`checks_run` 仍未闭合——见规则 5 的口径一节，它们的真实待办是把 `gate_skip` 三件套提到 `_lib.sh`。
 11. ~~`task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过是否排进批次 3 队首？~~ —— **已修复（2026-09-07）**，并订正了它对根因 H 的依赖关系。
 12. **【新增】** 规则 2 的处置顺序按 2026-09-07 的阈值实测反转为 `pipeline.sh:203/235` 优先、`guide.sh:216/223` 次之、`ac-coverage.sh:266` 最后。这个顺序是否接受？三处是否合并成一批（同根因、同修法，`task-complete.sh:113-115` 有样板）？
 13. **【新增】** `tests/unit/gate-skip-honesty.bats` 是本仓第一个「齐平遍历多个门禁」的契约单测。这种形态（一条用例循环四个门禁，而不是四份手写副本）是否作为同类契约的默认写法？

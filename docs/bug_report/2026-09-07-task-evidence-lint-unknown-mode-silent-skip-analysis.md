@@ -123,24 +123,71 @@ fi
 
 ## 回归测试
 
-`tests/regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats`，五条，
-双向：
+`tests/regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats`，七条，
+双向，覆盖两个站点：
 
-| # | 方向 | 断言 |
-|---|---|---|
-| 1 | 正向 | 模式无法解析时退出码非 0 |
-| 2 | 正向 | 输出含 `NOT verified` 且点名任务 ID |
-| 3 | 正向 | 输出不得再出现 `0 fail(s)` |
-| 4 | 反向 | tdd 任务带有效证据时仍然通过 |
-| 5 | 反向 | plan 模式任务无 TDD 证据时仍然通过 |
+| # | 站点 | 方向 | 断言 | 被哪个变异点亮 |
+|---|---|---|---|---|
+| 1 | lint | 正向 | 模式无法解析时退出码非 0 | 删掉 `else` 块 |
+| 2 | lint | 正向 | 输出含 `NOT verified` 且点名任务 ID | 删掉 `else`；`fail_msg` → 裸 `exit 1` |
+| 3 | lint | 正向 | 收尾摘要不得声称 `0 fail(s), 0 warning(s)` | 删掉 `else`；`fail_msg` → `warn_msg` |
+| 4 | lint | 反向 | tdd 任务带有效证据时仍然通过 | M-C（`== "tdd"` 永不匹配） |
+| 5 | complete | 正向 | 模式无法解析时拒绝，且**任务不被勾选** | 删掉 `else` 块 |
+| 6 | complete | 反向 | tdd 任务证据有效时仍然勾选 | — |
+| 7 | lint | 反向 | plan 模式任务无 TDD 证据时仍然通过 | M-B（`== "plan"` 永不匹配） |
 
-第 3 条不是第 1 条的重复：只断退出码的话，把出口改成**无声** `exit 1` 也能让第 1 条绿，
-而无声报红同样违反诚实性契约（收尾仍会说「1 completed task(s) checked」）。
+第 3 条守的是「模式维度必须真的计入 `FAILS`，而不只是打一行字」——被
+`fail_msg` → `warn_msg` 方向点亮（warn 只增 `WARNS`，收尾的 `✅ PASS` 只读 `FAILS`）。
 
-第 4、5 两条反向断言是必需的——把整个模式分支改成无条件 `fail_msg` 也能让三条正向全绿。
+> 【订正】本节初稿称第 3 条守的是「无声 `exit 1`」，理由写作「收尾仍会说
+> 『1 completed task(s) checked』」。**独立评审指出后实测：两句都不成立。**
+> 把 `else` 分支整行换成裸 `exit 1`，第 3 条**仍绿**——裸 `exit` 在循环里直接终止进程，
+> 收尾根本不执行，也就没有 `0 fail(s)` 可匹配；该变异下唯一变红的是第 2 条。
+> 断言本身有判别力（`warn_msg` 变异能点亮它），错的是它守什么的描述。已就地改正，
+> 测试文件的注释同步订正。
+>
+> 同时收紧了断言串：原先 `refute_output --partial "0 fail(s)"` 会把 `10 fail(s)`
+> 也当成命中，fixture 一旦长到十个失败就误红。现断 `0 fail(s), 0 warning(s)` 整串。
 
-**先红后绿实测**：修复前跑，1/2/3 红、4/5 绿（fixture 构造正确、既有路径未受影响）；
-补 `else` 后 5/5 绿。
+第 4、6、7 三条反向断言是必需的——把模式分支改成无条件失败也能让正向全绿。
+
+**先红后绿实测**：修复前跑，1/2/3 红、4/7 绿（fixture 构造正确、既有路径未受影响）；
+补 `else` 后全绿。task-complete 一侧同样先红：未修时输出 `Task marked complete: T1`，
+任务在无模式、无 TDD 证据的情况下被勾选。
+
+## 兄弟站点：`task-complete.sh` 的同一处方向缺陷（同批修复）
+
+独立评审发现的遗漏。`task-complete.sh:231-233` 是**同一个** `execution_mode()` +
+`task_mode()` 回退链、**同一个** `if [[ tdd ]] … fi`，连 `plan` 分支都没有：
+
+```bash
+if [[ "$EFFECTIVE_MODE" == "tdd" ]]; then
+  valid_tdd_evidence "$TASK_DIR/tdd-evidence.json" || fail_complete "…"
+fi
+```
+
+它比 lint 更危险：**lint 只读，它会勾选任务**。第三值落下来时，一个既无模式声明、
+又无 `tdd-evidence.json` 的任务被写成 `- [x] T1:`。
+
+**可达性与 lint 一侧不同，必须说清楚。** `:217` 的 plan-lint 调用会先拦住缺 `Mode:`
+的 plan（`plan-lint.sh:211` 的 `require_task_pattern` 走 `fail_msg`），所以正常路径上
+`unknown` 到不了那一段。但那道护栏是：
+
+```bash
+if [[ -x "$KERNEL_DIR/orchestrator/sdd/plan-lint.sh" ]]; then
+```
+
+——**护栏本身就是 fail-open**：脚本不可执行时整个检查被静默跳过。实测确认
+（`chmod -x plan-lint.sh` 后跑）：`Task marked complete: T1`，退出码 0，
+`.halo/sdd/unknown-mode/T1/` 下只有 brief 与 review-package，无 TDD 证据。
+
+「执行位丢失」不是臆想的场景：`doctor.sh:135` 专门 `check_executable` 这一位，
+说明这个失效模式在本仓是被建模过的。**一个 fail-closed 的证据契约不应该依赖
+另一个脚本的文件权限位。**
+
+修复是对称的 `elif [[ "$EFFECTIVE_MODE" != "plan" ]]` → `fail_complete`，
+与 lint 一侧同措辞。回归用例 5 把护栏摘掉，断的是「护栏没了，证据契约本身仍守得住」，
+并额外断言任务**不被勾选**——退出码之外，写路径的缺陷要断在写的结果上。
 
 ## 同批一并完成的相邻项
 
@@ -153,3 +200,20 @@ fi
 （`unit/`）而不是回归（`regression/`），也不单独登记 bug 条目——按 `INDEX.md:27-29`
 的对拍规则，一份 `-analysis.md` 会要求 `tests/regression/` 下有同名文件，而它们的
 测试正确的归属是 `unit/`。
+
+`tests/unit/gate-skip-honesty.bats` 的齐平用例断的是**各门禁自己那句完整出口文案**，
+不是宽泛的 `NOT verified` 子串。这一点由独立评审纠正过：宽泛子串在 `drift-check`
+上是**恒真**的——它走正常路径时本来就会打印 `NOT verified`（`:576-577` 逐个列出
+未比较的维度），于是那条断言对四个门禁里的一个完全不设防。`drift-check` 也因此
+没有反向用例（写了会立刻红且红得没有意义），文件里就这一点写明了理由。
+
+## 已登记未处置的同型残留
+
+`compliance.sh:143` 的 `echo "  ⏭️  Context knowledge is empty, skipping"`——
+一个维度没比较，stdout 只说 `skipping`。与本批修的五处同型，但严重度更低：
+它同时 `record_finding "knowledge_reference" "skip"`，**JSON 侧是诚实的**，
+缺的只有 stdout 那半句。
+
+未纳入本批的理由：噪声清单的规则 5 只扫 `exit 0` 站点，扫不到它，
+它属于「清单口径外的同型残留」。登记在此，连同规则 5 尚未闭合的
+②`checked.*` / ③`checks_run` 一起，等 `gate_skip` 三件套提到 `_lib.sh` 时一并处理。

@@ -229,6 +229,15 @@ if [[ "$TASK_ID" == T* ]]; then
   EFFECTIVE_MODE="${EFFECTIVE_MODE:-$MODE}"
   if [[ "$EFFECTIVE_MODE" == "tdd" ]]; then
     valid_tdd_evidence "$TASK_DIR/tdd-evidence.json" || fail_complete "$TASK_ID missing or invalid tdd-evidence.json"
+  elif [[ "$EFFECTIVE_MODE" != "plan" ]]; then
+    # Failure direction: fail-closed, mirroring task-evidence-lint.sh's else branch.
+    # A third value means no source declared the mode, so whether TDD evidence is
+    # required is unknown — and this script writes: an unknown requirement must not
+    # become a checked box. The plan-lint call above normally rejects such a plan
+    # first, but that guard is `if [[ -x … ]]`, which is itself fail-open (a lost
+    # execute bit skips it silently; doctor.sh:135 checks that bit for this reason).
+    # An evidence contract must not rest on another script's permissions.
+    fail_complete "$TASK_ID execution mode '$EFFECTIVE_MODE' — TDD evidence requirement NOT verified"
   fi
 else
   COVERED_ACS="$(task_covered_acs "$BODY" "$SPEC_FILE")"

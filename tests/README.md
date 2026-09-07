@@ -18,8 +18,8 @@ tests/vendor/bats-core/bin/bats tests/unit/fixtures.bats -f "make_spec"  # 按�
 
 | 目录 | 职责 |
 |------|------|
-| `unit/` | 契约单测与门禁行为单测（50 条） |
-| `regression/` | 回归语料库：一份 bug 报告 = 一个 `.bats` 文件或一个同名目录（78 条） |
+| `unit/` | 契约单测与门禁行为单测（55 条） |
+| `regression/` | 回归语料库：一份 bug 报告 = 一个 `.bats` 文件或一个同名目录（95 条） |
 | `e2e/` | 端到端：init → spec → plan → 门禁 → 证据 黄金路径 （批次 4 起）|
 | `meta/` | 原则守护 lint：把 AGENTS.md Gate Rules 变成机器断言 （批次 3 起）|
 | `helpers/` | `common.bash`（沙箱）、`fixtures.bash`（spec/plan 构造函数） |

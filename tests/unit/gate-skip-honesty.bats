@@ -31,6 +31,13 @@ setup() {
 
 @test "every spec-taking gate reports NOT verified when no spec is discoverable" {
   # 沙箱刚 init，halo/specs 下没有任何 spec —— 四个门禁都会走 find_spec 失败分支。
+  #
+  # 断的是**各门禁自己那句完整出口文案**，不是宽泛的 `NOT verified` 子串。理由有两条，
+  # 第二条是硬约束：
+  #   1. 宽泛子串对「在门禁任意位置无条件打一句 NOT verified」这种伪实现没有判别力；
+  #   2. `drift-check` 走到**正常**路径时本来就会打印 `NOT verified`
+  #      （`:576-577` 的 gate_skip 收尾，未比较的维度逐个列出）。对它而言
+  #      「输出含 NOT verified」是**恒真**的，断宽泛子串等于对四个门禁里的一个不设防。
   local names=(ac-coverage drift-check spec-lint compliance)
   local cmds=(
     "halo/kernel/delivery/gates/ac-coverage.sh"
@@ -38,16 +45,23 @@ setup() {
     "halo/kernel/delivery/gates/spec-lint.sh"
     "halo/kernel/delivery/gates/compliance.sh"
   )
+  local msgs=(
+    "No spec file found, skipping — AC coverage NOT verified"
+    "No spec file found, skipping — drift NOT verified"
+    "No spec file found, skipping — spec lint NOT verified"
+    "No spec file found, skipping compliance check — compliance NOT verified"
+  )
 
-  local i name cmd
+  local i name cmd msg
   for i in "${!names[@]}"; do
     name="${names[$i]}"
     cmd="${cmds[$i]}"
+    msg="${msgs[$i]}"
     run bash -c "$cmd"
     # 跳过语义本身不变：找不到 spec 不是失败，是没有可比较的工作量。
     [ "$status" -eq 0 ] || fail "gate=$name: expected exit 0 for the skip branch, got $status: $output"
-    [[ "$output" == *"NOT verified"* ]] \
-      || fail "gate=$name: skip output must say NOT verified, got: $output"
+    [[ "$output" == *"$msg"* ]] \
+      || fail "gate=$name: skip output must be exactly '$msg', got: $output"
   done
 }
 
@@ -60,11 +74,17 @@ setup() {
 
   run bash halo/kernel/delivery/gates/ac-coverage.sh halo/specs/no-ac/spec.md .
   assert_success
-  assert_output --partial "NOT verified"
+  assert_output --partial "No AC numbers found in spec — AC coverage NOT verified"
 }
 
 # ── 反向：不得把「未验证」无条件打进输出 ──
-# 缺这条，在每个门禁开头无条件 echo 一句 NOT verified 也能让上面两条全绿。
+# 缺这几条，在门禁开头无条件 echo 一句 NOT verified 也能让上面两条全绿。
+#
+# 覆盖面到此为止是**有意的**：`drift-check` 没有对应的反向用例，因为它对合法 spec
+# 正常就会打印 `NOT verified`（未比较的维度逐个列出，见上面用例的理由 2）。
+# 对它写一条 `refute_output --partial "NOT verified"` 会立刻红，且红得没有意义。
+# `drift-check` 那一侧的诚实性由 `gate_skip` 三件套的既有断言守（`checked.*`、
+# `checks_run`，见 tests/README.md「门禁诚实性契约」），不归本文件。
 
 @test "a gate that actually compared something does not claim NOT verified" {
   make_spec halo/specs real-spec
@@ -78,5 +98,12 @@ setup() {
   make_spec halo/specs real-spec
 
   run bash halo/kernel/delivery/gates/ac-coverage.sh halo/specs/real-spec/spec.md .
+  refute_output --partial "NOT verified"
+}
+
+@test "compliance does not claim NOT verified when it read a real spec" {
+  make_spec halo/specs real-spec
+
+  run bash halo/kernel/delivery/gates/compliance.sh halo/specs/real-spec/spec.md
   refute_output --partial "NOT verified"
 }

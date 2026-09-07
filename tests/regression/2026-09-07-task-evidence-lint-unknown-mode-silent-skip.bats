@@ -75,8 +75,16 @@ strip_all_mode_declarations() { # <spec-id>
   assert_output --partial "T1"
 }
 
-# 「静默」本身要有断言：光断 exit code 的话，把出口改成无声 exit 1 也能绿，
-# 而无声报红同样违反诚实性契约——收尾仍然会说「1 completed task(s) checked」。
+# 守的是**收尾摘要不得声称零失败**——即模式维度必须真的计入 FAILS，而不只是
+# 打一行字。被 `fail_msg` → `warn_msg` 方向的实现点亮（warn 只增 WARNS，收尾的
+# `✅ PASS` 只读 FAILS，于是仍是绿报告）。
+#
+# 它**不**守「无声报红」：实测把 else 分支整行换成裸 `exit 1`，本条仍绿——裸 exit
+# 在循环里直接终止进程，收尾根本不执行，也就没有 `0 fail(s)` 可匹配。守住那个方向的
+# 是上一条（`assert_output --partial "NOT verified"`），同一变异下它是唯一变红的。
+#
+# 断的是 `0 fail(s), 0 warning(s)` 整串而不是 `0 fail(s)`：后者是 `10 fail(s)` 的子串，
+# fixture 一旦长到十个失败就会误红。
 @test "task-evidence-lint does not silently count an unresolved task as checked" {
   make_spec halo/specs unknown-mode 1 1
   make_plan halo/specs unknown-mode 1 1
@@ -84,7 +92,7 @@ strip_all_mode_declarations() { # <spec-id>
   complete_t1_with_base_evidence unknown-mode
 
   run bash halo/kernel/orchestrator/sdd/task-evidence-lint.sh unknown-mode
-  refute_output --partial "0 fail(s)"
+  refute_output --partial "0 fail(s), 0 warning(s)"
 }
 
 # ── 反向：两条既有路径不得被一起打红 ──
@@ -106,6 +114,58 @@ JSON
   run bash halo/kernel/orchestrator/sdd/task-evidence-lint.sh tdd-mode
   assert_success
   assert_output --partial "tdd-evidence.json"
+}
+
+# ── 兄弟站点：task-complete.sh 的同一处方向缺陷 ──
+#
+# `task-complete.sh:231-233` 是同一个 `execution_mode()` + `task_mode()` 回退链、同一个
+# `if [[ tdd ]] … fi`，连 `plan` 分支都没有。它比 lint 更危险：lint 只读，它会**勾选任务**。
+#
+# 正常路径上 `:217` 的 plan-lint 调用会先拦住缺 `Mode:` 的 plan，所以 `unknown` 通常到不了
+# 那一段。但那道护栏是 `if [[ -x <plan-lint.sh> ]]`——**本身就是 fail-open**：脚本不可执行时
+# 整个检查被跳过，且不报错。`doctor.sh:135` 专门 `check_executable` 这一位，说明「执行位丢失」
+# 是这个仓库建模过的失效模式，不是臆想的场景。
+#
+# 一个 fail-closed 的证据契约不应该依赖另一个脚本的文件权限位。用例把护栏摘掉，
+# 断的是「护栏没了，证据契约本身仍然守得住」。
+@test "task-complete refuses an unresolved mode instead of marking the task done" {
+  make_spec halo/specs unknown-mode 1 1
+  make_plan halo/specs unknown-mode 1 1
+  strip_all_mode_declarations unknown-mode
+  mkdir -p ".halo/sdd/unknown-mode/T1"
+  echo "# brief" > ".halo/sdd/unknown-mode/T1/brief.md"
+  echo "# review package" > ".halo/sdd/unknown-mode/T1/review-package.md"
+  # 摘掉 :217 的护栏，暴露被它遮住的那段。
+  chmod -x halo/kernel/orchestrator/sdd/plan-lint.sh
+
+  run bash halo/kernel/orchestrator/sdd/task-complete.sh unknown-mode T1
+  assert_failure
+  assert_output --partial "NOT verified"
+  # 最要紧的一条：任务不许被勾上。
+  run grep -c '^- \[x\] T1:' halo/specs/unknown-mode/plan.md
+  assert_output "0"
+}
+
+@test "task-complete still marks a tdd task done when its evidence is valid" {
+  make_spec halo/specs tdd-mode 1 1
+  make_plan halo/specs tdd-mode 1 1
+  mkdir -p ".halo/sdd/tdd-mode/T1"
+  echo "# brief" > ".halo/sdd/tdd-mode/T1/brief.md"
+  echo "# review package" > ".halo/sdd/tdd-mode/T1/review-package.md"
+  cat > ".halo/sdd/tdd-mode/T1/tdd-evidence.json" << 'JSON'
+{
+  "kind": "tdd-evidence",
+  "status": "pass",
+  "ac_ids": ["AC-1"],
+  "red": { "exit_code": 1 },
+  "green": { "exit_code": 0 }
+}
+JSON
+
+  run bash halo/kernel/orchestrator/sdd/task-complete.sh tdd-mode T1
+  assert_success
+  run grep -c '^- \[x\] T1:' halo/specs/tdd-mode/plan.md
+  assert_output "1"
 }
 
 @test "task-evidence-lint still passes a plan-mode task without TDD evidence" {
