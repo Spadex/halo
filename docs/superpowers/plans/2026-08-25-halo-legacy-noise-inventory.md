@@ -42,6 +42,28 @@
 
 复核报告：`docs/bug_report/2026-09-07-task-evidence-lint-unknown-mode-silent-skip-analysis.md`。
 
+### 反向断言的判别力验证（四条变异）
+
+正向断言由先红后绿证伪过（修复前实测变红）。**反向断言在修复前后都是绿的**，
+按 `tests/README.md`「一条断言的『绿』，只有在它被独立证伪过之后，才构成证据」，
+它们必须各自被至少一条变异点亮。四条变异走完六步协议，逐条记录：
+
+| 变异 | 注入点 | 预期点亮 | 实测 |
+|---|---|---|---|
+| M-A | `spec-lint.sh:22` 的标题行追加 `NOT verified`（无条件声称未验证） | `gate-skip-honesty` #3 | ✅ 只点亮 #3 |
+| M-B | `task-evidence-lint.sh:142` 的 `== "plan"` 改成永不匹配的值 | `silent-skip` #5 | ✅ 只点亮 #5 |
+| M-C | `task-evidence-lint.sh:136` 的 `== "tdd"` 改成永不匹配的值 | `silent-skip` #4 | ✅ 只点亮 #4 |
+| M-D | `ac-coverage.sh:161` 的 AC 计数行追加 `NOT verified` | `gate-skip-honesty` #4 | ✅ 只点亮 #4 |
+
+每条变异「只点亮预期的那一条」这件事本身也是产出：它证明反向断言没有越界去
+约束别的行为。M-A/M-D 一并证明了「无条件把 `NOT verified` 打进输出」这条捷径
+过不了关——这正是补文案时最容易走偏的方向。
+
+协议执行：每条变异前 `git status --porcelain` 为空，用 python 字面替换并断言目标串
+恰好出现 1 次，`git diff` 确认落盘后才跑测试，跑完 `git checkout -- harness-template/ prismspec/`
+回滚。四条全部回滚后 status 再次为空，`tests/run.sh` 退出码 0、零 `not ok`、
+smoke-test 122/122。**无变异进入提交。**
+
 ### 本次实测产生的三条订正
 
 1. **`unknown` 的触发门槛比本文档写的低得多。** 本文档把它描述为根因 H（`execution_mode`
