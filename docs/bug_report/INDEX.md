@@ -56,10 +56,18 @@
 | `2026-08-03-user-report.md` | #14 | `1f993a4` | 2026-08-03 | A | `2026-08-03-user-report.bats` | ✅ |
 | `2026-08-07-runningtime-report/`（目录） | — | `3e25d7e` | 2026-08-07 | A + H | `2026-08-07-runningtime-report.bats` | ✅ |
 | `2026-08-16-init-detection-probe-pipefail-analysis.md` | — | `1a9773e` | 2026-08-16 | B | `2026-08-16-init-detection-probe-pipefail.bats` | ⚠️ 自查发现，无上报原文 |
-| `2026-08-25-ac-coverage-func-name-pipefail-analysis.md` | — | `7976672` | 2026-08-25 | B | `2026-08-25-ac-coverage-func-name-pipefail.bats` | ⚠️ 自查发现，无上报原文 |
-| `2026-08-25-compliance-missing-spec-fail-open-analysis.md` | — | `7976672` | 2026-08-25 | C + H | `2026-08-25-compliance-missing-spec-fail-open.bats` | ⚠️ 自查发现，无上报原文 |
+| `2026-08-25-ac-coverage-func-name-pipefail-analysis.md` | — | `c2fbfc8` | 2026-08-25 | B | `2026-08-25-ac-coverage-func-name-pipefail.bats` | ⚠️ 自查发现，无上报原文 |
+| `2026-08-25-compliance-missing-spec-fail-open-analysis.md` | — | `c2fbfc8` | 2026-08-25 | C + H | `2026-08-25-compliance-missing-spec-fail-open.bats` | ⚠️ 自查发现，无上报原文 |
+| `2026-09-07-task-evidence-lint-unknown-mode-silent-skip-analysis.md` | — | 与回归测试同批（见下方注记） | 2026-09-07 | C + H | `2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats` | ⚠️ 自查发现，无上报原文 |
 
 根因类别的含义见 `tests/README.md` 的根因类别表。
+
+> **「修复提交」列的 hash 会被 rebase 与 amend 作废。** 上面两条 `2026-08-25` 的条目
+> 原先记的是 `7976672`——那是一次 amend 之前的悬空提交，在当前分支历史里已经不可达
+> （`git merge-base --is-ancestor 7976672 HEAD` 为假），2026-09-07 核对时才发现并改成
+> `c2fbfc8`。新条目因此改用可自校验的表述：修复代码、analysis、回归测试同批提交，
+> 精确提交用 `git log -- tests/regression/<basename>.bats` 反查。
+> `tests/regression/*.bats` 的文件头 `Fixed by:` 早已是这个写法，本表向它对齐。
 
 ### 关于「无上报原文」的两类情况
 

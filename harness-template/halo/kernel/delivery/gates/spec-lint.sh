@@ -14,7 +14,7 @@ if [[ -z "$SPEC" ]]; then
   if [[ "$SPEC_RC" -eq 2 ]]; then
     echo "❌ Spec auto-discovery is ambiguous — pass the spec path explicitly"; exit 1
   elif [[ "$SPEC_RC" -ne 0 ]]; then
-    echo "⚠️  No spec file found, skipping"; exit 0
+    echo "⚠️  No spec file found, skipping — spec lint NOT verified"; exit 0
   fi
 fi
 [[ -f "$SPEC" ]] || { echo "File not found: $SPEC"; exit 1; }

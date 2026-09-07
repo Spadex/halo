@@ -2,7 +2,8 @@
 
 日期：2026-08-25
 基线提交：`c093b71`
-状态：**已复核并修正**。两处高危缺陷已随本批提交修复，其余登记待批次 3 处置。
+状态：**已复核并修正，已完成两批处置**。2026-08-25 修两处高危缺陷，2026-09-07 修
+`unknown` 静默跳过与规则 5 的五处 skip 文案（见「处置记录（2026-09-07）」）。其余登记待批次 3。
 用途：批次 3 `tests/meta/` 上线前置。五条 meta-lint 规则在当前代码库的全部命中面，逐条给出判定与两种处置方案。
 
 > 本文档全部数字均为实测（`grep`/`awk`/`md5` 直接跑在工作树上，基线 `c093b71`）。
@@ -30,6 +31,30 @@
 
 已随本批修复的两处：`ac-coverage.sh:188`、`compliance.sh:42`。
 
+## 处置记录（2026-09-07）
+
+第二批处置，对象是本文档登记的 P0 与规则 5 剩余项。两项都走了先红后绿。
+
+| 项目 | 处置 | 测试 |
+|---|---|---|
+| `task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过 | 补 `else` 分支，fail-closed，输出含 `NOT verified` | `tests/regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats`（5 条，双向） |
+| 规则 5 剩余五处 skip 出口文案 | 五处各补 `— … NOT verified` | `tests/unit/gate-skip-honesty.bats`（4 条，含反向） |
+
+复核报告：`docs/bug_report/2026-09-07-task-evidence-lint-unknown-mode-silent-skip-analysis.md`。
+
+### 本次实测产生的三条订正
+
+1. **`unknown` 的触发门槛比本文档写的低得多。** 本文档把它描述为根因 H（`execution_mode`
+   多份定义漂移）的下游后果，说要「把 `execution_mode:` 写在 front-matter 块外」才造得出。
+   实测不需要任何漂移：`execution_mode()` 末行是 `printf '%s' "${value:-unknown}"`，
+   spec front-matter 无 `execution_mode:`、plan 无 `Execution mode:` / `执行模式：`、
+   任务体无 `Mode:`，四处全部落空即返回 `unknown`。**这是纯粹的漏写。**
+   影响：本文档据此把它排在「`execution_mode` 收敛」之后，理由是「根因在上游」——
+   实测表明两者可解耦，fail-closed 出口独立成立，不必等收敛。已按此顺序处置。
+2. **规则 2 的优先级排序需要反转。** 详见下方「【2026-09-07 实测】规则 2 五处的触发门槛对比」。
+3. **`docs/bug_report/INDEX.md` 记的 `7976672` 是悬空 hash**（amend 前的提交，
+   `git merge-base --is-ancestor 7976672 HEAD` 为假），已改为 `c2fbfc8` 并加注记说明核验方式。
+
 ### 行号漂移对照（读本文档前先看这个）
 
 **正文所有行号都是基线 `c093b71` 的值**，这是本文档声明的取数口径，不改。但两处修复各自加了几行注释，
@@ -39,8 +64,10 @@
 |---|---|---|
 | `delivery/gates/ac-coverage.sh` | `:187` 之后 **+6** | `:188`→`:194`（func_name 抽取）、`:226`→`:232`（Tier2 候选 `sort -u`）、`:231`→`:237`、`:266`→`:272`（`grep -A 5`）、`:302`→`:308`、`:306`→`:312` |
 | `delivery/gates/compliance.sh` | `:41` 之后 **+4** | `:42`→`:46`（存在性守卫）。`:38` 及之前不变 |
+| `orchestrator/sdd/task-evidence-lint.sh` | `:143` 之后 **+8** | `:144`→`:152`（模式分支的 `fi`）。**2026-09-07 新增**，`:143` 及之前不变 |
 
-其余 49 个文件的行号未变。
+其余 48 个文件的行号未变。2026-09-07 补的五处 skip 文案只改字符串内容、不增删行，
+`ac-coverage.sh` / `drift-check.sh` / `spec-lint.sh` / `compliance.sh` 的行号不受它影响。
 
 > 写这张表是因为本文档自己在规则 2 里记了一笔：设计文档 `:13` 的 `guide.sh:180,187` 落笔当天就已失准，
 > 无人察觉。同一个坑不该由这份文档再踩一次。
@@ -196,6 +223,44 @@ eval-query.sh:263:  [[ "$emitted" -ge "$LIMIT" ]] && continue
 > 另外，设计文档 `:13` 点名的「已知未修」是**两处**：`_lib.sh:158` 与 `guide.sh:180,187`。初版只处理了后者。`_lib.sh:158` 的原始形态是 `find … | xargs -0 ls -t | head -1`（见同一份 analysis `:91-94`），已随 `7a50adf` 迁到 **`spec-select.sh:85`**——正是本文档 2b 判为「设计选择」的那处。今天 `_lib.sh` 的 `| grep` / `| head` 零命中，这条线索已闭合。
 
 `pipeline.sh:203/235` 的左侧 `$output` 是被测命令的完整输出，**可以任意大**——这两处的风险不比 guide.sh 小，但从未被登记过。调用链已复核：`pipeline.sh:390` `output=$(run_cmd "$run" 2>&1)` → `:407` `classify_failure_category "$name" "$output"` → `:227` → `:229` → `:192` → `:203`，全程无截断（`record_step` 的 `tail -20/-40` 是另一条路径）。
+
+### 【2026-09-07 实测】规则 2 五处的触发门槛对比
+
+本文档「若只能动一处」的榜单把 `guide.sh:216/223` 列为第 5 项（「登记最久」），
+而 `pipeline.sh:203/235` **根本没进榜**。实测表明这个排序反了。
+
+管道缓冲区阈值实测（macOS，`printf` 喂 `grep -qiE`，首行即命中）：
+
+```
+   800 行 /   45622 字节 -> OK
+  1000 行 /   57022 字节 -> OK
+  1200 行 /   68422 字节 -> MISCLASSIFIED
+  3000 行 /  171022 字节 -> MISCLASSIFIED
+```
+
+64KB 一过就把「命中」变成「未命中」。据此对比两处的实际触发概率：
+
+| 位置 | 管道左侧是什么 | 到 64KB 的现实距离 |
+|---|---|---|
+| `pipeline.sh:203/235` | 被测命令的**完整输出**（测试套件、构建日志） | **常态**。一个中等规模的测试套件输出轻易过 64KB |
+| `guide.sh:216/223` | `RUN_DIR` 下的**文件路径列表** | 需 1000+ 个文件。`2026-08-02-…-analysis.md:88-97` 实测同规模下 15/15 返回 0 |
+
+后果方向也不同：
+
+- `pipeline.sh:235` —— 环境类失败（`command not found` 等）漏判，落回按 `step_name` 的
+  兜底分类，`default_action` 走错；
+- `pipeline.sh:203` —— 用户在 `failure-categories` 里配的 `output_regex` 规则
+  **匹配成功却被 `continue` 静默跳过**，配置静默失效；
+- `guide.sh:216/223` —— 「有证据」误判为「无证据」，方向是**假红**（把用户导回更早的阶段），
+  保守但不产生错误的绿。
+
+**结论：规则 2 若只动一处，应该是 `pipeline.sh:203/235`，不是 `guide.sh`。**
+两处同根因，一份回归测试可覆盖；`task-complete.sh:113-115` 有现成的修复注释样板。
+
+另需订正本文档「处置方案 · 方案 A」的标题「（5 处真缺陷）」——那 5 处里
+`ac-coverage.sh:266` 的下游是 `--deep` 的 `DEEP_WARNINGS`，而 `ac-coverage.sh:295` 明写
+`warnings (non-blocking, for review reference)`，不进门禁判定；且 `grep -A 5` 的左侧是
+单文件的匹配上下文，很难到 64KB。它是五处里优先级最低的一处，不该与另外四处并列。
 
 ### 2b. `find … | xargs ls -t | head`
 
@@ -480,7 +545,8 @@ meta-lint 规则 4 改为「只对带此标记的副本放行」，其余报警�
 
 > 【复核订正】初版漏掉 **`spec-lint.sh:17`**，导致 4+4+5 = 13 ≠ 14。它与 `ac-coverage.sh:38`、`drift-check.sh:36` 是**逐字相同的第三份副本**（同一 `find_spec` 失败分支），而且 `spec-lint.sh` 全文只有这一个 `exit 0`（正常 PASS 走 `_lib.sh:282 print_summary` 的 `return 0`），不可能被归进「正常 PASS 出口」。
 
-**六处全部缺 `NOT verified`。**
+**六处全部缺 `NOT verified`**（本表为基线 `c093b71` 的状态；六处已于 2026-08-25 与
+2026-09-07 分两批全部处置——`compliance.sh:42` 改方向，其余五处补文案）。
 
 `compliance.sh:42` 是其中最恶劣的一处（**已修复**）：
 
@@ -521,7 +587,20 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 **方案 A · 纠正**
 
 1. `compliance.sh:42` 改 `exit 0` → `exit 1`，与另外三个门禁对齐。**这是行为变更**：现在报绿的场景会开始报红。**已完成**（复核确认该分支此前无任何测试覆盖，改动不打红任何现有用例）。
-2. 其余五处的输出补 `NOT verified` 字样。**代价：零。**
+2. 其余五处的输出补 `NOT verified` 字样。**代价：零。已完成（2026-09-07）**，五处现文案：
+
+   | 位置 | 现文案 |
+   |---|---|
+   | `ac-coverage.sh:38` | `⚠️  No spec file found, skipping — AC coverage NOT verified` |
+   | `ac-coverage.sh:156` | `⚠️  No AC numbers found in spec — AC coverage NOT verified` |
+   | `drift-check.sh:36` | `⚠️  No spec file found, skipping — drift NOT verified` |
+   | `spec-lint.sh:17` | `⚠️  No spec file found, skipping — spec lint NOT verified` |
+   | `compliance.sh:38` | `⚠️  No spec file found, skipping compliance check — compliance NOT verified` |
+
+   `skipping` 字样一并保留，二选一口径与收紧口径同时满足。
+   契约单测：`tests/unit/gate-skip-honesty.bats`（齐平遍历四个门禁 + 反向断言
+   「真比较过的门禁不得声称 NOT verified」）。实测「改文案零成本」的结论成立：
+   `tests/run.sh` 与两份 `examples/*/try-it.sh` 全绿。
 
 > 【复核订正】初版称第 2 项的代价是「`tests/smoke-test.sh` 与部分 bats 用例有 grep 门禁输出文案的断言，改文案会打红它们」，据此把它推迟到批次 4。**实测这个障碍不存在**：`tests/`（排 `vendor/`）对 `No spec file found` / `Spec not found` / `Spec file not found` / `No AC numbers found` 的断言**为零**；`tests/smoke-test.sh` 全文 `grep -c "compliance.sh"` = 0，根本不调这个门禁。
 >
@@ -548,12 +627,33 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 | | `spec-lint.sh:17` |
 | | `compliance.sh:38` |
 
-**必须同时记录的落差**：被放行的这四处**仍不满足** `AGENTS.md:86-87` 与 `tests/README.md:323` 的三条硬契约（① 输出含 `NOT verified`；② 对应的 `checked.*` 为 false；③ 不计入 `checks_run`）。规则 5 按字面口径**管不到**它们——**这不是缺陷消失，是规则覆盖不到**。别让「规则 5 绿」被读成「诚实 skip 已达标」。
+**曾经必须记录的落差（2026-09-07 已部分闭合）**：被放行的这四处此前**不满足**
+`AGENTS.md:86-87` 与 `tests/README.md:323` 的三条硬契约（① 输出含 `NOT verified`；
+② 对应的 `checked.*` 为 false；③ 不计入 `checks_run`）。规则 5 按字面口径管不到它们，
+所以这在当时不是「缺陷消失」而是「规则覆盖不到」。
+
+现状：
+
+- **① 已闭合**——六处出口现在全部含 `NOT verified`（含被放行的四处），
+  按收紧口径也已达标。契约由 `tests/unit/gate-skip-honesty.bats` 守住，
+  不再依赖规则 5 是否收窄。
+- **②③ 仍未闭合，但需要重新表述**。实测 `mark_checked` / `checks_run` / `checked.*`
+  **只存在于 `drift-check.sh`**（`:58`、`:67`、`:165`），`ac-coverage.sh` 的
+  `write_gate_json`（`:69-99`）根本没有 `checked.*` 字段，`compliance.sh` / `spec-lint.sh`
+  也没有这套机制——这与本文档「对照：`gate_skip` 是正确的样板」一节的观察一致。
+  更关键的是：这四处出口都在**写任何 gate JSON 之前**就 `exit 0`，所以对它们而言
+  ②③ 不是「没满足」，是**没有可满足的对象**。
+
+  因此 ②③ 的真实待办不是「补两个字段」，而是本节处置方案里那条「更彻底的做法」——
+  把 `gate_skip` / `mark_checked` / `checks_run` 三件套提到 `_lib.sh` 让三个门禁共用。
+  **该项仍未做。** 在做之前，别把「规则 5 绿」读成「诚实 skip 已达标」：
+  达标的只有输出文案这一层。
 
 **倾向**：
 
 - 第 1 项（`compliance.sh:42`）已完成。它是全 kernel 唯一一处「同种情况其他都报错、唯独这里报绿」的 fail-open 不一致。
-- 第 2 项（补 `NOT verified` 文案）成本为零，**建议进批次 3**，不必等批次 4。
+- 第 2 项（补 `NOT verified` 文案）成本为零，**已于 2026-09-07 完成**，未等批次 3。
+  实测印证了「零成本」：`tests/run.sh` 全绿、两份 `examples/*/try-it.sh` 全绿，无一处需要迁就。
 - 规则 5 是五条规则里信噪比最好的一条：14 个 `exit 0` 里 8 处噪声、6 处真缺陷，且按二选一口径命中的 2 处全是真缺陷、零误报。
 
 ---
@@ -589,21 +689,34 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 | 4 重复定义 | 129 | ~估算 | ~估算 | **4 组** | **不能全自动**：报告 + 标 md5，人工判读。噪声/缺注释未穷尽分类，只有真缺陷数是精确的 |
 | 5 诚实 skip | 14 | 8 | 0 | **6** | 二选一口径（命中 2 处，零误报）；余下 4 处的落差另行登记 |
 
-**真缺陷合计 12 处 / 4 组**（初版称 20 处 / 4 组）。已修复 2 处（`ac-coverage.sh:188`、`compliance.sh:42`），登记在案的原有 2 处（`guide.sh:216/223`），其余为本次复核新发现。
+**真缺陷合计 12 处 / 4 组**（初版称 20 处 / 4 组）。登记在案的原有 2 处（`guide.sh:216/223`），其余为复核新发现。
+
+**处置进度（截至 2026-09-07）：已修 7 处，余 5 处 / 4 组。**
+
+| 批次 | 已修 | 测试 |
+|---|---|---|
+| 2026-08-25 | `ac-coverage.sh:188`（pipefail 硬崩）、`compliance.sh:42`（fail-open 报绿） | `regression/2026-08-25-*.bats` ×2 |
+| 2026-09-07 | 规则 5 剩余五处 skip 文案 | `unit/gate-skip-honesty.bats` |
+| 2026-09-07 | `task-evidence-lint.sh` 的 `unknown` 静默跳过（清单外的额外项，见「处置记录」） | `regression/2026-09-07-task-evidence-lint-unknown-mode-silent-skip.bats` |
+
+余下的 5 处 = 规则 2 的 `guide.sh:216/223`、`ac-coverage.sh:266`、`pipeline.sh:203/235`；
+4 组 = 规则 4 的 `execution_mode` / `extract_task_id` / `has_frontmatter` / `frontmatter_value`。
 
 ### 若只能动一处
 
-按「纠正成本 ÷ 风险收益」排序（**已按此顺序动了前两项**）：
+按「纠正成本 ÷ 风险收益」排序（**第 2–5 项已动，第 6–7 项待办**）：
 
 1. ~~**规则 3 的 6 处加 `| sort`**~~ —— **已作废**，对象不存在（见规则 3 的复核订正）。
-2. **`ac-coverage.sh:188` 补 `|| true`** ✅ 已修复 —— 唯一一处会让门禁**硬崩**的缺陷，且 node 项目用 jest 参数化写法即触发。
-3. **`compliance.sh:42` 的 `exit 0` → `exit 1`** ✅ 已修复 —— 一行改动，闭合全 kernel 唯一一处「同种情况其他都报错、唯独这里报绿」的 fail-open 不一致。
-4. **`task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过** —— 见下，**建议排在批次 3 队首**。
-5. **`guide.sh:216/223`** —— 登记最久，但当年实测过在现实规模下不触发，是有据的搁置。
+2. **`ac-coverage.sh:188` 补 `|| true`** ✅ 已修复（2026-08-25）—— 唯一一处会让门禁**硬崩**的缺陷，且 node 项目用 jest 参数化写法即触发。
+3. **`compliance.sh:42` 的 `exit 0` → `exit 1`** ✅ 已修复（2026-08-25）—— 一行改动，闭合全 kernel 唯一一处「同种情况其他都报错、唯独这里报绿」的 fail-open 不一致。
+4. **`task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过** ✅ 已修复（2026-09-07）—— 补 `else` 分支，fail-closed。触发门槛比本文档原先认定的低得多，不依赖根因 H，见「处置记录（2026-09-07）」的订正 1。
+5. **规则 5 的五处 skip 文案** ✅ 已修复（2026-09-07）—— 零行为风险，实测零成本。
+6. **`pipeline.sh:203/235`** —— **未修，现列为规则 2 的队首**。实测 64KB 一过即误判，而管道左侧是被测命令的完整输出，超阈值是常态。详见「【2026-09-07 实测】规则 2 五处的触发门槛对比」。
+7. **`guide.sh:216/223`** —— 未修。登记最久，但实测触发需 1000+ 文件，且方向是假红。**排在 `pipeline.sh` 之后**，这是 2026-09-07 对本榜单原顺序的反转。
 
-### 【复核补充】最该优先的未修项：`unknown` 模式静默跳过
+### 【复核补充】`unknown` 模式静默跳过 ✅ 已修复（2026-09-07）
 
-`task-evidence-lint.sh:136-144` 是 `if / elif / fi`，**没有 `else`**：
+`task-evidence-lint.sh:136-144`（基线行号）是 `if / elif / fi`，**没有 `else`**：
 
 ```bash
 136  if [[ "$effective_mode" == "tdd" ]]; then …
@@ -614,7 +727,34 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 
 `effective_mode` 为 `unknown`（或任何第三值）时这段完全不执行：`FAILS`、`WARNS` 都不增加，`pass_msg`/`warn_msg`/`fail_msg` 一行都不输出。该任务的模式维度**静默消失**，而 `:150` 仍打印 `$TASK_COUNT completed task(s) checked`、`:157` 照常 `✅ PASS`。
 
-这与 `tests/README.md:317-343` 的「静默跳过＝假绿」红线直接冲突，且它同时是根因 H（`execution_mode` 多份定义漂移）的下游后果——一份把 `execution_mode:` 写在 front-matter 块外的 spec 就能造出 `unknown`。**根因 H 与假绿红线的交点，本清单里唯一一处会产生假绿的缺陷。**
+这与 `tests/README.md:317-343` 的「静默跳过＝假绿」红线直接冲突。**本清单里唯一一处会产生假绿的缺陷。**
+
+实测输出（修复前）：
+
+```
+── Completed task evidence ──
+  ✅ T1 brief.md
+  ✅ T1 review-package.md
+  ✅ 1 completed task(s) checked
+
+📊 Task Evidence Lint: 0 fail(s), 0 warning(s)
+✅ PASS
+```
+
+> 【2026-09-07 实测订正】本节原先把它归为根因 H（`execution_mode` 多份定义漂移）的下游后果，
+> 说「一份把 `execution_mode:` 写在 front-matter 块外的 spec 就能造出 `unknown`」。
+> **实测不需要任何漂移**：`execution_mode()` 末行是 `printf '%s' "${value:-unknown}"`，
+> spec front-matter 无 `execution_mode:`、plan 无 `Execution mode:`、plan 无 `执行模式：`、
+> 任务体无 `Mode:`——四处全落空即得 `unknown`。**这是纯粹的漏写，不是漂移。**
+>
+> 这条订正改变了处置顺序：原先它被排在「`execution_mode` 四份定义收敛」之后
+> （理由是「根因在上游」），实测表明两者可解耦，fail-closed 出口独立成立。已按此处置。
+> 根因 H 的收敛仍应做——它消除的是**另一条**通往 `unknown` 的路径——但不再是本处的前置。
+
+**修复**：补 `else` 分支，fail-closed，输出含 `NOT verified`，退出码变 1。
+选 `fail_msg` 而非 `warn_msg` 的理由：收尾的 `✅ PASS` 只看 `FAILS`（`:156`），
+报 warning 仍然是报绿，缺陷核心原样保留。
+详见 `docs/bug_report/2026-09-07-task-evidence-lint-unknown-mode-silent-skip-analysis.md`。
 
 ### 待定夺清单
 
@@ -627,5 +767,7 @@ echo "   A skipped dimension was not compared. Do not read this as contract alig
 7. ~~`compliance.sh:42` 是否在批次 3 纠正？~~ —— **已修复**。
 8. `allowlist.txt` 是否采用 `EXEMPT` / `KNOWN-DEFECT` 两类条目？后者「打印告警但不失败、只减不增」的语义是否接受？
 9. `tests/smoke-test.sh` 排除出扫描范围（硬编码而非 allowlist）是否可接受？
-10. **【新增】** 规则 5 按二选一口径放行的四处（`ac-coverage.sh:38`、`drift-check.sh:36`、`spec-lint.sh:17`、`compliance.sh:38`）仍不满足 `AGENTS.md:86-87`。补 `NOT verified` 文案成本为零——是在批次 3 补，还是接受「规则管不到」的落差并登记？
-11. **【新增】** `task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过是否排进批次 3 队首？
+10. ~~规则 5 按二选一口径放行的四处仍不满足 `AGENTS.md:86-87`，是补文案还是登记落差？~~ —— **已定并已做（2026-09-07）：补文案。** 连同 `ac-coverage.sh:158` 共五处，实测零成本。**但落差只闭合了「① 输出含 `NOT verified`」这一层**，②`checked.*` 与 ③`checks_run` 仍未闭合——见规则 5 的口径一节，它们的真实待办是把 `gate_skip` 三件套提到 `_lib.sh`。
+11. ~~`task-evidence-lint.sh:136-144` 的 `unknown` 静默跳过是否排进批次 3 队首？~~ —— **已修复（2026-09-07）**，并订正了它对根因 H 的依赖关系。
+12. **【新增】** 规则 2 的处置顺序按 2026-09-07 的阈值实测反转为 `pipeline.sh:203/235` 优先、`guide.sh:216/223` 次之、`ac-coverage.sh:266` 最后。这个顺序是否接受？三处是否合并成一批（同根因、同修法，`task-complete.sh:113-115` 有样板）？
+13. **【新增】** `tests/unit/gate-skip-honesty.bats` 是本仓第一个「齐平遍历多个门禁」的契约单测。这种形态（一条用例循环四个门禁，而不是四份手写副本）是否作为同类契约的默认写法？

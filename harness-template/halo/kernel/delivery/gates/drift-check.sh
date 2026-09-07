@@ -33,7 +33,7 @@ if [[ -z "$SPEC" ]]; then
   if [[ "$SPEC_RC" -eq 2 ]]; then
     echo "❌ Spec auto-discovery is ambiguous — pass the spec path explicitly"; exit 1
   elif [[ "$SPEC_RC" -ne 0 ]]; then
-    echo "⚠️  No spec file found, skipping"; exit 0
+    echo "⚠️  No spec file found, skipping — drift NOT verified"; exit 0
   fi
 fi
 PROJECT="${POSITIONAL[1]:-$PROJECT_ROOT}"

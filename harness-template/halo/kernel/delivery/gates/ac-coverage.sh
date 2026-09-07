@@ -35,7 +35,7 @@ if [[ -z "$SPEC" ]]; then
   if [[ "$SPEC_RC" -eq 2 ]]; then
     echo "❌ Spec auto-discovery is ambiguous — pass the spec path explicitly"; exit 1
   elif [[ "$SPEC_RC" -ne 0 ]]; then
-    echo "⚠️  No spec file found, skipping"; exit 0
+    echo "⚠️  No spec file found, skipping — AC coverage NOT verified"; exit 0
   fi
 fi
 TEST_DIR="${TEST_DIR_ARG:-$PROJECT_ROOT}"
@@ -153,7 +153,7 @@ SPEC_ACS=$(spec_declared_acs "$SPEC" | sort -t- -k2 -n | uniq)
 SPEC_COUNT=$(echo "$SPEC_ACS" | grep -c . || true)
 
 if [[ "$SPEC_COUNT" -eq 0 ]]; then
-  echo "⚠️  No AC numbers found in spec"
+  echo "⚠️  No AC numbers found in spec — AC coverage NOT verified"
   write_gate_json "skip"
   exit 0
 fi

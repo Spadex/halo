@@ -141,6 +141,14 @@ while IFS= read -r line; do
     fi
   elif [[ "$effective_mode" == "plan" ]]; then
     pass_msg "$task_id plan mode (TDD evidence not required)"
+  else
+    # Failure direction: fail-closed. A third value (`unknown`, or anything a future
+    # execution_mode() learns to emit) means no source declared the mode — not the spec
+    # front-matter, not the plan header, not the task body. Whether TDD evidence is
+    # required is therefore unknown, and an unknown requirement must not be reported as
+    # met. Without this branch the whole dimension went silent while the summary below
+    # still counted the task as checked: a pass built on a comparison never made.
+    fail_msg "$task_id execution mode '$effective_mode' — TDD evidence requirement NOT verified"
   fi
 done < <(completed_task_lines "$PLAN_FILE")
 
