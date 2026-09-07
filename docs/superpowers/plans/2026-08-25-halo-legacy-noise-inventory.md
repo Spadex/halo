@@ -75,13 +75,31 @@
 | 变异 | 注入点 | 预期点亮 | 实测 |
 |---|---|---|---|
 | M-A | `spec-lint.sh:22` 的标题行追加 `NOT verified`（无条件声称未验证） | `gate-skip-honesty` #3 | ✅ 只点亮 #3 |
-| M-B | `task-evidence-lint.sh:142` 的 `== "plan"` 改成永不匹配的值 | `silent-skip` #5 | ✅ 只点亮 #5 |
+| M-B | `task-evidence-lint.sh:142` 的 `== "plan"` 改成永不匹配的值 | `silent-skip` #7 | ✅ 只点亮 #7 |
 | M-C | `task-evidence-lint.sh:136` 的 `== "tdd"` 改成永不匹配的值 | `silent-skip` #4 | ✅ 只点亮 #4 |
 | M-D | `ac-coverage.sh:161` 的 AC 计数行追加 `NOT verified` | `gate-skip-honesty` #4 | ✅ 只点亮 #4 |
+| **M-E2** | `drift-check.sh:36` 的 skip 文案退化成只剩 `NOT verified` 三个字 | `gate-skip-honesty` #1 | ✅ 只点亮 #1 |
+| **M-F** | `compliance.sh` 顶部无条件 `echo "MUTANT compliance NOT verified"` | `gate-skip-honesty` #5 | ✅ 只点亮 #5 |
+| **M-G** | `task-complete.sh:231` 的 `== "tdd"` 改成永不匹配的值 | `silent-skip` #6 | ✅ 只点亮 #6 |
 
 每条变异「只点亮预期的那一条」这件事本身也是产出：它证明反向断言没有越界去
-约束别的行为。M-A/M-D 一并证明了「无条件把 `NOT verified` 打进输出」这条捷径
+约束别的行为。M-A/M-D/M-F 一并证明了「无条件把 `NOT verified` 打进输出」这条捷径
 过不了关——这正是补文案时最容易走偏的方向。
+
+**M-E2 与 M-F 是评审后补的，各自对应一处此前的判别力缺口**：
+
+- **M-E2** 专门挑了一条**旧断言会放过、新断言抓得住**的变异。旧版断宽泛子串
+  `NOT verified`，文案退化成只剩这三个字时照样绿；改断完整出口文案后变红。
+  （相对地，「改坏文案让它完全不含 `NOT verified`」这类变异新旧断言都能抓，
+  证明不了新断言更强，故不作为证据。）
+- **M-F** 是评审实测过**旧版零变红**的那条。新增的 compliance 反向用例把它抓住了。
+
+**诚实记录一处抓不住的方向**：同样的「无条件打印 `NOT verified`」若注入 `drift-check`，
+**没有任何用例会红**，而且这是**结构性的、补不上的**——`drift-check` 走正常路径时
+本来就打印 `NOT verified`（`:576-577` 逐个列出未比较的维度），任何
+`refute_output --partial "NOT verified"` 对它都会立刻误红。该门禁那一侧的诚实性
+由 `gate_skip` 三件套的既有断言守（`checked.*`、`checks_run`），不归本文件。
+测试文件里就这一点写了理由，不留无声的空洞。
 
 协议执行：每条变异前 `git status --porcelain` 为空，用 python 字面替换并断言目标串
 恰好出现 1 次，`git diff` 确认落盘后才跑测试，跑完 `git checkout -- harness-template/ prismspec/`
